@@ -24,3 +24,9 @@ php artisan migrate:fresh --seed           # local only — destroys data
 | Date | Migration(s) | Phase | Notes |
 |---|---|---|---|
 | 2026-09-27 | Laravel default `users`, `cache`, `jobs` migrations | 0 | Skeleton |
+| 2026-09-27 | `2026_09_27_150000` → `150500`: users status/admin, catalogue, tenants, RBAC, domains, audit logs | 1 | PG11-compatible (partial unique indexes); applied to the shared dev DB |
+
+## Compatibility
+
+The shared dev server runs PostgreSQL 11 (AW-006). Until it is upgraded, do not use `NULLS NOT DISTINCT`,
+generated columns, or other PG12+ features. Use partial unique indexes via `DB::statement()` instead.

@@ -1,21 +1,39 @@
 # Authentication
 
-> Status: **not implemented** (Phase 1). The `users` table and Laravel's session guard exist from the skeleton.
+> Status: **implemented in Phase 1** (ADR-010).
 
-## Planned V1 scope
+## Business app (`app.autowave.in`) — Laravel Fortify
 
-Login, logout, registration, email verification, password reset, session management, remember me, account
-status (active/suspended).
+| Feature | Route | Notes |
+|---|---|---|
+| Login / logout | `GET/POST /login`, `POST /logout` | Remember me supported; throttle `login` (5/min per email+IP) |
+| Registration | `GET/POST /register` | Creates a user only; business setup is Phase 2 |
+| Email verification | `/email/verify`, signed verify link, resend | `verified` middleware on the app |
+| Password reset | `/forgot-password`, `/reset-password/{token}` | Standard broker, 60-minute tokens |
 
-## Design
+- Custom `authenticateUsing`: case-insensitive email, rejects **suspended** accounts, records `last_login_at`.
+- `active` middleware logs out users suspended after login.
+- Fortify routes exist only on the app host; `/login` on any other host is 404.
+- Pages: `resources/js/pages/auth/*.jsx`.
 
-- Laravel session guard (`web`) with database sessions; cookies `HttpOnly`, `SameSite=Lax`, `Secure` in production.
-- Passwords hashed with bcrypt (`BCRYPT_ROUNDS=12`).
-- Rate limiting on login, registration, password reset and verification resend.
-- Account status checked at login and on every request (suspended users are logged out).
-- After login, the user selects/gets their active tenant membership (see multi-tenancy docs).
-- Super Admin authentication is separate from tenant membership (platform role flag), served only on `admin.autowave.in`.
+## Super Admin (`admin.autowave.in`)
+
+- `Admin\AuthController`: only `is_platform_admin` and active users. Failures return the generic
+  `auth.failed` message and are audited (`admin.login_failed`); success audited (`admin.login`).
+- Throttle `admin-login` (5/min per email+IP). Session regenerated on login, invalidated on logout.
+- First admin is created by `PlatformAdminSeeder` from `AUTOWAVE_ADMIN_*`; with no password set, a random
+  one is generated and printed once.
+
+## Sessions and cookies
+
+- `web` guard, database sessions, `HttpOnly`, `SameSite=Lax`, `Secure` in production.
+- `SESSION_DOMAIN` stays unset (host-only cookies): app and admin sessions are independent.
+
+## Account data
+
+- `users.status` (`active|suspended`), `users.is_platform_admin`, `users.last_login_at`.
+- Neither `status` nor `is_platform_admin` is mass-assignable (tested).
 
 ## Future (do not build yet)
 
-Google login, OTP, passkeys — the design keeps authentication pluggable.
+Two-factor, passkeys (Fortify-supported), Google login, OTP.

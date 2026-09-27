@@ -59,3 +59,54 @@ with the date and commit/PR reference; do not delete it.
   user PATH ahead of XAMPP. See `docs/09-devops/local-development.md`.
 - **Affected:** Local development only
 - **Created:** 2026-09-27
+
+### AW-006 — Shared dev database runs PostgreSQL 11 (end-of-life)
+
+- **Category:** DevOps / Security
+- **Description:** The shared dev database server runs PostgreSQL 11.20 (EOL since Nov 2023). The target is 17.
+- **Impact:** Migrations must avoid PG12+ features (`NULLS NOT DISTINCT`, generated columns, etc.). No security patches.
+- **Status:** Open
+- **Workaround:** Partial unique indexes are used; tests run on local PostgreSQL 17. Plan an upgrade before staging.
+- **Affected:** `database/migrations/*`
+- **Created:** 2026-09-27
+
+### AW-007 — App connects to the shared dev server as the `postgres` superuser; credentials shared in chat
+
+- **Category:** Security
+- **Description:** The dev server hosts ~75 databases; AutoWave uses the superuser account whose password was
+  shared in plain text during setup.
+- **Impact:** A leak of the AutoWave `.env` exposes every database on that server.
+- **Status:** Open — needs the server owner.
+- **Workaround:** Create a dedicated role owning only `autowave` (`CREATE ROLE autowave_app LOGIN PASSWORD ...;
+  ALTER DATABASE autowave OWNER TO autowave_app;`), switch `.env`, and rotate the `postgres` password.
+- **Affected:** `.env` (not committed)
+- **Created:** 2026-09-27
+
+### AW-008 — Remote dev DB latency (~1.3 s per page)
+
+- **Category:** Performance (dev only)
+- **Description:** Each query round-trips to the remote server; sessions are also stored there.
+- **Impact:** Slow local page loads and seeding (~1–2 minutes). Not representative of production.
+- **Status:** Open
+- **Workaround:** Use the local Docker database for day-to-day work when latency matters.
+- **Affected:** Local development
+- **Created:** 2026-09-27
+
+### AW-009 — Feature flags and custom fields tables deferred
+
+- **Category:** Technical Debt
+- **Description:** The master prompt lists `feature_flags` and `custom_fields` as platform tables. No Phase 1
+  feature needs them, so they were not created.
+- **Impact:** None yet.
+- **Status:** Open — add with the first feature that uses them.
+- **Affected:** Database
+- **Created:** 2026-09-27
+
+### AW-010 — Tenant website page title includes the platform name
+
+- **Category:** UI
+- **Description:** The Inertia title template appends "· AutoWave" on every page, including public tenant sites.
+- **Impact:** Cosmetic; tenant sites show e.g. "ABC Salon · AutoWave".
+- **Status:** Open — fix with the website engine (Phase 6).
+- **Affected:** `resources/js/app.jsx`
+- **Created:** 2026-09-27

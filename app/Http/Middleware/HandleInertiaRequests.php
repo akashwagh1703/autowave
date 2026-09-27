@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\RBAC\Support\PermissionResolver;
+use App\Domain\Tenant\Support\TenantContext;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -30,7 +32,8 @@ class HandleInertiaRequests extends Middleware
      * Define the props that are shared by default.
      *
      * Only expose data that is safe for the browser. Never share secrets, tokens,
-     * or another tenant's data here.
+     * or another tenant's data here. Tenant props are closures because the tenant
+     * is resolved by route middleware that runs after this one.
      *
      * @see https://inertiajs.com/shared-data
      *
@@ -44,8 +47,20 @@ class HandleInertiaRequests extends Middleware
                 'name' => config('app.name'),
             ],
             'auth' => [
-                'user' => $request->user()?->only(['id', 'name', 'email']),
+                'user' => fn () => $request->user()?->only(['id', 'name', 'email']),
             ],
+            'tenant' => function () {
+                $tenant = app(TenantContext::class)->get();
+
+                return $tenant?->only(['id', 'name', 'slug']);
+            },
+            'permissions' => function () use ($request) {
+                $user = $request->user();
+
+                return $user && app(TenantContext::class)->check()
+                    ? app(PermissionResolver::class)->permissionsFor($user)
+                    : [];
+            },
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

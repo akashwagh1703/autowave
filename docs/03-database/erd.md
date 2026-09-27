@@ -1,23 +1,20 @@
 # Entity Relationship Diagram
 
-## Current (Phase 0)
+## Platform core (Phase 1 — implemented)
 
-Only Laravel default tables exist (`users`, `sessions`, `password_reset_tokens`, cache, jobs). No relationships
-beyond `sessions.user_id → users.id` (nullable, not a foreign key in the default migration).
-
-## Target platform core (Phase 1 design — not implemented)
+Column details: [schema.md](schema.md).
 
 ```mermaid
 erDiagram
-    TENANTS ||--o{ TENANT_USERS : has
     USERS ||--o{ TENANT_USERS : "member of"
+    TENANTS ||--o{ TENANT_USERS : has
     TENANT_USERS ||--o{ USER_ROLES : has
     ROLES ||--o{ USER_ROLES : assigned
     ROLES ||--o{ ROLE_PERMISSIONS : grants
     PERMISSIONS ||--o{ ROLE_PERMISSIONS : in
-    TENANTS ||--o{ ROLES : "defines (null = platform)"
+    TENANTS ||--o{ ROLES : "defines (null = template)"
     TENANTS ||--o{ DOMAINS : owns
-    BUSINESS_TYPES ||--o{ TENANTS : "preset of"
+    BUSINESS_TYPES ||--o{ TENANTS : "preset of (version pinned)"
     BUSINESS_TYPES ||--o{ BUSINESS_TYPE_ENGINES : recommends
     BUSINESS_TYPES ||--o{ BUSINESS_TYPE_MODULES : recommends
     ENGINES ||--o{ BUSINESS_TYPE_ENGINES : ""
@@ -28,6 +25,11 @@ erDiagram
     ENGINES ||--o{ TENANT_ENGINES : ""
     MODULES ||--o{ TENANT_MODULES : ""
     TENANTS ||--o{ TENANT_SETTINGS : has
+    TENANTS ||--o{ AUDIT_LOGS : "about (nullable)"
+    USERS ||--o{ AUDIT_LOGS : "actor (nullable)"
 ```
 
-Update this diagram when the Phase 1 migrations are written, reflecting the actual columns.
+`USER_ROLES` carries `tenant_id` and composite FKs to both `TENANT_USERS (id, tenant_id)` and
+`ROLES (id, tenant_id)`, so a membership and its roles always share a tenant (ADR-011).
+
+Laravel default tables (`sessions`, `password_reset_tokens`, cache, jobs) are omitted.

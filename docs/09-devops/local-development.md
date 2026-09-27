@@ -57,6 +57,40 @@ Redis ........... ping: PONG
 Cache ........... store: redis
 ```
 
+### Databases: development vs tests
+
+- **Development** (`.env`) may point at the local Docker PostgreSQL or at the shared dev server
+  (database `autowave`; host and credentials are shared privately and live only in your `.env`, never committed).
+- **Tests always use a local `*_testing` database.** `.env.testing` (gitignored, copy the DB block from
+  `.env.example`) points at Docker `autowave_testing`; `tests/TestCase.php` refuses to run against any
+  database whose name does not end in `_testing`, because `RefreshDatabase` wipes it.
+
+### Seeding
+
+```bash
+php artisan migrate --seed   # catalogue, RBAC templates, platform admin, AutoWave Internal (+ demo tenants when APP_ENV=local)
+```
+
+- `AUTOWAVE_ADMIN_PASSWORD` empty → a random admin password is printed once. Save it.
+- Demo data (local only, password `password`): tenants `abc-salon` (Beauty & Salon) and `abc-turf` (Turf);
+  users `owner@abc-salon.test`, `owner@abc-turf.test`, `staff@abc-salon.test`, `manager@autowave.test`
+  (manager in both tenants).
+- Seeders are idempotent; re-running is safe.
+
+### Hosts
+
+`*.localhost` resolves to 127.0.0.1 in Chrome/Edge/Firefox, so no hosts-file changes are needed:
+
+| URL | What |
+|---|---|
+| http://autowave.localhost:8000 | Marketing site |
+| http://app.autowave.localhost:8000 | Business app (login, register, dashboard) |
+| http://admin.autowave.localhost:8000 | Super Admin |
+| http://abc-salon.autowave.localhost:8000 | Demo tenant website |
+
+Tools that do their own DNS (PowerShell `Invoke-WebRequest`, some HTTP clients) may not resolve `*.localhost`;
+send a `Host` header to `127.0.0.1:8000` instead.
+
 ### Port conflicts
 
 If 5432 or 6379 is already used (e.g. another project's PostgreSQL container), change **both** values in `.env`:
@@ -73,7 +107,7 @@ then `docker compose up -d`. (The primary dev machine uses 5433 for this reason.
 | What | Command |
 |---|---|
 | Everything (server, queue, logs, Vite) | `composer dev` |
-| Web server only | `php artisan serve` → http://localhost:8000 |
+| Web server only | `php artisan serve` → http://app.autowave.localhost:8000 |
 | Vite dev server (HMR) | `npm run dev` |
 | Queue worker | `php artisan queue:work redis --queue=default,automation,messaging,ai,notifications,reports,media` |
 | Scheduler | `php artisan schedule:work` |

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Domain\User\Enums\UserStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -41,5 +42,15 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    public function suspended(): static
+    {
+        return $this->state(['status' => UserStatus::Suspended]);
+    }
+
+    public function platformAdmin(): static
+    {
+        return $this->state(['is_platform_admin' => true]);
     }
 }

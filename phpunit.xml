@@ -19,6 +19,11 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <env name="APP_URL" value="http://app.autowave.test"/>
+        <env name="AUTOWAVE_ROOT_DOMAIN" value="autowave.test"/>
+        <env name="AUTOWAVE_MARKETING_HOST" value="autowave.test"/>
+        <env name="AUTOWAVE_APP_HOST" value="app.autowave.test"/>
+        <env name="AUTOWAVE_ADMIN_HOST" value="admin.autowave.test"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>

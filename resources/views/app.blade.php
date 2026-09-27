@@ -5,6 +5,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#4338ca">
 
+        {{-- Cascade layer order must be declared before MUI injects global styles (they go right above the insertion point). --}}
+        <style>@layer theme, base, mui, components, utilities;</style>
+        <meta name="emotion-insertion-point" content="">
+
         <title inertia>{{ config('app.name', 'AutoWave') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">

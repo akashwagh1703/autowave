@@ -8,7 +8,14 @@ Template: `.env.example`. Never commit `.env`. Production secrets live only on t
 | `APP_ENV` | `local` | `production` | Environment name |
 | `APP_KEY` | generated | generated once, secret | Encryption key (`php artisan key:generate`) — rotating invalidates sessions/encrypted data |
 | `APP_DEBUG` | `true` | **`false`** | Detailed errors — must be false in production |
-| `APP_URL` | `http://localhost:8000` | `https://app.autowave.in` | Base URL for generated links |
+| `APP_URL` | `http://app.autowave.localhost:8000` | `https://app.autowave.in` | Base URL for generated links (the business app host) |
+| `AUTOWAVE_ROOT_DOMAIN` | `autowave.localhost` | `autowave.in` | Tenant subdomains are `{slug}.{root}`; `www.{root}` redirects to marketing |
+| `AUTOWAVE_MARKETING_HOST` | `autowave.localhost` | `autowave.in` | Marketing site host |
+| `AUTOWAVE_APP_HOST` | `app.autowave.localhost` | `app.autowave.in` | Business app + Fortify auth host |
+| `AUTOWAVE_ADMIN_HOST` | `admin.autowave.localhost` | `admin.autowave.in` | Super Admin host |
+| `AUTOWAVE_DOMAIN_CACHE_TTL` | `600` | `600` | Seconds a host → tenant lookup is cached |
+| `AUTOWAVE_ADMIN_NAME` / `AUTOWAVE_ADMIN_EMAIL` | `AutoWave Admin` / `admin@autowave.in` | real values | First platform admin (`PlatformAdminSeeder`) |
+| `AUTOWAVE_ADMIN_PASSWORD` | empty (random, printed once) | set once, then remove | First platform admin password; never changes an existing admin |
 | `APP_LOCALE`, `APP_FALLBACK_LOCALE` | `en` | `en` | Locale |
 | `APP_FAKER_LOCALE` | `en_IN` | — | Faker locale for factories |
 | `APP_MAINTENANCE_DRIVER` | `file` | `file` | Maintenance mode storage |

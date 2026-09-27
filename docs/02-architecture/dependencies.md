@@ -10,6 +10,7 @@ Every non-skeleton dependency and why it exists. Update when adding or removing 
 | `laravel/tinker` | REPL (skeleton) | Phase 0 |
 | `inertiajs/inertia-laravel` ^3.4 | Server adapter for Inertia (ADR-003) | Phase 0 |
 | `predis/predis` ^3.6 | Pure-PHP Redis client; phpredis is unavailable on Windows dev (ADR-009) | Phase 0 |
+| `laravel/fortify` ^1.40 | Headless auth backend for the business app (ADR-010). Pulls in `laravel/passkeys` and 2FA libraries, which stay disabled | Phase 1 |
 | dev: `laravel/pint`, `phpunit/phpunit`, `mockery/mockery`, `fakerphp/faker`, `nunomaduro/collision`, `laravel/pail` | Skeleton dev tooling | Phase 0 |
 
 ## JavaScript (npm)

@@ -1,0 +1,95 @@
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Chip from '@mui/material/Chip';
+import AppLayout from '@/layouts/AppLayout';
+import PageHeader from '@/components/PageHeader';
+import StatusChip from '@/components/StatusChip';
+
+function Detail({ label, value }) {
+    return (
+        <div>
+            <dt className="text-xs font-medium tracking-wide text-slate-500 uppercase">{label}</dt>
+            <dd className="mt-1 text-sm text-slate-900">{value || '—'}</dd>
+        </div>
+    );
+}
+
+export default function Settings({ business, branding, domains, modules, canUpdate }) {
+    return (
+        <AppLayout title="Settings">
+            <PageHeader
+                title="Business settings"
+                description={canUpdate ? 'Editing arrives in a later release.' : 'You have view-only access.'}
+            />
+
+            <div className="grid gap-4 lg:grid-cols-2">
+                <Card variant="outlined">
+                    <CardContent>
+                        <h2 className="font-semibold text-slate-900">Business</h2>
+                        <dl className="mt-4 grid grid-cols-2 gap-4">
+                            <Detail label="Name" value={business.name} />
+                            <Detail label="Workspace ID" value={business.slug} />
+                            <Detail
+                                label="Business type"
+                                value={`${business.business_type ?? '—'} (v${business.business_type_version ?? '—'})`}
+                            />
+                            <Detail label="Timezone" value={business.timezone} />
+                            <Detail label="Currency" value={business.currency} />
+                            <Detail label="Language" value={business.locale} />
+                        </dl>
+                    </CardContent>
+                </Card>
+
+                <Card variant="outlined">
+                    <CardContent>
+                        <h2 className="font-semibold text-slate-900">Branding</h2>
+                        <dl className="mt-4 grid grid-cols-2 gap-4">
+                            <Detail label="Display name" value={branding.business_name} />
+                            <div>
+                                <dt className="text-xs font-medium tracking-wide text-slate-500 uppercase">Primary colour</dt>
+                                <dd className="mt-1 flex items-center gap-2 text-sm text-slate-900">
+                                    <span
+                                        className="inline-block h-4 w-4 rounded border border-slate-200"
+                                        style={{ backgroundColor: branding.primary_color }}
+                                    />
+                                    {branding.primary_color}
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <h2 className="mt-6 font-semibold text-slate-900">Domains</h2>
+                        <ul className="mt-3 space-y-2">
+                            {domains.map((domain) => (
+                                <li key={domain.domain} className="flex flex-wrap items-center gap-2 text-sm">
+                                    <span className="font-medium text-slate-900">{domain.domain}</span>
+                                    {domain.is_primary ? <Chip label="Primary" size="small" color="primary" /> : null}
+                                    <StatusChip status={domain.status} />
+                                </li>
+                            ))}
+                        </ul>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <Card variant="outlined" className="mt-4">
+                <CardContent>
+                    <h2 className="font-semibold text-slate-900">Modules</h2>
+                    <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {modules.map((module) => (
+                            <li
+                                key={module.code}
+                                className={`rounded-lg border p-3 ${module.enabled ? 'border-brand-100 bg-brand-50' : 'border-slate-200'}`}
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-sm font-medium text-slate-900">{module.name}</span>
+                                    <StatusChip status={module.enabled ? 'active' : 'disabled'} />
+                                </div>
+                                <p className="mt-1 text-xs text-slate-600">{module.description}</p>
+                            </li>
+                        ))}
+                    </ul>
+                </CardContent>
+            </Card>
+        </AppLayout>
+    );
+}
