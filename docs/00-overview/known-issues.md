@@ -110,3 +110,34 @@ with the date and commit/PR reference; do not delete it.
 - **Status:** Open — fix with the website engine (Phase 6).
 - **Affected:** `resources/js/app.jsx`
 - **Created:** 2026-09-27
+
+### AW-011 — Onboarding does not create default automations or a dashboard layout
+
+- **Category:** Product / Technical Debt
+- **Description:** Master prompt §20 lists default automations and a default dashboard among onboarding
+  outputs. The automation engine does not exist yet, and the dashboard is driven by the business type's
+  `dashboard_widgets` setting rather than a stored layout.
+- **Impact:** New tenants have no automations until Phase 5.
+- **Status:** Open — add an onboarding step to `CreateTenant` (or a `TenantCreated` listener) in Phase 5.
+- **Affected:** `app/Domain/Tenant/Actions/CreateTenant.php`
+- **Created:** 2026-09-27
+
+### AW-012 — No logo upload during onboarding
+
+- **Category:** Product
+- **Description:** Branding captures colour and tagline only; `branding.logo_path` stays null.
+- **Impact:** Sites show the business name as text.
+- **Status:** Open — add with the media/file-security pipeline (`docs/04-security/file-security.md`).
+- **Affected:** Onboarding wizard, website header
+- **Created:** 2026-09-27
+
+### AW-013 — Legacy `website_sections` tenant setting left on pre-Phase-2 tenants
+
+- **Category:** Technical Debt (dev data only)
+- **Description:** Tenants created in Phase 1 (internal + demo tenants on the dev DB) still have a
+  `website_sections` row in `tenant_settings`. Nothing reads it any more; sections now live in
+  `website_sections`.
+- **Impact:** None functionally.
+- **Status:** Open — harmless; delete the rows or `migrate:fresh --seed` the dev DB when convenient.
+- **Affected:** Shared dev DB data
+- **Created:** 2026-09-27

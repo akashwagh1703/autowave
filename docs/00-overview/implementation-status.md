@@ -15,11 +15,12 @@ Legend: ✅ done · 🚧 in progress · ⏳ not started
 | Domains + domain resolution | ✅ | 1 | Default subdomain; custom domain UI later |
 | Audit log | ✅ | 1 | Admin + tenant status actions |
 | Feature flags / custom fields | ⏳ | later | AW-009 |
-| One-click onboarding | ⏳ | 2 | First milestone |
+| One-click onboarding | ✅ | 2 | Wizard, dependency-aware modules, per-user cap; default automations deferred (AW-011) |
+| Website foundation (templates, config, sections, public render) | ✅ | 2 | ADR-012; editor in Phase 6 |
 | Customers / Leads / CRM | ⏳ | 3 | |
 | Services + Booking | ⏳ | 4 | |
 | Automation engine | ⏳ | 5 | |
-| Website engine | ⏳ | 6 | |
+| Website engine (editor, SEO, gallery, booking widget) | ⏳ | 6 | Data model ready (Phase 2) |
 | Commerce | ⏳ | 7 | |
 | Messaging (WhatsApp, Instagram, email) | ⏳ | 8 | |
 | AI | ⏳ | 9 | |

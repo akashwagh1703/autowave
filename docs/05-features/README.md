@@ -7,13 +7,13 @@ Do not document planned features as if they exist.
 
 | Feature | Document | Status |
 |---|---|---|
-| Onboarding | `onboarding.md` | ⏳ not started |
+| Onboarding | [onboarding.md](onboarding.md) | ✅ Phase 2 |
 | Tenant management | [tenant-management.md](tenant-management.md) | ✅ Phase 1 (foundation) |
 | RBAC | [rbac.md](rbac.md) | ✅ Phase 1 (foundation) |
 | Lead management | `lead-management.md` | ⏳ |
 | Booking | `booking.md` | ⏳ |
 | Commerce | `commerce.md` | ⏳ |
-| Website | `website.md` | ⏳ |
+| Website | [website.md](website.md) | 🚧 Phase 2 (provisioning + rendering) |
 | Automation | `automation.md` | ⏳ |
 | Messaging | `messaging.md` | ⏳ |
 | AI | `ai.md` | ⏳ |

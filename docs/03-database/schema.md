@@ -28,7 +28,7 @@ see AW-006). Timestamps in UTC. Update this file with every migration.
 
 | Table | Key columns |
 |---|---|
-| `tenants` | `name`, `slug` (63, unique), `business_type_id` (restrict), `business_type_version`, `status`, `is_internal`, `timezone`, `locale`, `currency` |
+| `tenants` | `name`, `slug` (63, unique), `business_type_id` (restrict), `business_type_version`, `status`, `is_internal`, `timezone`, `locale`, `currency`, `created_by_user_id` (nullable, null on delete, indexed — Phase 2 `2026_09_27_160000`) |
 | `tenant_users` | `tenant_id`, `user_id` (unique together), `status`, `joined_at`; unique (`id`, `tenant_id`) for composite FKs |
 | `tenant_settings` | `tenant_id`, `key` (unique together), `value` jsonb — tenant-scoped model |
 | `tenant_engines` | `tenant_id`, `engine_id` (unique together), `enabled` |
@@ -53,7 +53,20 @@ Partial unique `domains_one_primary_per_tenant (tenant_id) WHERE is_primary`.
 
 `audit_logs`: `tenant_id` (nullable, null on delete), `user_id` (nullable), `action`, `subject_type/subject_id`,
 `metadata` jsonb, `ip_address`, `user_agent`, `created_at`. Append-only (no `updated_at`).
-Current actions: `admin.login`, `admin.login_failed`, `admin.logout`, `tenant.suspended`, `tenant.activated`.
+Current actions: `admin.login`, `admin.login_failed`, `admin.logout`, `tenant.suspended`, `tenant.activated`,
+`tenant.created` (onboarding; metadata `source`, `business_type`, `business_type_version`, `website_template`).
+
+## Website (Phase 2, `2026_09_27_160100`) — ADR-012
+
+| Table | Key columns |
+|---|---|
+| `website_templates` | Platform catalogue: `code` unique, `name`, `description`, `status`, `configuration` jsonb (`theme`: `hero`, `font`, `radius`), `sort_order` |
+| `website_configs` | `tenant_id` unique (cascade), `website_template_id` (restrict, indexed), `theme` jsonb (`primary_color`), `seo` jsonb (`title`, `description`), `status` (`published\|draft`), `published_at` — tenant-scoped model |
+| `website_sections` | `tenant_id` (cascade), `type` (40), `sort_order`, `enabled`, `configuration` jsonb; index (`tenant_id`, `sort_order`) — tenant-scoped model |
+
+Tenant settings written at creation: `branding` (`business_name`, `primary_color`, `tagline`, `logo_path`),
+`business_profile` (`phone`, `email`, `city`, `address`, `description`), plus business-type configuration
+keys except `icon`, `website_templates`, `website_sections`.
 
 ## Deferred platform tables
 

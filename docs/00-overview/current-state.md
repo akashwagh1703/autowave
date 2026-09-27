@@ -1,6 +1,6 @@
 # Current State
 
-_Last updated: 2026-09-27 — end of Phase 1 (Platform Foundation)._
+_Last updated: 2026-09-27 — end of Phase 2 (One-Click Onboarding)._
 
 This document describes what **actually exists** in the repository today. Planned work is in
 [roadmap.md](roadmap.md).
@@ -33,16 +33,28 @@ This document describes what **actually exists** in the repository today. Planne
 - **Tests**: 76 feature tests (auth, isolation, domains, membership, RBAC, modules, tenant creation, admin).
 - **Shared remote dev DB** (PostgreSQL 11.20; host in the team's private `.env`) migrated and seeded.
 
+### Phase 2 — one-click onboarding
+- **Onboarding wizard** (`/onboarding`): business type → details (live slug check) → capabilities
+  (dependency-aware) → branding → website template → review. New users without a business are sent there;
+  existing members can add businesses from **Your businesses** (per-user cap, rate limited).
+- **One transaction** creates tenant, owner role, modules, engines, branding/profile settings, website and
+  default subdomain; audit `tenant.created`; session switches to the new business.
+- **Website foundation** (ADR-012): `website_templates` (Modern, Premium, Minimal, Elegant, Corporate),
+  `website_configs`, `website_sections`; `ProvisionWebsite` (idempotent, backfills older tenants); public site
+  renders header, hero, about, contact and footer with the template theme and brand colour.
+- **Settings** page shows contact details, tagline and website template/sections.
+- **Tests**: 98 feature tests (Phase 2 adds onboarding and website provisioning suites).
+
 ## In progress
 
-- Nothing. Phase 1 is complete and awaiting approval before Phase 2 (one-click onboarding).
+- Nothing. Phase 2 is complete and awaiting approval before Phase 3 (CRM).
 
 ## Not implemented
 
-Onboarding UI, invitations/member management, role editor, editable settings, custom domain UI, feature
-flags, custom fields, CRM/leads, services, booking, commerce, website engine, automation, messaging, AI,
-analytics, billing.
+Invitations/member management, role editor, editable settings, website editor, logo upload, custom domain
+UI, default automations, feature flags, custom fields, CRM/leads, services, booking, commerce, automation,
+messaging, AI, analytics, billing.
 
 ## Known technical debt
 
-See [known-issues.md](known-issues.md) (AW-001 → AW-010).
+See [known-issues.md](known-issues.md) (AW-001 → AW-013).

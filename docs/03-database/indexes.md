@@ -24,6 +24,16 @@ Phase 1:
 | `business_types (code, version)` unique | Versioned presets |
 | `audit_logs (tenant_id, created_at)`, `audit_logs.action`, morph index | Audit timelines and filters |
 
+Phase 2:
+
+| Index | Serves |
+|---|---|
+| `tenants.created_by_user_id` | Per-user business limit in onboarding |
+| `website_templates.code` unique | Template lookup by code |
+| `website_configs.tenant_id` unique | One config per tenant; site render lookup |
+| `website_configs.website_template_id` | FK side (template deletion is restricted) |
+| `website_sections (tenant_id, sort_order)` | Ordered section list for rendering |
+
 ## Guidelines
 
 Review indexes for:

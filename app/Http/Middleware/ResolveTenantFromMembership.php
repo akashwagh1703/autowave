@@ -30,7 +30,10 @@ class ResolveTenantFromMembership
         if (! $membership) {
             $request->session()->forget(self::SESSION_KEY);
 
-            return redirect()->route('workspaces.index');
+            // Brand-new users set up their first business; users whose access was removed see why on /workspaces.
+            return $user && ! $user->memberships()->exists()
+                ? redirect()->route('onboarding.create')
+                : redirect()->route('workspaces.index');
         }
 
         if ((int) $preferred !== $membership->tenant_id) {

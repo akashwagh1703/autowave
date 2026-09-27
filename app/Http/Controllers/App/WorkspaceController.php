@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Domain\Onboarding\Actions\OnboardBusiness;
 use App\Domain\Tenant\Models\Tenant;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\ResolveTenantFromMembership;
@@ -33,6 +34,7 @@ class WorkspaceController extends Controller
 
         return Inertia::render('business/Workspaces', [
             'workspaces' => $workspaces,
+            'canCreate' => ! OnboardBusiness::limitReached($request->user()),
         ]);
     }
 

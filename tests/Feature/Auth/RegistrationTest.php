@@ -68,14 +68,14 @@ class RegistrationTest extends TestCase
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
     }
 
-    public function test_verified_user_without_a_business_is_sent_to_workspaces(): void
+    public function test_verified_user_without_a_business_is_sent_to_onboarding(): void
     {
         $this->actingAs(User::factory()->create())
             ->get($this->appUrl('/dashboard'))
-            ->assertRedirect(route('workspaces.index'));
+            ->assertRedirect(route('onboarding.create'));
 
         $this->get($this->appUrl('/workspaces'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->component('business/Workspaces')->has('workspaces', 0));
+            ->assertInertia(fn (Assert $page) => $page->component('business/Workspaces')->has('workspaces', 0)->where('canCreate', true));
     }
 }

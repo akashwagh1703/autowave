@@ -4,13 +4,15 @@ namespace App\Http\Controllers\App;
 
 use App\Domain\Module\Models\Module;
 use App\Domain\Tenant\Support\TenantContext;
+use App\Domain\Website\Models\WebsiteConfig;
+use App\Domain\Website\Models\WebsiteSection;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Read-only business settings for Phase 1. Editing arrives with the settings feature.
+ * Read-only business settings. Editing arrives with the settings feature.
  */
 class SettingsController extends Controller
 {
@@ -30,6 +32,8 @@ class SettingsController extends Controller
                 'locale' => $tenant->locale,
             ],
             'branding' => $context->setting('branding', []),
+            'profile' => $context->setting('business_profile', []),
+            'website' => $this->website(),
             'domains' => $tenant->domains->map(fn ($domain) => [
                 'domain' => $domain->domain,
                 'type' => $domain->type->value,
@@ -45,5 +49,22 @@ class SettingsController extends Controller
                 ]),
             'canUpdate' => $request->user()->can('settings.update'),
         ]);
+    }
+
+    /** @return ?array<string, mixed> */
+    private function website(): ?array
+    {
+        $config = WebsiteConfig::query()->with('template:id,code,name')->first();
+
+        if (! $config) {
+            return null;
+        }
+
+        return [
+            'template' => $config->template->name,
+            'status' => $config->status,
+            'sections' => WebsiteSection::query()->orderBy('sort_order')->get(['type', 'enabled'])
+                ->map(fn (WebsiteSection $section) => ['type' => $section->type, 'enabled' => $section->enabled]),
+        ];
     }
 }

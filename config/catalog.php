@@ -64,11 +64,30 @@ return [
         'inventory' => ['name' => 'Inventory', 'description' => 'Stock levels and movements.', 'depends_on' => []],
     ],
 
+    /*
+    | Website templates: look and feel only. Content always comes from tenant data,
+    | so switching template never loses information (master prompt §23).
+    | theme.hero: gradient|dark|plain|soft|solid · theme.font: sans|serif · theme.radius: none|sm|md|lg
+    */
+    'website_templates' => [
+        'modern' => ['name' => 'Modern', 'description' => 'Bold gradient hero and rounded cards.', 'theme' => ['hero' => 'gradient', 'font' => 'sans', 'radius' => 'lg']],
+        'premium' => ['name' => 'Premium', 'description' => 'Dark, high-contrast hero with serif headings.', 'theme' => ['hero' => 'dark', 'font' => 'serif', 'radius' => 'md']],
+        'minimal' => ['name' => 'Minimal', 'description' => 'Clean white layout with sharp edges.', 'theme' => ['hero' => 'plain', 'font' => 'sans', 'radius' => 'none']],
+        'elegant' => ['name' => 'Elegant', 'description' => 'Soft tinted hero with serif headings.', 'theme' => ['hero' => 'soft', 'font' => 'serif', 'radius' => 'lg']],
+        'corporate' => ['name' => 'Corporate', 'description' => 'Solid brand-colour hero, straightforward layout.', 'theme' => ['hero' => 'solid', 'font' => 'sans', 'radius' => 'sm']],
+    ],
+
+    /*
+    | Business types. `website_templates` lists recommended templates; the first is the default.
+    | `configuration` keys other than website_* are copied into tenant settings on creation.
+    */
     'business_types' => [
         'beauty_salon' => [
             'name' => 'Beauty & Salon',
             'description' => 'Salons, spas and beauty studios.',
+            'icon' => 'spa',
             'version' => '1.0',
+            'website_templates' => ['elegant', 'modern', 'premium'],
             'engines' => ['service', 'booking', 'commerce'],
             'modules' => ['crm', 'leads', 'customers', 'messaging', 'marketing', 'automation', 'website', 'reviews', 'loyalty'],
             'configuration' => [
@@ -80,7 +99,9 @@ return [
         'turf' => [
             'name' => 'Turf & Sports Venue',
             'description' => 'Turfs, courts and slot-based venues.',
+            'icon' => 'sports',
             'version' => '1.0',
+            'website_templates' => ['modern', 'corporate', 'minimal'],
             'engines' => ['booking'],
             'modules' => ['crm', 'leads', 'messaging', 'payments', 'automation', 'website'],
             'configuration' => [
@@ -92,7 +113,9 @@ return [
         'coaching' => [
             'name' => 'Coaching Centre',
             'description' => 'Coaching classes, tuition and academies.',
+            'icon' => 'school',
             'version' => '1.0',
+            'website_templates' => ['corporate', 'modern', 'minimal'],
             'engines' => ['education'],
             'modules' => ['crm', 'leads', 'messaging', 'automation', 'website'],
             'configuration' => [
@@ -103,7 +126,9 @@ return [
         'cafe' => [
             'name' => 'Cafe & Restaurant',
             'description' => 'Cafes, restaurants and eateries.',
+            'icon' => 'cafe',
             'version' => '1.0',
+            'website_templates' => ['premium', 'elegant', 'modern'],
             'engines' => ['food', 'commerce'],
             'modules' => ['crm', 'messaging', 'offers', 'automation', 'website'],
             'configuration' => [
@@ -114,7 +139,9 @@ return [
         'clinic' => [
             'name' => 'Clinic',
             'description' => 'Clinics and healthcare practices.',
+            'icon' => 'clinic',
             'version' => '1.0',
+            'website_templates' => ['minimal', 'corporate', 'modern'],
             'engines' => ['service', 'booking'],
             'modules' => ['crm', 'leads', 'customers', 'messaging', 'automation', 'website', 'reviews'],
             'configuration' => [
@@ -126,7 +153,9 @@ return [
         'local_store' => [
             'name' => 'Local Store',
             'description' => 'Retail and neighbourhood stores.',
+            'icon' => 'store',
             'version' => '1.0',
+            'website_templates' => ['modern', 'minimal', 'corporate'],
             'engines' => ['commerce'],
             'modules' => ['crm', 'customers', 'messaging', 'marketing', 'automation', 'website', 'inventory'],
             'configuration' => [
@@ -137,8 +166,10 @@ return [
         'autowave_internal' => [
             'name' => 'AutoWave Internal',
             'description' => 'Preset for the AutoWave Internal tenant (marketing, CRM, demos). Not offered in onboarding.',
+            'icon' => 'business',
             'version' => '1.0',
             'public' => false,
+            'website_templates' => ['corporate'],
             'engines' => ['service', 'booking'],
             'modules' => ['crm', 'leads', 'customers', 'messaging', 'marketing', 'automation', 'website', 'forms', 'analytics'],
             'configuration' => [

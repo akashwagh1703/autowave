@@ -39,6 +39,16 @@ return [
     'domain_cache_ttl' => (int) env('AUTOWAVE_DOMAIN_CACHE_TTL', 600),
 
     /*
+    | Self-service onboarding (Phase 2).
+    */
+    'onboarding' => [
+        // Businesses one user may create through onboarding (abuse guard; admins can create more later).
+        'max_businesses_per_user' => (int) env('AUTOWAVE_MAX_BUSINESSES_PER_USER', 3),
+        // Preset brand colours offered in the wizard; any valid hex is accepted.
+        'brand_colors' => ['#4f46e5', '#db2777', '#0d9488', '#ea580c', '#16a34a', '#0284c7', '#7c3aed', '#1f2937'],
+    ],
+
+    /*
     | The tenant AutoWave uses for its own marketing, CRM and sales (dogfooding).
     */
     'internal_tenant' => [

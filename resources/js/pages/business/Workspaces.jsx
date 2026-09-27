@@ -1,4 +1,5 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import AddIcon from '@mui/icons-material/Add';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardActionArea from '@mui/material/CardActionArea';
@@ -8,7 +9,13 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import EmptyState from '@/components/EmptyState';
 import FlashMessages from '@/components/FlashMessages';
 
-export default function Workspaces({ workspaces }) {
+export default function Workspaces({ workspaces, canCreate }) {
+    const createButton = canCreate ? (
+        <Button variant={workspaces.length === 0 ? 'contained' : 'outlined'} startIcon={<AddIcon />} component={Link} href="/onboarding">
+            Create a business
+        </Button>
+    ) : null;
+
     const { app, auth } = usePage().props;
 
     return (
@@ -25,15 +32,21 @@ export default function Workspaces({ workspaces }) {
             </header>
 
             <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">Your businesses</h1>
-                <p className="mt-1 text-sm text-slate-600">Signed in as {auth.user?.email}</p>
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Your businesses</h1>
+                        <p className="mt-1 text-sm text-slate-600">Signed in as {auth.user?.email}</p>
+                    </div>
+                    {workspaces.length > 0 ? createButton : null}
+                </div>
 
                 <div className="mt-6 space-y-3">
                     {workspaces.length === 0 ? (
                         <EmptyState
                             icon={StorefrontIcon}
                             title="No business workspace yet"
-                            description="You're not a member of any business. Ask a business owner to invite you. Self-service business setup is coming soon."
+                            description="You don't have access to a business right now. Set up your own, or ask a business owner to invite you."
+                            action={createButton}
                         />
                     ) : (
                         workspaces.map((workspace) => (

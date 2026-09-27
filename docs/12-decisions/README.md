@@ -18,3 +18,4 @@ Format: **Title, Status, Date, Context, Decision, Alternatives, Consequences.**
 | [ADR-009](ADR-009-local-infrastructure.md) | Local infrastructure: Docker services, predis, PostgreSQL tests | Accepted |
 | [ADR-010](ADR-010-authentication.md) | Fortify for business-app auth; separate Super Admin login | Accepted |
 | [ADR-011](ADR-011-tenant-enforcement.md) | Tenant enforcement: host routing, fail-closed scope, tenant-safe RBAC keys | Accepted |
+| [ADR-012](ADR-012-website-sections-and-templates.md) | Section-based website configuration and templates | Accepted |

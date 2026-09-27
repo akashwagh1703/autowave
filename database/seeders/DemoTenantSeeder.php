@@ -9,6 +9,7 @@ use App\Domain\Tenant\Enums\MembershipStatus;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Tenant\Models\TenantUser;
 use App\Domain\Tenant\Support\TenantContext;
+use App\Domain\Website\Actions\ProvisionWebsite;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use RuntimeException;
@@ -19,14 +20,23 @@ use RuntimeException;
  */
 class DemoTenantSeeder extends Seeder
 {
-    public function run(CreateTenant $createTenant, AssignRole $assignRole, TenantContext $context): void
+    public function run(CreateTenant $createTenant, AssignRole $assignRole, TenantContext $context, ProvisionWebsite $provisionWebsite): void
     {
         if (app()->isProduction()) {
             throw new RuntimeException('DemoTenantSeeder must not run in production.');
         }
 
-        $salon = $this->tenant($createTenant, 'owner@abc-salon.test', 'Asha Owner', 'ABC Salon', 'abc-salon', 'beauty_salon');
-        $turf = $this->tenant($createTenant, 'owner@abc-turf.test', 'Tarun Owner', 'ABC Turf', 'abc-turf', 'turf');
+        $salon = $this->tenant($createTenant, 'owner@abc-salon.test', 'Asha Owner', 'ABC Salon', 'abc-salon', 'beauty_salon', [
+            'branding' => ['primary_color' => '#db2777', 'tagline' => 'Hair, skin and nails in the heart of Pune'],
+            'profile' => ['phone' => '+91 98765 43210', 'city' => 'Pune', 'description' => 'A neighbourhood salon offering haircuts, colour, facials and bridal packages.'],
+        ]);
+        $turf = $this->tenant($createTenant, 'owner@abc-turf.test', 'Tarun Owner', 'ABC Turf', 'abc-turf', 'turf', [
+            'branding' => ['primary_color' => '#16a34a', 'tagline' => 'Floodlit 5-a-side football, open till midnight'],
+            'profile' => ['phone' => '+91 91234 56789', 'city' => 'Pune'],
+        ]);
+
+        $provisionWebsite->ensureFor($salon);
+        $provisionWebsite->ensureFor($turf);
 
         $staff = $this->user('staff@abc-salon.test', 'Sana Staff');
         $this->member($context, $assignRole, $salon, $staff, 'staff');
@@ -38,10 +48,10 @@ class DemoTenantSeeder extends Seeder
         $this->command?->info('Demo tenants: abc-salon, abc-turf. Users: owner@abc-salon.test, owner@abc-turf.test, staff@abc-salon.test, manager@autowave.test (password: password).');
     }
 
-    private function tenant(CreateTenant $createTenant, string $email, string $name, string $business, string $slug, string $type): Tenant
+    private function tenant(CreateTenant $createTenant, string $email, string $name, string $business, string $slug, string $type, array $options): Tenant
     {
         return Tenant::query()->where('slug', $slug)->first()
-            ?? $createTenant->handle($this->user($email, $name), $business, $type, ['slug' => $slug]);
+            ?? $createTenant->handle($this->user($email, $name), $business, $type, ['slug' => $slug, ...$options]);
     }
 
     private function user(string $email, string $name): User

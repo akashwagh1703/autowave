@@ -8,6 +8,15 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- Phase 2 one-click onboarding:
+  - Six-step business setup wizard: business type, details with live web-address check, capabilities,
+    branding, website style and review.
+  - New users without a business go straight to setup; existing users can add another business.
+  - One click creates the workspace, owner role, features, branding, contact details, website and free
+    subdomain.
+  - Five website templates (Modern, Premium, Minimal, Elegant, Corporate); each business type recommends some.
+  - Public website now shows the business's hero, about and contact sections in the chosen style and colour.
+  - Settings page shows contact details, tagline and website template.
 - Phase 1 platform foundation:
   - Host-based routing for marketing, business app, Super Admin and tenant websites.
   - Login, logout, remember me, registration, email verification and password reset (Laravel Fortify).
@@ -33,6 +42,7 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Security
 
+- Business creation is rate limited and capped per user (default 3).
 - Suspended users are blocked at login and signed out mid-session.
 - Database-level guarantee that roles cannot be assigned across businesses.
 - Tests refuse to run against any database not named `*_testing`.

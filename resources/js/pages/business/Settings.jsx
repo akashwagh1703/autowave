@@ -4,6 +4,7 @@ import Chip from '@mui/material/Chip';
 import AppLayout from '@/layouts/AppLayout';
 import PageHeader from '@/components/PageHeader';
 import StatusChip from '@/components/StatusChip';
+import { humanize } from '@/utils/format';
 
 function Detail({ label, value }) {
     return (
@@ -14,7 +15,7 @@ function Detail({ label, value }) {
     );
 }
 
-export default function Settings({ business, branding, domains, modules, canUpdate }) {
+export default function Settings({ business, branding, profile, website, domains, modules, canUpdate }) {
     return (
         <AppLayout title="Settings">
             <PageHeader
@@ -37,6 +38,17 @@ export default function Settings({ business, branding, domains, modules, canUpda
                             <Detail label="Currency" value={business.currency} />
                             <Detail label="Language" value={business.locale} />
                         </dl>
+
+                        <h2 className="mt-6 font-semibold text-slate-900">Contact details</h2>
+                        <dl className="mt-4 grid grid-cols-2 gap-4">
+                            <Detail label="Phone" value={profile.phone} />
+                            <Detail label="Email" value={profile.email} />
+                            <Detail label="City" value={profile.city} />
+                            <Detail label="Address" value={profile.address} />
+                            <div className="col-span-2">
+                                <Detail label="Description" value={profile.description} />
+                            </div>
+                        </dl>
                     </CardContent>
                 </Card>
 
@@ -45,6 +57,7 @@ export default function Settings({ business, branding, domains, modules, canUpda
                         <h2 className="font-semibold text-slate-900">Branding</h2>
                         <dl className="mt-4 grid grid-cols-2 gap-4">
                             <Detail label="Display name" value={branding.business_name} />
+                            <Detail label="Tagline" value={branding.tagline} />
                             <div>
                                 <dt className="text-xs font-medium tracking-wide text-slate-500 uppercase">Primary colour</dt>
                                 <dd className="mt-1 flex items-center gap-2 text-sm text-slate-900">
@@ -56,6 +69,30 @@ export default function Settings({ business, branding, domains, modules, canUpda
                                 </dd>
                             </div>
                         </dl>
+
+                        <h2 className="mt-6 font-semibold text-slate-900">Website</h2>
+                        {website ? (
+                            <dl className="mt-4 grid grid-cols-2 gap-4">
+                                <Detail label="Template" value={website.template} />
+                                <div>
+                                    <dt className="text-xs font-medium tracking-wide text-slate-500 uppercase">Status</dt>
+                                    <dd className="mt-1">
+                                        <StatusChip status={website.status} />
+                                    </dd>
+                                </div>
+                                <div className="col-span-2">
+                                    <Detail
+                                        label="Sections"
+                                        value={website.sections
+                                            .filter((section) => section.enabled)
+                                            .map((section) => humanize(section.type))
+                                            .join(' · ')}
+                                    />
+                                </div>
+                            </dl>
+                        ) : (
+                            <p className="mt-2 text-sm text-slate-600">No website configured.</p>
+                        )}
 
                         <h2 className="mt-6 font-semibold text-slate-900">Domains</h2>
                         <ul className="mt-3 space-y-2">

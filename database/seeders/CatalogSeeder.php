@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Domain\Business\Models\BusinessType;
 use App\Domain\Engine\Models\Engine;
 use App\Domain\Module\Models\Module;
+use App\Domain\Website\Models\WebsiteTemplate;
 use Illuminate\Database\Seeder;
 
 /**
@@ -48,6 +49,17 @@ class CatalogSeeder extends Seeder
         $engines = Engine::query()->pluck('id', 'code');
 
         $sort = 0;
+        foreach (config('catalog.website_templates') as $code => $template) {
+            WebsiteTemplate::query()->updateOrCreate(['code' => $code], [
+                'name' => $template['name'],
+                'description' => $template['description'] ?? null,
+                'status' => $template['status'] ?? 'active',
+                'configuration' => ['theme' => $template['theme'] ?? []],
+                'sort_order' => $sort += 10,
+            ]);
+        }
+
+        $sort = 0;
         foreach (config('catalog.business_types') as $code => $type) {
             $businessType = BusinessType::query()->updateOrCreate(
                 ['code' => $code, 'version' => $type['version']],
@@ -56,7 +68,11 @@ class CatalogSeeder extends Seeder
                     'description' => $type['description'] ?? null,
                     'status' => $type['status'] ?? 'active',
                     'is_public' => $type['public'] ?? true,
-                    'configuration' => $type['configuration'] ?? [],
+                    'configuration' => [
+                        ...($type['configuration'] ?? []),
+                        'icon' => $type['icon'] ?? 'business',
+                        'website_templates' => $type['website_templates'] ?? [],
+                    ],
                     'sort_order' => $sort += 10,
                 ],
             );

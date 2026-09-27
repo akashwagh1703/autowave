@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Domain\Tenant\Actions\CreateTenant;
 use App\Domain\Tenant\Models\Tenant;
+use App\Domain\Website\Actions\ProvisionWebsite;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -13,11 +14,15 @@ use Illuminate\Support\Str;
  */
 class InternalTenantSeeder extends Seeder
 {
-    public function run(CreateTenant $createTenant): void
+    public function run(CreateTenant $createTenant, ProvisionWebsite $provisionWebsite): void
     {
         $config = config('autowave.internal_tenant');
 
-        if (Tenant::query()->where('slug', $config['slug'])->exists()) {
+        $existing = Tenant::query()->where('slug', $config['slug'])->first();
+
+        if ($existing) {
+            $provisionWebsite->ensureFor($existing);
+
             return;
         }
 
@@ -26,6 +31,7 @@ class InternalTenantSeeder extends Seeder
         $createTenant->handle($owner, $config['name'], $config['business_type'], [
             'slug' => $config['slug'],
             'is_internal' => true,
+            'branding' => ['tagline' => 'Automation for local businesses'],
         ]);
     }
 }

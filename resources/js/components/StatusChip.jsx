@@ -2,6 +2,7 @@ import Chip from '@mui/material/Chip';
 
 const colors = {
     active: 'success',
+    published: 'success',
     pending: 'warning',
     invited: 'info',
     draft: 'default',

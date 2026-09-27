@@ -7,6 +7,8 @@ use App\Domain\Domain\Models\Domain;
 use App\Domain\Engine\Models\TenantEngine;
 use App\Domain\Module\Models\TenantModule;
 use App\Domain\Tenant\Enums\TenantStatus;
+use App\Domain\Website\Models\WebsiteConfig;
+use App\Domain\Website\Models\WebsiteSection;
 use App\Models\User;
 use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -21,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 /**
  * A business workspace. Not tenant-scoped itself; it is the tenant.
  */
-#[Fillable(['name', 'slug', 'business_type_id', 'business_type_version', 'status', 'is_internal', 'timezone', 'locale', 'currency'])]
+#[Fillable(['name', 'slug', 'business_type_id', 'business_type_version', 'status', 'is_internal', 'timezone', 'locale', 'currency', 'created_by_user_id'])]
 #[UseFactory(TenantFactory::class)]
 class Tenant extends Model
 {
@@ -86,5 +88,21 @@ class Tenant extends Model
     public function tenantEngines(): HasMany
     {
         return $this->hasMany(TenantEngine::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    /** Tenant-scoped models: load inside TenantContext::run() for this tenant. */
+    public function websiteConfig(): HasOne
+    {
+        return $this->hasOne(WebsiteConfig::class);
+    }
+
+    public function websiteSections(): HasMany
+    {
+        return $this->hasMany(WebsiteSection::class)->orderBy('sort_order');
     }
 }

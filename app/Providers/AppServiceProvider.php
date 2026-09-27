@@ -6,7 +6,10 @@ use App\Domain\RBAC\Support\PermissionCatalog;
 use App\Domain\RBAC\Support\PermissionResolver;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Models\User;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,5 +32,8 @@ class AppServiceProvider extends ServiceProvider
         foreach (PermissionCatalog::keys() as $permission) {
             Gate::define($permission, fn (User $user) => $this->app->make(PermissionResolver::class)->allows($user, $permission));
         }
+
+        // Business creation attempts (including validation failures) per user.
+        RateLimiter::for('onboarding', fn (Request $request) => Limit::perHour(20)->by('onboarding|'.($request->user()?->getKey() ?? $request->ip())));
     }
 }
