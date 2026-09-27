@@ -1,0 +1,30 @@
+---
+description: Documentation sync rules — documentation drift is a defect
+alwaysApply: true
+---
+
+# Documentation
+
+The repository is the source of truth. Anything only in a chat is undocumented.
+
+When you change... update:
+
+| Change | Update |
+|---|---|
+| Architecture | `docs/02-architecture/*` + ADR in `docs/12-decisions/` |
+| Database schema | `docs/03-database/schema.md` (+ `erd.md`, `indexes.md`) |
+| API | `docs/07-api/*` |
+| Permissions | `docs/04-security/authorization.md` |
+| Feature / workflow | `docs/05-features/<feature>.md` (use the template in `docs/05-features/README.md`) |
+| Deployment / ops | `docs/09-devops/*`, `docs/11-runbooks/*` |
+| Env variables | `.env.example` + `docs/09-devops/environment.md` |
+| New dependency | `docs/02-architecture/dependencies.md` |
+| User-visible behaviour | `CHANGELOG.md` (Added/Changed/Fixed/Security/Deprecated/Removed) |
+
+After any significant feature update `docs/00-overview/current-state.md`,
+`implementation-status.md` and `known-issues.md`.
+
+- Never describe planned features as implemented.
+- Use glossary terms (`docs/00-overview/glossary.md`): Tenant, Business Type, Engine, Module, Workspace...
+- ADR format: Title, Status, Date, Context, Decision, Alternatives, Consequences.
+- Finish tasks with a report: what changed, files, DB changes, tests run, docs updated, risks, follow-ups.

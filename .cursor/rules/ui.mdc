@@ -1,0 +1,20 @@
+---
+description: AutoWave design system and UI rules (Tailwind + MUI, mobile-first)
+globs: resources/js/**/*.jsx,resources/css/**/*.css
+alwaysApply: false
+---
+
+# UI / Design system
+
+- Tailwind for layout, spacing, responsive structure. MUI for complex controls: DataGrid, Dialog, Drawer,
+  Autocomplete, DatePicker, advanced form inputs.
+- Brand tokens live in `resources/js/theme/tokens.js` and are mirrored in `resources/css/app.css` `@theme`.
+  Change both together. Use `brand-*` / `accent-*` Tailwind colors and MUI `primary`/`secondary` — no ad-hoc hex values.
+- CSS layers: `theme, base, mui, components, utilities` — Tailwind utilities override MUI without `!important`.
+- Do not add MUI `CssBaseline` (Tailwind preflight is the reset). Custom CSS only when unavoidable.
+- Mobile-first: every business screen must work on phone, tablet, laptop, desktop. Test at 360px width.
+- Audience is non-technical local business owners: plain language, few steps, clear primary action.
+  Dashboards answer: what happened, what needs attention, what to do, what was automated.
+- Every page: loading, empty, error, permission-denied, validation states. Forms show loading + success feedback.
+- Tables: search, filters, pagination, sorting (and bulk actions where useful).
+- Reuse shared components in `resources/js/components/` before creating new ones.

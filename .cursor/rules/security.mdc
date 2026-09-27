@@ -1,0 +1,27 @@
+---
+description: Security and tenant-isolation rules for AutoWave (release-blocking)
+alwaysApply: true
+---
+
+# Security
+
+- Tenant isolation is release-blocking. Derive tenant from domain/auth membership; never from request input.
+
+```php
+// ❌ BAD
+Lead::where('tenant_id', $request->input('tenant_id'))->get();
+
+// ✅ GOOD — tenant scope applied by TenantContext/global scope
+Lead::query()->latest()->paginate();
+```
+
+- Authorize every action server-side with Policies/Gates using granular permissions (`leads.assign`).
+- Validate every input with Form Requests. Client-side validation is only UX.
+- Route model binding for tenant-owned models must resolve within the current tenant (404 otherwise).
+- Rate limit auth, password reset, public forms and webhooks.
+- Verify webhook signatures before parsing payloads; reject replays where the provider supports it.
+- Uploads: validate size, MIME, extension; store under `tenant/{tenant_id}/...`; serve private files via signed/authorized routes.
+- Never send secrets, API keys, tokens or password hashes to the browser (Inertia props, JS bundles, logs).
+- Secrets live only in `.env` / server environment. Never commit `.env`.
+- Log security events and sensitive admin actions to the audit log with tenant_id, user_id, IP.
+- Super Admin routes live only on the admin domain and require platform-admin authorization.

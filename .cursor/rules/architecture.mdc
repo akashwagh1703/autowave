@@ -1,0 +1,30 @@
+---
+description: AutoWave core architecture rules — modular monolith, configure-don't-hard-code, tenancy
+alwaysApply: true
+---
+
+# Architecture
+
+Read `AGENTS.md` and `docs/00-overview/current-state.md` before significant work.
+
+- Modular monolith: one Laravel app, one Inertia/React frontend, one PostgreSQL, one Redis. No microservices.
+- Domain logic lives in `app/Domain/<Domain>/` (Actions, Models, Events, Policies, Services). Controllers stay thin.
+- **Configure, don't hard-code.** One reusable module/engine, configured per business type and tenant.
+
+```php
+// ❌ BAD
+class SalonLeadService {}
+if ($tenant->business_type === 'salon') { /* salon-only branch */ }
+
+// ✅ GOOD
+class LeadService {}                               // one Lead module
+$tenant->modules()->enabled('booking');            // behaviour driven by config
+```
+
+- Customization order: Configuration → Custom Field → Workflow → Reusable Module → Engine Enhancement → Tenant Extension.
+- Every tenant-owned query is scoped by the server-side `TenantContext`. Never trust a client `tenant_id`.
+- Vendors (AI, messaging, payments) are behind interfaces; business code never calls vendor SDKs directly.
+- AI never decides price, stock, availability, booking/payment/order status.
+- Architectural change ⇒ write/update an ADR in `docs/12-decisions/` first.
+- No unrelated refactors, renames or dependency upgrades inside a feature task.
+- Do not implement roadmap items that were not requested. Prefer simple, reusable, testable.

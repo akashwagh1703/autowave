@@ -1,0 +1,32 @@
+---
+description: PostgreSQL schema and migration rules for AutoWave
+globs: database/**/*.php,app/Domain/**/Models/*.php,app/Models/*.php
+alwaysApply: false
+---
+
+# Database
+
+- Every schema change is a new migration. Never edit an already-deployed migration.
+- Tenant-owned tables: `tenant_id` `foreignId()->constrained()->cascadeOnDelete()` (or restrict), non-null,
+  and composite indexes that **start with `tenant_id`**.
+
+```php
+Schema::create('leads', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
+    $table->string('status', 32);
+    $table->timestamp('next_followup_at')->nullable();
+    $table->timestamps();
+
+    $table->index(['tenant_id', 'status']);
+    $table->index(['tenant_id', 'next_followup_at']);
+});
+```
+
+- Uniqueness is per tenant: `$table->unique(['tenant_id', 'slug'])`, not global `unique('slug')`.
+- Use foreign keys everywhere; choose `cascadeOnDelete`/`restrictOnDelete` deliberately.
+- Timestamps are UTC. Store money as integer minor units (paise) or `decimal(12,2)` — never float.
+- Prevent double booking at the DB level (exclusion/unique constraints + `lockForUpdate` in a transaction).
+- Use `jsonb` only for genuinely flexible config (module configuration, section settings), not for queryable core fields.
+- After schema changes update `docs/03-database/schema.md` (and `erd.md`, `indexes.md` when relevant).
+- Seeders must be idempotent (`updateOrCreate`).

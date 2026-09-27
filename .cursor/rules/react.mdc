@@ -1,0 +1,30 @@
+---
+description: React + Inertia frontend conventions for AutoWave (JavaScript/JSX only)
+globs: resources/js/**/*.js,resources/js/**/*.jsx
+alwaysApply: false
+---
+
+# React / Inertia
+
+- JavaScript + JSX only. **No TypeScript** unless an ADR approves it.
+- Import from the `@/` alias (`@/components/...`), which maps to `resources/js/`.
+- Structure:
+  - `pages/` — Inertia pages (thin: compose layout + module components)
+  - `layouts/` — page shells (PublicLayout, later BusinessLayout, AdminLayout)
+  - `modules/<module>/` — feature components/hooks for one module (leads, bookings, ...)
+  - `components/` — shared, business-agnostic UI
+  - `theme/` — design tokens + MUI theme
+- Never create per-business-type pages (`SalonDashboard.jsx`). Render from server-provided config/widgets.
+- The server is authoritative for permissions, prices, availability, stock, status and tenant access.
+  React may hide UI for UX, but never implements the rule.
+- Keep components small; split files before ~200 lines. No 1000-line JSX.
+- Forms: Inertia `useForm` (+ React Hook Form/Zod when the form is complex). Show server validation errors.
+- Every page handles loading, empty, error, permission-denied and validation states.
+
+```jsx
+// ❌ BAD
+{user.role === 'owner' && <DeleteButton />}      // rule duplicated client-side
+
+// ✅ GOOD
+{can['leads.delete'] && <DeleteButton />}         // flag computed by the server policy
+```

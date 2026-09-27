@@ -1,0 +1,19 @@
+---
+description: Automation engine, queue and scheduler rules for AutoWave
+globs: app/Domain/Automation/**,app/Jobs/**,app/Listeners/**,routes/console.php
+alwaysApply: false
+---
+
+# Automation / Queues
+
+- Model: **Trigger → Condition → Wait → Action**. Triggers are domain events (`lead.created`, `appointment.completed`).
+- Flow: Event → AutomationResolver → `automation_runs` row → Job (Redis) → worker → Action → `automation_logs`.
+- Every run records: status, attempts, started_at, completed_at, error, payload, tenant_id.
+- Actions are idempotent: guard with a unique key per (automation, subject, step) so retries never double-send.
+- Delays: store `run_at` in `automation_jobs`; one scheduler entry (`everyMinute`) dispatches due jobs.
+  Never one cron per tenant.
+- Queues: `automation` for runs, `messaging` for sends, `ai` for AI calls, `notifications`, `reports`, `media`, `default`.
+- Jobs set `$tries`, `backoff()`, `failed()` logging; failures stay visible and can be retried manually.
+- Actions call `MessagingService` / `AIService` abstractions — never provider APIs directly.
+- Automations run in the tenant context of the triggering event; always set/verify tenant before executing.
+- AI is optional: automations must work when AI is unavailable.

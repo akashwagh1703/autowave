@@ -1,0 +1,24 @@
+---
+description: Git branching and commit conventions for AutoWave
+alwaysApply: true
+---
+
+# Git
+
+- Branches: `main` (production), `develop` (integration), `feature/AW-XXX-name`, `fix/AW-XXX-name`, `hotfix/*`.
+- Conventional commits with scope and issue ID:
+
+```text
+feat(lead): add automatic lead assignment [AW-031]
+fix(booking): prevent duplicate slot booking [AW-142]
+docs(tenant): update tenant resolution architecture
+test(rbac): add cross-tenant authorization tests
+security(auth): rate limit password reset
+```
+
+- Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `security`.
+- One logical change per commit. Review `git diff` before committing.
+- Before committing: `php artisan test`, `vendor/bin/pint --test`, `npm run build` all pass.
+- Never commit `.env`, credentials, `vendor/`, `node_modules/`, `public/build/`.
+- Never force-push shared branches (`main`, `develop`). Never rewrite published history.
+- Do not push or open PRs unless the user asks.

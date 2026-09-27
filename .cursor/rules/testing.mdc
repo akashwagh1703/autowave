@@ -1,0 +1,32 @@
+---
+description: Testing rules for AutoWave (PHPUnit on PostgreSQL)
+globs: tests/**/*.php,phpunit.xml
+alwaysApply: false
+---
+
+# Testing
+
+- Tests run on PostgreSQL database `autowave_testing` (see `phpunit.xml`). Never switch to SQLite.
+- Run `php artisan test` before every commit. CI runs Pint + tests + frontend build.
+- Use `RefreshDatabase` for tests that touch the database. Use factories, not hand-written inserts.
+- `tests/TestCase.php` disables Vite so backend tests never need `npm run build`.
+- Organise by domain: `tests/Feature/<Domain>/...`, `tests/Unit/<Domain>/...`.
+- Every tenant-owned feature needs isolation tests:
+
+```php
+public function test_tenant_a_cannot_view_tenant_b_lead(): void
+{
+    [$tenantA, $userA] = $this->tenantWithOwner();
+    $leadB = Lead::factory()->for(Tenant::factory())->create();
+
+    $this->actingAs($userA)->onTenant($tenantA)
+        ->get(route('leads.show', $leadB))
+        ->assertNotFound();
+}
+```
+
+- Every permission-guarded action needs allowed + forbidden tests.
+- Booking: create, cancel, reschedule, unavailable slot, duplicate, concurrent attempt, timezone.
+- Automation: trigger, condition pass/fail, delay, execution, retry, failure log, duplicate prevention.
+- Fake external providers (`Http::fake()`, `Queue::fake()`, `Notification::fake()`); never call real APIs.
+- Never delete or weaken a test to make the suite pass.

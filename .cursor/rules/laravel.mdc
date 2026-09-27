@@ -1,0 +1,32 @@
+---
+description: Laravel backend conventions for AutoWave
+globs: app/**/*.php,routes/**/*.php,config/**/*.php,bootstrap/**/*.php
+alwaysApply: false
+---
+
+# Laravel
+
+- Request flow: Route → Form Request (validation) → Policy (authorization) → Domain Action/Service → Response.
+- Controllers: no business logic, no raw queries, no vendor calls. Target < 15 lines per action.
+- Put domain code in `app/Domain/<Domain>/{Actions,Models,Events,Policies,Services,Data}`.
+- Multi-step writes go in `DB::transaction()`. Use `lockForUpdate()` for contended rows (slots, stock).
+- Side effects (messages, AI, webhooks, reports) run in queued Jobs on the right queue:
+  `default, automation, messaging, ai, notifications, reports, media`.
+- Jobs must be idempotent where re-running is possible, set `$tries`/`backoff`, and log failures with tenant/job context.
+- Emit domain events (`LeadCreated`, `AppointmentConfirmed`) instead of calling other domains directly.
+- Use config/enum constants, not magic strings, for statuses, permissions and module codes.
+- Eager-load relations; paginate lists; never return unbounded collections.
+- Inertia shared props (`HandleInertiaRequests`) must never include secrets or other tenants' data.
+
+```php
+// ✅ GOOD
+public function store(StoreLeadRequest $request, CreateLead $createLead)
+{
+    $this->authorize('create', Lead::class);
+    $createLead->handle($request->validated());
+
+    return back()->with('success', 'Lead created.');
+}
+```
+
+- Style: Laravel Pint (`vendor/bin/pint`). Must pass `vendor/bin/pint --test`.
