@@ -98,7 +98,10 @@ class BookAppointment
 
                 $appointment->setRelations(['customer' => $customer, 'resource' => $locked, 'service' => $service]);
 
-                $this->recordActivity->handle('appointment_booked', appointment: $appointment, actor: $actor, metadata: self::summary($appointment));
+                $this->recordActivity->handle('appointment_booked', appointment: $appointment, actor: $actor, metadata: [
+                    ...self::summary($appointment),
+                    ...($appointment->source !== 'manual' ? ['source' => $appointment->source] : []),
+                ]);
 
                 AppointmentCreated::dispatch($appointment);
 
@@ -187,7 +190,7 @@ class BookAppointment
                 'name' => $inline['name'],
                 'phone' => $inline['phone'] ?? null,
                 'email' => $inline['email'] ?? null,
-            ], $actor, ['via' => 'booking']);
+            ], $actor, ['via' => ($data['source'] ?? 'manual') === 'website' ? 'online_booking' : 'booking']);
     }
 
     private function initialStatus(?string $requested): AppointmentStatus

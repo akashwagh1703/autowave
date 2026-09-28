@@ -11,7 +11,7 @@ export default function BrandingStep({ form, colors }) {
         <div>
             <StepHeading
                 title="Make it yours"
-                description="Pick a brand colour and a one-line tagline. Logo upload arrives with website settings."
+                description="Pick a brand colour and a one-line tagline. You can add your logo later under Website → Design."
             />
 
             <p className="mb-2 text-sm font-medium text-slate-700">Brand colour</p>

@@ -111,6 +111,7 @@ class AutomationCatalog
             'lead_sources' => LeadSource::query()->active()->orderBy('sort_order')->get()
                 ->map(fn (LeadSource $source) => ['value' => $source->code, 'label' => $source->name])->all(),
             'appointment_statuses' => array_map(fn (AppointmentStatus $status) => ['value' => $status->value, 'label' => $status->label()], AppointmentStatus::cases()),
+            'appointment_sources' => array_map(fn (string $value, string $label) => ['value' => $value, 'label' => $label], array_keys(config('booking.sources')), config('booking.sources')),
             'services' => $this->context->hasEngine('service')
                 ? Service::query()->orderBy('name')->get()->map(fn (Service $service) => ['value' => (string) $service->id, 'label' => $service->name])->all()
                 : [],

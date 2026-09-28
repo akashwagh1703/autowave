@@ -3,7 +3,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { fontFamily, heroStyle, radius } from '@/utils/websiteTheme';
 import StepHeading from './StepHeading';
 
-function TemplatePreview({ template, color, name }) {
+export function TemplatePreview({ template, color, name }) {
     const hero = heroStyle(template.theme, color);
     const button = hero.accent ?? '#ffffff';
 

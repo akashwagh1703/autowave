@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsureEngineEnabled;
 use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsurePlatformAdmin;
+use App\Http\Middleware\EnsureWebsiteIsLive;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ResolveTenantFromDomain;
 use App\Http\Middleware\ResolveTenantFromMembership;
@@ -52,6 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'tenant.site' => ResolveTenantFromDomain::class,
+            'site.live' => EnsureWebsiteIsLive::class,
             'tenant.member' => ResolveTenantFromMembership::class,
             'module' => EnsureModuleEnabled::class,
             'engine' => EnsureEngineEnabled::class,
@@ -83,6 +85,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
             if ($status === 419) {
                 return back()->with('error', __('The page expired. Please try again.'));
+            }
+
+            // Rate-limited form submissions: show the message on the form instead of an error page.
+            if ($status === 429 && $request->header('X-Inertia') && ! $request->isMethod('GET')) {
+                $message = __('Too many attempts. Please wait a few minutes and try again.');
+
+                return back()->withErrors(['throttle' => $message])->with('error', $message);
             }
 
             $rendered = [403, 404];

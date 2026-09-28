@@ -15,6 +15,7 @@ use App\Domain\Lead\Events\LeadConverted;
 use App\Domain\Lead\Events\LeadCreated;
 use App\Domain\Lead\Events\LeadStatusChanged;
 use App\Domain\Lead\Events\LeadUpdated;
+use App\Domain\Website\Events\WebsiteEnquiryReceived;
 use Illuminate\Database\Eloquent\Model;
 use Throwable;
 
@@ -42,6 +43,7 @@ class StartAutomations
         AppointmentCompleted::class,
         AppointmentCancelled::class,
         AppointmentNoShow::class,
+        WebsiteEnquiryReceived::class,
     ];
 
     public function __construct(private readonly AutomationResolver $resolver) {}
@@ -84,6 +86,7 @@ class StartAutomations
             $event instanceof AppointmentCompleted => ['appointment.completed', $event->appointment, "appointment:{$event->appointment->id}", []],
             $event instanceof AppointmentCancelled => ['appointment.cancelled', $event->appointment, "appointment:{$event->appointment->id}", []],
             $event instanceof AppointmentNoShow => ['appointment.no_show', $event->appointment, "appointment:{$event->appointment->id}", []],
+            $event instanceof WebsiteEnquiryReceived => ['website.enquiry', $event->lead, null, ['new_lead' => $event->newLead]],
             default => null,
         };
     }

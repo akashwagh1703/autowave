@@ -39,6 +39,29 @@ class BookingSettings
         return array_values($this->stored()['default_hours'] ?? config('booking.default_hours'));
     }
 
+    /**
+     * Online booking from the public website: the `online` part of the setting over
+     * config('booking.online').
+     *
+     * @return array{enabled: bool, auto_confirm: bool, min_notice_minutes: int, max_days_ahead: int, allow_any_resource: bool}
+     */
+    public function online(): array
+    {
+        $stored = is_array($this->stored()['online'] ?? null) ? $this->stored()['online'] : [];
+        $defaults = config('booking.online');
+
+        $notice = (int) ($stored['min_notice_minutes'] ?? $defaults['min_notice_minutes']);
+        $days = (int) ($stored['max_days_ahead'] ?? $defaults['max_days_ahead']);
+
+        return [
+            'enabled' => (bool) ($stored['enabled'] ?? $defaults['enabled']),
+            'auto_confirm' => (bool) ($stored['auto_confirm'] ?? $defaults['auto_confirm']),
+            'min_notice_minutes' => in_array($notice, config('booking.online_notice_options'), true) ? $notice : (int) $defaults['min_notice_minutes'],
+            'max_days_ahead' => in_array($days, config('booking.online_days_ahead_options'), true) ? $days : (int) $defaults['max_days_ahead'],
+            'allow_any_resource' => (bool) ($stored['allow_any_resource'] ?? $defaults['allow_any_resource']),
+        ];
+    }
+
     public function resourceLabel(): string
     {
         $label = $this->context->setting(self::LABEL_KEY);
@@ -55,7 +78,7 @@ class BookingSettings
     }
 
     /**
-     * @param  array{slot_interval?: int, auto_confirm?: bool, default_hours?: list<array{weekday: int, starts_at: string, ends_at: string}>}  $values
+     * @param  array{slot_interval?: int, auto_confirm?: bool, default_hours?: list<array{weekday: int, starts_at: string, ends_at: string}>, online?: array<string, mixed>}  $values
      */
     public function update(array $values, ?string $resourceLabel = null): void
     {

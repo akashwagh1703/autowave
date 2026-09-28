@@ -55,9 +55,21 @@ class AppServiceProvider extends ServiceProvider
             'automation' => '[0-9]+',
             'run' => '[0-9]+',
             'message' => '[0-9]+',
+            'section' => '[0-9]+',
+            'media' => '[0-9]+',
         ]);
 
         // Business creation attempts (including validation failures) per user.
         RateLimiter::for('onboarding', fn (Request $request) => Limit::perHour(20)->by('onboarding|'.($request->user()?->getKey() ?? $request->ip())));
+
+        // Public website endpoints, per visitor IP and website host. Throttling runs before the tenant
+        // is resolved (middleware priority), so the host stands in for the business.
+        $site = fn (string $name, Request $request) => $name.'|'.$request->getHost().'|'.$request->ip();
+        RateLimiter::for('website-enquiry', fn (Request $request) => [
+            Limit::perMinute((int) config('website.enquiry.per_minute'))->by($site('enquiry-minute', $request)),
+            Limit::perHour((int) config('website.enquiry.per_hour'))->by($site('enquiry-hour', $request)),
+        ]);
+        RateLimiter::for('website-booking', fn (Request $request) => Limit::perHour((int) config('booking.online_per_hour'))->by($site('booking', $request)));
+        RateLimiter::for('website-slots', fn (Request $request) => Limit::perMinute(60)->by($site('slots', $request)));
     }
 }

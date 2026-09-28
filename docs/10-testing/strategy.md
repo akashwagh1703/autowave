@@ -31,6 +31,7 @@ tests/
 | Queue | Jobs dispatched, idempotent, retry/failure | Every job |
 | Automation | Trigger, condition pass/fail, delay, execution, retry, failure log, duplicate prevention | Automation engine (`tests/Feature/Automation`; helpers in `tests/Concerns/CreatesAutomations.php`) |
 | Booking | Create, cancel, reschedule, unavailable slot, duplicate, concurrent attempt, timezone, resource availability | Booking engine (`tests/Feature/Booking`; concurrency is simulated, AW-021) |
+| Public website | Render, publish/preview, SEO meta, forms (validation, honeypot, throttle), online booking, cross-tenant hosts | Website engine (`tests/Feature/Website`; requests go to `$this->siteUrl('abc-salon.autowave.test', '/path')`) |
 | E2E | Full customer workflows | Milestones (tooling TBD) |
 
 ## Testing queued work
@@ -48,6 +49,22 @@ tests/
   log rows, not on exceptions.
 - Default automations fire in every test tenant. Tests that count activities or runs call
   `pauseDefaultAutomations($tenant)` first.
+
+## Several requests in one test
+
+Laravel keeps controller instances between requests in the same application, which is what happens in a
+test (and under Octane). A service injected into a controller's constructor keeps the state of the first
+request: tenant, memoised settings. Inject request-dependent services (`OnlineBooking`, `BookingSettings`,
+`TenantContext`) into the controller **method** instead. A test that changes a setting and then makes
+another request catches this.
+
+Other helpers:
+
+- `disableModule($tenant, $code)` (`CreatesTenants`) turns a module off for gate tests.
+- Rate-limit tests set a low limit with `config([...])` before the first request. Honeypot requests count
+  towards the limit too.
+- Postgres `jsonb` does not keep object key order; compare stored arrays with `assertEquals`, not
+  `assertSame`.
 
 ## Current coverage (Phase 0)
 

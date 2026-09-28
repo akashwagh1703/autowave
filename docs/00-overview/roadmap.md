@@ -15,15 +15,15 @@ What exists is described in [current-state.md](current-state.md).
 - **Phase 5 — Automation** → _Milestone 3 reached: lead created → follow-up job → Redis → worker → message
   action → execution log._ Triggers from the CRM and booking events, conditions, waits, 7 actions, run
   history, retry and cancel, default automations, and the outbound messaging pipeline (WhatsApp simulated).
+- **Phase 6 — Website** → _Milestone 4 reached except products: `abc-salon.autowave.in` shows business
+  info, services, booking, an enquiry form and a WhatsApp button._ Section editor, design, business details,
+  images, publish and preview, SEO meta. The Products section is built and stays hidden until Phase 7
+  creates products (AW-034).
 
 ## Next
 
-**Phase 6 — Website** → _Milestone 4: `abc-salon.autowave.in` shows business info, services, products, booking, enquiry form, WhatsApp CTA._
-Starts only after Phase 5 is approved.
-
-## Later
-
-- **Phase 7 — Commerce**: products, categories, inventory, cart, orders.
+**Phase 7 — Commerce**: products, categories, inventory, cart, orders. Completes Milestone 4 by filling the
+website's Products section. Starts only after Phase 6 is approved.
 
 ## Future
 

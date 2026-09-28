@@ -107,7 +107,8 @@ with the date and commit/PR reference; do not delete it.
 - **Category:** UI
 - **Description:** The Inertia title template appends "· AutoWave" on every page, including public tenant sites.
 - **Impact:** Cosmetic; tenant sites show e.g. "ABC Salon · AutoWave".
-- **Status:** Open — fix with the website engine (Phase 6).
+- **Status:** Resolved 2026-09-30 (Phase 6): `app.blade.php` marks public site pages with
+  `data-site="tenant"`, and the title callback in `app.jsx` leaves their titles unchanged.
 - **Affected:** `resources/js/app.jsx`
 - **Created:** 2026-09-27
 
@@ -128,7 +129,9 @@ with the date and commit/PR reference; do not delete it.
 - **Category:** Product
 - **Description:** Branding captures colour and tagline only; `branding.logo_path` stays null.
 - **Impact:** Sites show the business name as text.
-- **Status:** Open — add with the media/file-security pipeline (`docs/04-security/file-security.md`).
+- **Status:** Partly resolved 2026-09-30 (Phase 6): the logo can be uploaded under Website → Design (media
+  collection `logo`) and the site header shows it. The onboarding wizard still has no upload step (see also
+  AW-040).
 - **Affected:** Onboarding wizard, website header
 - **Created:** 2026-09-27
 
@@ -364,3 +367,78 @@ with the date and commit/PR reference; do not delete it.
   permissions for each action when saving.
 - **Affected:** Automation builder, custom roles
 - **Created:** 2026-09-29
+
+### AW-034 — Products, packages, reviews and shop sections stay hidden
+
+- **Category:** Product
+- **Description:** The website registry includes Products, Packages, Reviews and Shop sections, and the
+  content builder reads them. But the records they display (products, packages, reviews, online orders) come
+  in later phases, so these sections are never shown on the site. The editor lists them with a hint instead.
+- **Impact:** Milestone 4 (master prompt §115) is complete except for products on the public site.
+- **Status:** Open — Products arrive with Commerce (Phase 7), reviews with the Reviews module.
+- **Affected:** `config/website.php`, `WebsiteContent`
+- **Created:** 2026-09-30
+
+### AW-035 — Uploaded images are not resized and EXIF data is not stripped
+
+- **Category:** Security / Performance
+- **Description:** Uploads are checked for type (jpg, png, webp; no SVG), size (4 MB) and dimensions, and
+  stored under a random name in the tenant's folder. They are served as uploaded: no resized variants, no
+  WebP conversion and no removal of EXIF metadata (which can include GPS location).
+- **Impact:** Large photos slow the site down. Photos taken on a phone can reveal where they were taken.
+- **Status:** Open — add image processing on the media queue (`docs/04-security/file-security.md`).
+- **Affected:** `ManageMedia`, public site
+- **Created:** 2026-09-30
+
+### AW-036 — Public site content is rendered in the browser
+
+- **Category:** SEO
+- **Description:** The public site is an Inertia page. The server renders the title, description and Open
+  Graph tags, but the section content is rendered by React in the browser (no SSR).
+- **Impact:** Search engines that don't run JavaScript see only the meta tags. Google does run JavaScript,
+  but indexing may be slower.
+- **Status:** Open — options: Inertia SSR, or a server-rendered HTML version of the site.
+- **Affected:** `resources/views/app.blade.php`, `pages/website/Home.jsx`
+- **Created:** 2026-09-30
+
+### AW-037 — Customers can't cancel or reschedule an online booking themselves
+
+- **Category:** Product
+- **Description:** Online booking creates the appointment and shows a confirmation. There is no link or page
+  for the customer to cancel or change it.
+- **Impact:** Customers must call or message the business, which changes the appointment in the app.
+- **Status:** Open — add signed manage-booking links with notifications.
+- **Affected:** Online booking
+- **Created:** 2026-09-30
+
+### AW-038 — Public forms have no captcha
+
+- **Category:** Security
+- **Description:** The enquiry and booking forms are protected by a hidden honeypot field, validation and
+  rate limits per visitor IP and business (`website.enquiry`, `booking.online_per_hour`). There is no
+  captcha.
+- **Impact:** A determined bot that rotates IPs can still create spam leads or pending bookings.
+- **Status:** Open — add a captcha (e.g. Cloudflare Turnstile) as a per-tenant option if spam appears.
+- **Affected:** `EnquiryController`, `BookingController` (tenant site)
+- **Created:** 2026-09-30
+
+### AW-039 — No custom domains
+
+- **Category:** Product
+- **Description:** Tenant sites are served on `{slug}.{base domain}` only. The `domains` table supports more
+  hosts, but there is no UI, verification or TLS for custom domains.
+- **Impact:** Businesses can't use their own domain yet.
+- **Status:** Open — planned with domain management.
+- **Affected:** Website, domains
+- **Created:** 2026-09-30
+
+### AW-040 — `branding.logo_path` setting is unused
+
+- **Category:** Technical Debt
+- **Description:** Phase 2 reserved a `branding.logo_path` tenant setting. The logo is now a media record
+  (collection `logo`). `CreateTenant` still writes the setting as null, and nothing reads it.
+- **Impact:** None.
+- **Status:** Open — stop writing it in `CreateTenant::branding()` and drop it from existing tenants in a
+  later cleanup.
+- **Affected:** Tenant settings
+- **Created:** 2026-09-30

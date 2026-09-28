@@ -8,6 +8,25 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- Phase 6 Website:
+  - Website page in the business app: the site's status and address, a setup checklist, publish and
+    unpublish, and a preview link for sites that are not published yet.
+  - Section editor: add, edit, reorder, show or hide and remove sections. Each section has its own form
+    (headings, texts, buttons, testimonials, offers, FAQ) and hides itself while it has nothing to show.
+  - Design and logo (template, colours, logo upload) and Business details (description, contact details,
+    address, opening hours, social links, search title and description).
+  - Images: logo, hero banner and gallery uploads with alt text and ordering.
+  - Public website: hero, about, services with prices, team, gallery, testimonials, offers, FAQ, contact
+    with "Get directions", social links and a WhatsApp button. Pages have proper titles, descriptions and
+    share previews, without "· AutoWave" in the title.
+  - Enquiry form: enquiries become leads with the source "Website" (or update the existing lead with that
+    phone number) and appear on the lead's timeline.
+  - Online booking: visitors pick a service, a staff member or "Any available", a date and a free time.
+    Bookings appear in the calendar marked as online, pending until confirmed unless auto-confirm is on.
+    Settings for minimum notice, how far ahead and "Any available".
+  - Automations: new trigger "Website enquiry received" and the condition "Appointment source is Online
+    booking".
+  - The Products section is ready and will appear once products are added in Phase 7.
 - Phase 5 Automation:
   - Automations page: every automation with its steps in plain language, run counts, an on/off switch,
     and figures for runs, completed, in progress and failed in the last 7 days.
@@ -95,6 +114,10 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Security
 
+- Public website forms (enquiry, booking) have a hidden spam trap, validation and rate limits per visitor
+  and business. Image uploads accept only jpg, png and webp (no SVG) within size and dimension limits, and
+  are stored under random names in the business's own folder.
+- Unpublished websites return 404; their preview links are signed, expire after an hour and are not indexed.
 - CRM records can only reference records of the same business (database-level composite keys); another
   business's lead or customer id returns 404.
 - Disabled features (modules) return 404 for their pages and actions.

@@ -15,6 +15,9 @@ use App\Http\Controllers\App\OnboardingController;
 use App\Http\Controllers\App\ServiceCategoryController;
 use App\Http\Controllers\App\ServiceController;
 use App\Http\Controllers\App\SettingsController;
+use App\Http\Controllers\App\WebsiteController;
+use App\Http\Controllers\App\WebsiteMediaController;
+use App\Http\Controllers\App\WebsiteSectionController;
 use App\Http\Controllers\App\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
@@ -114,6 +117,33 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
 
             Route::get('/settings/booking', [BookingSettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.booking');
             Route::put('/settings/booking', [BookingSettingsController::class, 'update'])->middleware('can:settings.update')->name('settings.booking.update');
+        });
+
+        Route::middleware('module:website')->group(function () {
+            Route::middleware('can:website.view')->group(function () {
+                Route::get('/website', [WebsiteController::class, 'index'])->name('website.index');
+                Route::get('/website/design', [WebsiteController::class, 'design'])->name('website.design');
+                Route::get('/website/details', [WebsiteController::class, 'details'])->name('website.details');
+                Route::get('/website/sections/{section}/edit', [WebsiteSectionController::class, 'edit'])->name('website.sections.edit');
+            });
+
+            Route::middleware('can:website.manage')->group(function () {
+                Route::put('/website/publish', [WebsiteController::class, 'publish'])->name('website.publish');
+                Route::put('/website/design', [WebsiteController::class, 'updateDesign'])->name('website.design.update');
+                Route::put('/website/details', [WebsiteController::class, 'updateDetails'])->name('website.details.update');
+                Route::put('/website/booking', [WebsiteController::class, 'updateBooking'])->middleware('engine:booking')->name('website.booking.update');
+
+                Route::post('/website/sections', [WebsiteSectionController::class, 'store'])->name('website.sections.store');
+                Route::put('/website/sections/order', [WebsiteSectionController::class, 'reorder'])->name('website.sections.reorder');
+                Route::put('/website/sections/{section}', [WebsiteSectionController::class, 'update'])->name('website.sections.update');
+                Route::patch('/website/sections/{section}/toggle', [WebsiteSectionController::class, 'toggle'])->name('website.sections.toggle');
+                Route::delete('/website/sections/{section}', [WebsiteSectionController::class, 'destroy'])->name('website.sections.destroy');
+
+                Route::post('/website/media', [WebsiteMediaController::class, 'store'])->middleware('throttle:60,1')->name('website.media.store');
+                Route::put('/website/media/order', [WebsiteMediaController::class, 'reorder'])->name('website.media.reorder');
+                Route::patch('/website/media/{media}', [WebsiteMediaController::class, 'update'])->name('website.media.update');
+                Route::delete('/website/media/{media}', [WebsiteMediaController::class, 'destroy'])->name('website.media.destroy');
+            });
         });
 
         Route::middleware('module:automation')->group(function () {

@@ -63,6 +63,10 @@ return [
             'update' => 'Update automations',
             'delete' => 'Delete automations',
         ],
+        'website' => [
+            'view' => 'View the website setup',
+            'manage' => 'Edit, design and publish the website',
+        ],
         'reports' => [
             'view' => 'View reports',
         ],
@@ -96,7 +100,7 @@ return [
             'description' => 'Runs day-to-day operations.',
             'permissions' => [
                 'customers.*', 'leads.*', 'services.*', 'resources.*', 'appointments.*', 'products.*', 'orders.*',
-                'automation.*', 'reports.view', 'users.view', 'settings.view',
+                'automation.*', 'website.*', 'reports.view', 'users.view', 'settings.view',
             ],
         ],
         'receptionist' => [

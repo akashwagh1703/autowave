@@ -99,3 +99,18 @@ erDiagram
 A run's subject (`subject_type`, `subject_id`) is polymorphic: a lead, customer or appointment. It has no
 FK, so deleting the subject does not delete the run's history; the run is cancelled at its next step.
 Other arrows are composite FKs.
+
+## Website builder and media (Phase 6 — implemented, ADR-016)
+
+```mermaid
+erDiagram
+    TENANTS ||--|| WEBSITE_CONFIGS : "one website"
+    WEBSITE_TEMPLATES ||--o{ WEBSITE_CONFIGS : "look and feel"
+    TENANTS ||--o{ WEBSITE_SECTIONS : "one per type"
+    TENANTS ||--o{ MEDIA : "logo, hero, gallery"
+    USERS ||--o{ MEDIA : "uploaded by (nullable)"
+```
+
+Sections don't reference business records. The public page reads services, booking resources, working
+hours, media and the `branding` / `business_profile` settings at request time. Online bookings are ordinary
+`appointments` rows with `source = website`, and enquiries are ordinary `leads` and `activities`.

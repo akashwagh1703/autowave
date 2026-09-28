@@ -17,6 +17,7 @@ import StickyNote2Icon from '@mui/icons-material/StickyNote2';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
 import EmptyState from '@/components/EmptyState';
+import LanguageIcon from '@mui/icons-material/Language';
 import { formatDateTime, formatRelative, humanize } from '@/utils/format';
 
 const icons = {
@@ -40,6 +41,7 @@ const icons = {
     appointment_no_show: EventBusyIcon,
     appointment_updated: EditNoteIcon,
     task: AssignmentIcon,
+    website_enquiry: LanguageIcon,
 };
 
 const sent = { whatsapp: 'sent a WhatsApp message', email: 'sent an email' };
@@ -88,9 +90,15 @@ function describe(activity, timezone) {
                 return 'added the customer while booking an appointment';
             }
 
+            if (meta.via === 'online_booking') {
+                return 'added the customer from an online booking';
+            }
+
             return meta.lead_name ? `added the customer when converting ${meta.lead_name}` : 'added the customer';
         case 'appointment_booked':
-            return `booked ${appointmentLabel(meta, timezone)}`;
+            return `booked ${appointmentLabel(meta, timezone)}${meta.source === 'website' ? ' online' : ''}`;
+        case 'website_enquiry':
+            return `sent an enquiry from the website${meta.interest ? ` about ${meta.interest}` : ''}`;
         case 'appointment_rescheduled':
             return `moved ${appointmentLabel(meta.from ?? {}, timezone)} to ${formatDateTime(meta.to?.starts_at, timezone, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}${meta.to?.resource && meta.to.resource !== meta.from?.resource ? ` with ${meta.to.resource}` : ''}`;
         case 'appointment_updated':

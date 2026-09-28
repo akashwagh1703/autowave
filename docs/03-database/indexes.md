@@ -33,6 +33,10 @@ Phase 2:
 | `website_configs.tenant_id` unique | One config per tenant; site render lookup |
 | `website_configs.website_template_id` | FK side (template deletion is restricted) |
 | `website_sections (tenant_id, sort_order)` | Ordered section list for rendering |
+| `website_sections (tenant_id, type)` unique | One section per type; section lookup by type (Phase 6) |
+| `media.path` unique | One row per stored file |
+| `media (tenant_id, collection, sort_order)` | Ordered images of a collection (logo, hero, gallery) |
+| `media.uploaded_by_user_id` | FK side (null on user deletion) |
 
 Phase 3 (CRM):
 

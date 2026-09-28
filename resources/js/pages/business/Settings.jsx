@@ -19,15 +19,20 @@ function Detail({ label, value }) {
 }
 
 export default function Settings({ business, branding, profile, website, domains, modules, canUpdate }) {
-    const { hasModule, hasEngine } = useTenant();
+    const { hasModule, hasEngine, can } = useTenant();
 
     return (
         <AppLayout title="Settings">
             <PageHeader
                 title="Business settings"
-                description={canUpdate ? 'Business details editing arrives in a later release.' : 'You have view-only access.'}
+                description={canUpdate ? 'Business name, contact details and branding are edited under Website.' : 'You have view-only access.'}
                 actions={
                     <>
+                        {hasModule('website') && can('website.view') ? (
+                            <Button component={Link} href="/website/details" variant="outlined">
+                                Business details
+                            </Button>
+                        ) : null}
                         {hasEngine('booking') ? (
                             <Button component={Link} href="/settings/booking" variant="outlined">
                                 Booking settings
@@ -89,7 +94,14 @@ export default function Settings({ business, branding, profile, website, domains
                             </div>
                         </dl>
 
-                        <h2 className="mt-6 font-semibold text-slate-900">Website</h2>
+                        <div className="mt-6 flex items-center justify-between gap-2">
+                            <h2 className="font-semibold text-slate-900">Website</h2>
+                            {website && hasModule('website') && can('website.view') ? (
+                                <Button component={Link} href="/website" size="small">
+                                    Manage website
+                                </Button>
+                            ) : null}
+                        </div>
                         {website ? (
                             <dl className="mt-4 grid grid-cols-2 gap-4">
                                 <Detail label="Template" value={website.template} />

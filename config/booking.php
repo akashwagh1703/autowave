@@ -41,6 +41,30 @@ return [
 
     'max_windows_per_day' => 4,
 
+    /*
+    | Online booking from the public website (Phase 6). Tenant values live in the
+    | `booking` setting under `online`; these are the defaults. Website bookings start
+    | as pending unless `auto_confirm` is on, so the team checks them first.
+    */
+    'online' => [
+        'enabled' => true,
+        'auto_confirm' => false,
+        'min_notice_minutes' => 60,
+        'max_days_ahead' => 30,
+        // Visitors may choose "Any available" instead of a specific staff member or resource.
+        'allow_any_resource' => true,
+    ],
+    'online_notice_options' => [0, 30, 60, 120, 240, 720, 1440, 2880],
+    'online_days_ahead_options' => [7, 14, 30, 60, 90],
+    // Bookings per visitor IP and business per hour.
+    'online_per_hour' => 10,
+
+    // Where an appointment came from (appointments.source).
+    'sources' => [
+        'manual' => 'Added by the team',
+        'website' => 'Online booking',
+    ],
+
     'per_page' => 25,
 
 ];

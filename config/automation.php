@@ -41,6 +41,7 @@ return [
         'lead.status_changed' => ['label' => 'Lead stage changed', 'group' => 'Leads', 'subject' => 'lead', 'module' => 'leads', 'description' => 'A lead moves to another stage.'],
         'lead.assigned' => ['label' => 'Lead assigned', 'group' => 'Leads', 'subject' => 'lead', 'module' => 'leads', 'description' => 'A lead is assigned to a team member.'],
         'lead.converted' => ['label' => 'Lead converted', 'group' => 'Leads', 'subject' => 'lead', 'module' => 'leads', 'description' => 'A lead becomes a customer.'],
+        'website.enquiry' => ['label' => 'Website enquiry received', 'group' => 'Leads', 'subject' => 'lead', 'module' => 'leads', 'description' => 'A visitor sends the enquiry form on your website (new or existing lead).'],
         'customer.created' => ['label' => 'Customer added', 'group' => 'Customers', 'subject' => 'customer', 'module' => 'customers', 'description' => 'A new customer is added.'],
         'appointment.created' => ['label' => 'Appointment booked', 'group' => 'Appointments', 'subject' => 'appointment', 'engine' => 'booking', 'description' => 'A new appointment is booked.'],
         'appointment.confirmed' => ['label' => 'Appointment confirmed', 'group' => 'Appointments', 'subject' => 'appointment', 'engine' => 'booking', 'description' => 'An appointment is confirmed (including bookings confirmed automatically).'],
@@ -71,6 +72,7 @@ return [
         'appointment.service' => ['label' => 'Appointment service', 'entity' => 'appointment', 'type' => 'enum', 'options' => 'services', 'engine' => 'service'],
         'appointment.resource' => ['label' => 'Appointment with', 'entity' => 'appointment', 'type' => 'enum', 'options' => 'booking_resources'],
         'appointment.price' => ['label' => 'Appointment price', 'entity' => 'appointment', 'type' => 'number'],
+        'appointment.source' => ['label' => 'Appointment source', 'entity' => 'appointment', 'type' => 'enum', 'options' => 'appointment_sources'],
     ],
 
     'operators' => [

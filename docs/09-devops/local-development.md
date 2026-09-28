@@ -44,10 +44,14 @@ docker compose up -d                  # PostgreSQL + Redis (+ creates autowave_t
 composer install
 php artisan key:generate
 php artisan migrate
+php artisan storage:link              # serves uploaded website images from /storage
 npm install
 npm run build
 php artisan autowave:health
 ```
+
+Website images go to the disk named by `WEBSITE_MEDIA_DISK` (default `public`, i.e.
+`storage/app/public/tenant/{id}/…`). Without `storage:link` uploads succeed but the images don't load.
 
 Expected health output:
 
@@ -111,10 +115,11 @@ then `docker compose up -d`. (The primary dev machine uses 5433 for this reason.
 | Vite dev server (HMR) | `npm run dev` |
 | Queue worker | `php artisan queue:work redis --queue=automation,messaging,default` |
 | Scheduler (automation waits, recovery) | `php artisan schedule:work` |
+| Logs | `php artisan pail` or `storage/logs/laravel-YYYY-MM-DD.log` |
 
 Automations need both the queue worker and the scheduler; see [queue-workers.md](queue-workers.md).
-`php artisan db:seed` (local) also turns on the demo automations for `abc-salon` (`DemoAutomationSeeder`).
-| Logs | `php artisan pail` or `storage/logs/laravel-YYYY-MM-DD.log` |
+`php artisan db:seed` (local) also turns on the demo automations for `abc-salon` (`DemoAutomationSeeder`)
+and fills the website content of `abc-salon` and `abc-turf` (`DemoWebsiteSeeder`).
 
 ## Tests and checks
 

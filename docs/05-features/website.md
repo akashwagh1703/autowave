@@ -1,48 +1,155 @@
 # Website
 
-- **Status:** 🚧 Phase 2 foundation (provisioning + rendering; editing arrives later)
-- **Last updated:** 2026-09-27
+- **Status:** ✅ Phase 6: builder, public site, enquiry form and online booking
+- **Last updated:** 2026-09-30
 
 ## Purpose
 
-Every business gets a fast, mobile-friendly public website at `{slug}.{root_domain}` built from
-configurable sections — no page builder (master prompt §22, §23; ADR-012).
+Every business gets a fast, mobile-friendly public website at `{slug}.{root_domain}`, built from
+configurable sections instead of a page builder (master prompt §22, §23 and §111; ADR-012, ADR-016). The
+business can edit it without help: design, content, images, publishing, the enquiry form and online booking.
 
-## User flow
+## User flows
 
-1. Onboarding picks a template (default = first recommended template of the business type).
-2. `ProvisionWebsite` creates the website config and the business type's sections.
-3. Visitors open `{slug}.{root_domain}`; the tenant is resolved from the host (ADR-007).
+### Business (app host, `/website`)
+
+1. **Overview** (`/website`) shows:
+   - the live/draft status, with **View website**, **Preview** (for drafts) and **Publish / Unpublish**;
+   - the section list: show/hide, move up and down, edit, remove and add, with a status for each section
+     ("On your site", "Waiting for content", "Hidden");
+   - the **online booking** settings;
+   - a "Get your website ready" checklist.
+2. **Design** (`/website/design`): template, brand colour and logo upload.
+3. **Business details** (`/website/details`):
+   - display name, tagline and description;
+   - phone, WhatsApp, email, address, city and opening hours;
+   - social links;
+   - SEO title and description.
+4. **Section edit** (`/website/sections/{id}/edit`): the section's fields, rendered from
+   `config/website.php`, plus its images for the hero and gallery.
+
+### Visitors (tenant host)
+
+- The page shows the header (logo, section links, **Call** and **Book** buttons), then the enabled sections
+  in order, then the footer with social links. A floating WhatsApp button appears when a WhatsApp number is
+  set.
+- **Enquiry form** (contact section): name, phone, optional email, interest and message. The form is replaced
+  by the section's success message after sending.
+- **Online booking** (booking section) goes through these steps:
+  1. service (when the business has the service engine);
+  2. staff or resource, or "Any available";
+  3. date;
+  4. free time;
+  5. details;
+  6. confirmation ("We will confirm shortly" while the booking is pending).
+- **Book** on a service card jumps to the booking section with that service chosen.
+
+## Section types (`config/website.php`)
+
+| Type | Shows | Needs |
+|---|---|---|
+| header, footer | Logo, name, buttons / text, social links | pinned, not removable |
+| hero | Headline, subheadline, main button (book, contact, WhatsApp or call), optional image | — |
+| about | Heading and text (falls back to the business description) | — |
+| services | Active services by category, prices, durations, **Book** buttons | service engine |
+| products, packages, shop | Hidden until Commerce (Phase 7) supplies products | commerce / service engine |
+| gallery | Uploaded photos with a lightbox | — |
+| team | Active staff or resources and what they offer | booking engine |
+| testimonials, offers, faq | Items entered in the editor | — |
+| reviews | Hidden until the Reviews module exists | reviews module |
+| contact | Contact details, opening hours, "Get directions", enquiry form | form needs the leads module |
+| booking | Online booking widget | booking engine, online booking on, at least one bookable resource |
 
 ## Rules
 
-- Served only when the `website` module is enabled and the config is `published`; otherwise 404.
-- Disabled sections are not rendered; sections render in `sort_order`.
-- Templates only change look (hero style, font, corner radius); switching never touches sections.
-- Rendered today: `header`, `hero`, `about` (when there is a description), `contact` (when there are contact
-  details), `footer`. Other section types (`services`, `products`, `gallery`, `booking`, …) are provisioned
-  but skipped until their modules supply data.
-- Hero CTA is **Book now** when the tenant has the booking engine, otherwise **Contact us** (scrolls to
-  contact).
+- **When the site is served.** The site is served only while the `website` module is enabled and the site
+  is published. Drafts return 404, except through a signed preview link.
+- **Hidden sections.** Disabled sections are never rendered. Sections with a data source are hidden while
+  they have nothing to show, and so are sections the tenant's engines or modules don't support.
+- **Order.** Header first and footer last; the rest by `sort_order`. There is one section per type.
+- **Templates.** Templates change only the look (hero style, font, corner radius). Switching keeps all
+  content.
+- **Business data.** Business data is never copied into sections. The site reads services, staff, hours,
+  media and the business profile at request time.
+- **Enquiries.**
+  - An enquiry creates a lead with the source "Website". If an open lead with the same phone exists, a
+    `website_enquiry` activity is added to it instead.
+  - Automations: trigger **Website enquiry received** (`website.enquiry`), payload `new_lead`.
+- **Online booking.**
+  - Settings come from `booking_settings.online`, over the defaults in `config('booking.online')`:
+    - on/off;
+    - auto-confirm (off, so online bookings start as pending);
+    - minimum notice (60 min);
+    - booking window (30 days);
+    - "Any available" (on).
+  - Slots are the union of the free slots of every qualifying resource, from the earliest allowed start
+    onwards.
+  - Bookings go through `BookAppointment` with `source = website`. The customer is matched by phone or
+    created, and the customer timeline shows "booked … online".
+  - Automations can use the condition **Appointment source**.
+- **Uploads.**
+  - JPG, PNG or WebP only (sniffed MIME type, no SVG), up to 4 MB, 100–6000 px per side.
+  - Limits: logo 1, hero 1, gallery 24. Uploading a new logo or hero image replaces the old one.
 
 ## Database
 
-`website_templates`, `website_configs`, `website_sections` — see `docs/03-database/schema.md`.
+`website_templates`, `website_configs`, `website_sections` (unique `(tenant_id, type)`) and `media`. Settings:
+`branding`, `business_profile` (adds `whatsapp`, `opening_hours`, `social`) and `booking_settings.online`. See
+`docs/03-database/schema.md`.
 
-## UI
+## Code
 
-`resources/js/pages/website/Home.jsx`, theme helpers in `resources/js/utils/websiteTheme.js` (shared with
-the onboarding template preview). Business settings (`/settings`) show template, status and sections.
+- **Config:** `config/website.php` (sections, media, social networks, WhatsApp text, enquiry limits,
+  preview lifetime); `config/booking.php` (`online`, `sources`).
+- **Domain:**
+  - `app/Domain/Website/{Support/SectionCatalog, Support/SectionSchema, Support/WebsitePreview}`;
+  - `app/Domain/Website/{Actions/ManageWebsiteSections, Actions/UpdateWebsiteSettings, Actions/SubmitEnquiry}`;
+  - `app/Domain/Website/{Services/WebsiteContent, Services/OnlineBooking, Events/WebsiteEnquiryReceived}`;
+  - `app/Domain/Media/{Models/Media, Actions/ManageMedia}`.
+- **HTTP:**
+  - App host: `App\WebsiteController`, `App\WebsiteSectionController` and `App\WebsiteMediaController`, with
+    `WebsitePresenter`.
+  - Tenant host: `Website\HomeController`, `Website\EnquiryController` and `Website\BookingController`,
+    behind the `EnsureWebsiteIsLive` middleware (`site.live`).
+- **UI:**
+  - Public site: `pages/website/Home.jsx` and `modules/website/{site, sections, ContactSection, BookingSection}.jsx`.
+  - Editor: `pages/business/website/{Index, Design, Details, SectionEdit}.jsx` and
+    `modules/website/{SchemaFields, MediaManager}.jsx`.
 
 ## Security
 
-`WebsiteConfig` and `WebsiteSection` use `BelongsToTenant` (fail-closed). Only public data is sent to the
-page: branding, contact details, enabled sections.
+- `WebsiteConfig`, `WebsiteSection` and `Media` use `BelongsToTenant`, which fails closed. Route model
+  binding runs after tenant resolution, so another tenant's section or image id returns 404.
+- **Permissions:** `website.view` for the editor pages, `website.manage` for every change (Manager role:
+  `website.*`).
+- **Public forms:**
+  - honeypot field;
+  - rate limits per IP and website host (enquiry 5/min and 20/hour, booking 10/hour, slots 60/min);
+  - forms answer only while the website is live;
+  - input is validated server-side;
+  - leads and appointments are created in the tenant resolved from the host.
+- **Uploads:** see `docs/04-security/file-security.md`.
+- The page receives public data only. Preview links are signed, expire after 60 minutes, are bound to the
+  tenant id, and carry `noindex`.
 
 ## Testing
 
-`tests/Feature/Website/WebsiteProvisioningTest.php`, plus site checks in `OnboardingTest`.
+`tests/Feature/Website/`:
+
+- `WebsiteEditorTest`: overview, sections, schema validation, design and details, online booking settings,
+  permissions, module gate, isolation.
+- `WebsiteMediaTest`: storage path, replacement, type/size/dimension checks, limits, order, deletion,
+  isolation, permissions.
+- `PublicWebsiteTest`: database-driven content, hidden empty sections including products, SEO tags, media,
+  signed preview, module gate, turf.
+- `WebsiteEnquiryTest`: lead creation and automation run, duplicates, validation, honeypot, throttling, form
+  gates, isolation.
+- `OnlineBookingTest`: slots, notice and window, "Any available", pending vs auto-confirm, rules, turf
+  without services, switch-off, honeypot and throttle, the `appointment.source` condition.
+- `WebsiteProvisioningTest`: provisioning.
 
 ## Known limitations
 
-No section editor, reordering, SEO editor, logo/gallery upload or template switcher UI yet.
+See `docs/00-overview/known-issues.md` (AW-034 to AW-040): products, packages, reviews and shop stay hidden
+until their phases; images are not resized; the section content isn't server-rendered; there's no customer
+self-cancel or reschedule; there's no captcha; there are no custom domains yet.

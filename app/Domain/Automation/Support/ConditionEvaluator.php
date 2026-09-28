@@ -60,6 +60,7 @@ class ConditionEvaluator
             'appointment.service' => $appointment?->service_id !== null ? (string) $appointment->service_id : null,
             'appointment.resource' => $appointment ? (string) $appointment->booking_resource_id : null,
             'appointment.price' => $appointment?->price !== null ? (float) $appointment->price : null,
+            'appointment.source' => $appointment?->source,
             default => null,
         };
     }

@@ -13,9 +13,9 @@ Do not document planned features as if they exist.
 | Lead management | [lead-management.md](lead-management.md) | ✅ Phase 3 |
 | Customers | [customers.md](customers.md) | ✅ Phase 3 |
 | Services | [services.md](services.md) | ✅ Phase 4 |
-| Booking | [booking.md](booking.md) | ✅ Phase 4 (staff-side; online booking in Phase 6) |
+| Booking | [booking.md](booking.md) | ✅ Phase 4 (staff-side); online booking in Phase 6 ([website.md](website.md)) |
 | Commerce | `commerce.md` | ⏳ |
-| Website | [website.md](website.md) | 🚧 Phase 2 (provisioning + rendering) |
+| Website | [website.md](website.md) | ✅ Phase 6 (products section waits for Phase 7) |
 | Automation | [automation.md](automation.md) | ✅ Phase 5 |
 | Messaging | [messaging.md](messaging.md) | 🚧 Phase 5 (outbound pipeline; WhatsApp simulated) |
 | AI | `ai.md` | ⏳ |

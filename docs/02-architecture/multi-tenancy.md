@@ -35,7 +35,9 @@ Reserved subdomains (`config('autowave.reserved_subdomains')`) can never be tena
    normalises the host (lowercase, no port, no trailing dot), ignores platform hosts, and returns the
    tenant only for an **active** domain of an **active** tenant. Lookups (including misses) are cached for
    `AUTOWAVE_DOMAIN_CACHE_TTL` seconds; `Domain` model events and tenant status changes flush entries.
-   Unknown/disabled/suspended → 404.
+   Unknown/disabled/suspended → 404. On top of that, the site itself returns 404 while the `website` module
+   is off or the site is unpublished, except for a signed `/preview` link (Phase 6, ADR-016). Rate limiters
+   on the tenant site key on the host, because throttling runs before tenant resolution.
 2. **Business app** — `ResolveTenantFromMembership` (`tenant.member`): the session key
    `current_tenant_id` is a preference, re-validated each request against an active membership in an active
    tenant. No membership → redirect to `/workspaces`. Switching (`POST /workspaces/{tenant}/switch`)

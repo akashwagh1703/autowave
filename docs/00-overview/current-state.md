@@ -1,6 +1,6 @@
 # Current State
 
-_Last updated: 2026-09-29 — end of Phase 5 (Automation)._
+_Last updated: 2026-09-30 — end of Phase 6 (Website)._
 
 This document describes what **actually exists** in the repository today. Planned work is in
 [roadmap.md](roadmap.md).
@@ -150,24 +150,60 @@ This document describes what **actually exists** in the repository today. Planne
 - **Tests:** 283 feature tests. Phase 5 adds 32 in `tests/Feature/Automation`: engine
   (including the §114 milestone), HTTP and permissions, isolation, provisioning.
 
+### Phase 6 — Website (ADR-016)
+
+- **Website editor** (`/website`, needs the `website` module; `website.view` to see, `website.manage` to
+  change):
+  - the site's status and address, a setup checklist, publish and unpublish, and a signed preview link for
+    unpublished sites;
+  - sections: add, edit, reorder, show or hide, remove. Header and footer are pinned. Sections that need
+    records (services, team, gallery, testimonials…) show why they are hidden;
+  - a section edit page generated from the section's schema in `config/website.php`, including repeatable
+    items (testimonials, offers, FAQ) and its images;
+  - **Design and logo:** template, colours and logo;
+  - **Business details:** tagline, description, phone, WhatsApp, email, address, city, opening hours,
+    social links, and the search title and description. They are stored in the tenant's business profile;
+    "Get directions" opens a map search for the address;
+  - **Online booking settings:** on/off, auto-confirm, minimum notice, how far ahead, "Any available".
+- **Images:** logo, hero image and gallery uploads (jpg, png, webp; 4 MB; dimension limits) stored under
+  the tenant's folder on the `WEBSITE_MEDIA_DISK` disk, with alt text and ordering (`media` table).
+- **Public site** (`{slug}.{root}`): header, hero, about, services with prices, team, gallery with a
+  lightbox, testimonials, offers, FAQ, contact with directions, footer with social links, and a floating
+  WhatsApp button. Titles, descriptions and Open Graph tags are rendered on the server (AW-010 resolved).
+- **Enquiry form:** creates or updates a lead with the source "Website", logs a `website_enquiry` activity
+  and starts automations with the new `website.enquiry` trigger. Honeypot and rate limits.
+- **Online booking:** service, staff or resource ("Any available"), date and free time, then name and phone.
+  Creates the customer and an appointment with `source = website`, pending unless auto-confirm is on. Turfs
+  without the service engine book fixed slots. The `appointment.source` automation condition tells online
+  bookings apart.
+- **Products section:** built and reading from the product catalogue, but hidden until Phase 7 creates
+  products (AW-034). Packages, reviews and shop sections likewise.
+- **Backfill:** `TenantBackfillSeeder` grants the `website` permission group to existing roles, once.
+- **Demo data:** the local-only `DemoWebsiteSeeder` fills the profile and section content of ABC Salon and
+  ABC Turf.
+- **Tests:** 326 feature tests. Phase 6 adds 43 in `tests/Feature/Website`: public site, preview and
+  SEO, enquiry, online booking, editor and permissions, media, isolation.
+
 ## In progress
 
-- Nothing. Phase 5 is complete and awaiting approval before Phase 6 (Website).
+- Nothing. Phase 6 is complete and awaiting approval before Phase 7 (Commerce).
 
 ## Not implemented
 
-- **Platform:** invitations and member management, role editor, editable business settings, website editor,
-  logo upload, custom domain UI, feature flags, custom fields, commerce, AI, analytics, billing.
+- **Platform:** invitations and member management, role editor, logo upload during onboarding, custom
+  domain UI, feature flags, custom fields, commerce, AI, analytics, billing.
 - **CRM gaps:** kanban board, own-leads visibility, campaigns, import/export.
-- **Booking gaps:** online booking (Phase 6), "any staff", buffers, recurring or group bookings, week view,
-  packages, scoped staff visibility.
+- **Booking gaps:** buffers, recurring or group bookings, week view, packages, scoped staff visibility,
+  customer self-cancel and reschedule (AW-037).
+- **Website gaps:** products, packages, reviews and shop content (AW-034), image resizing (AW-035), server
+  rendering of section content (AW-036), captcha (AW-038), custom domains (AW-039).
 - **Automation gaps:**
   - branches;
-  - webhook, AI, website and payment actions and triggers (AW-026, AW-027);
+  - webhook, AI and payment actions and triggers (AW-026, AW-027);
   - real WhatsApp delivery, consent and quiet hours (AW-025);
   - retention (AW-030);
   - an inbox and inbound messages (Phase 8).
 
 ## Known technical debt
 
-See [known-issues.md](known-issues.md) (AW-001 → AW-033).
+See [known-issues.md](known-issues.md) (AW-001 → AW-040).

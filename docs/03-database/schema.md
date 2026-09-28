@@ -164,6 +164,36 @@ Other changes:
 - New business type configuration key `automation_templates` (a list of template keys). It is
   catalogue-only and not copied to the tenant.
 
+## Website builder and media (Phase 6, `2026_09_30_100000`) — ADR-016
+
+| Table | Key columns |
+|---|---|
+| `media` | `tenant_id` (cascade), `collection` (30: `logo\|hero\|gallery`, from `config('website.media.collections')`), `disk` (30), `path` (255, unique; `tenant/{tenant_id}/{logo\|website}/{collection}-{ulid}.{ext}`), `original_name` (display only), `mime_type` (60, sniffed), `size_bytes`, `width`, `height`, `alt` (150, nullable), `sort_order`, `uploaded_by_user_id` (nullable, null on delete), timestamps. Tenant-scoped model |
+| `website_sections` | New unique index (`tenant_id`, `type`): one section per type per tenant |
+
+Other changes:
+
+- **`website_sections.configuration`** holds only the fields defined for the section type in
+  `config/website.php` (validated by `SectionSchema`). For example: hero `headline`, `subheadline`, `cta`;
+  list sections `items`; contact `show_form`, `form_heading`, `success_message`, `show_map`.
+- **`business_profile` setting** adds `whatsapp`, `opening_hours` and `social` (`instagram`, `facebook`,
+  `youtube`, `google` URLs). **`branding`** is edited from the website editor. The logo now lives in `media`
+  (collection `logo`), so `branding.logo_path` is unused (AW-040).
+- **`booking_settings` setting** adds `online`: `enabled`, `auto_confirm`, `min_notice_minutes`,
+  `max_days_ahead`, `allow_any_resource` (defaults in `config('booking.online')`).
+- **`appointments.source`**: the value `website` is now written for online bookings (labels in
+  `config('booking.sources')`).
+- **New activity type** `website_enquiry` (lead timeline; `body` = message, `metadata.interest`, plus `name`
+  and `email` when added to an existing lead).
+  - Customer `created` activities carry `metadata.via = online_booking` for online bookings.
+  - `appointment_booked` activities carry `metadata.source` when the source isn't `manual`.
+- **New audit actions:**
+  - `website.published`, `website.unpublished`, `website.design_updated`, `website.details_updated`;
+  - `website.section_updated`, `website.section_added`, `website.section_removed`, `website.section_shown`,
+    `website.section_hidden`, `website.sections_reordered`;
+  - `media.uploaded`, `media.deleted`;
+  - `booking.online_settings_updated`.
+
 ## Deferred platform tables
 
 `feature_flags`, `custom_fields` — added with the first feature that needs them (AW-009).

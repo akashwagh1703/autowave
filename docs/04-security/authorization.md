@@ -26,6 +26,7 @@ appointments.view  appointments.create  appointments.update  appointments.cancel
 products.view  products.create  products.update  products.delete
 orders.view  orders.create  orders.update
 automation.view  automation.create  automation.update  automation.delete
+website.view  website.manage
 reports.view
 users.view  users.manage
 roles.manage
@@ -85,9 +86,31 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
   - Condition values and action targets (stages, members, services) are checked against the tenant's own
     records when saved. A member chosen as a notification target who later leaves is skipped at run time.
   - Activities written by automations have no user; the timeline shows "Automation".
+- **Website specifics (Phase 6):**
+  - The editor routes are behind `module:website`.
+  - `website.view`: the website page, design, business details and section edit pages (read-only).
+  - `website.manage`: publish or unpublish, template and colours, business details, sections (add, edit,
+    reorder, show or hide, remove), images, and the online booking settings (also behind `engine:booking`).
+  - Owner and Manager have both; Receptionist and Staff have neither by default.
+  - Section content is validated against the section's schema in `config/website.php`; unknown keys are
+    dropped. Section and media ids are resolved inside the tenant scope, so another tenant's id is a 404.
+- **Public site (Phase 6):** the tenant site has no login. Its protections are:
+  - The site is resolved from the host. It returns 404 for unknown, disabled or suspended hosts, when the
+    website module is off or when the site is unpublished (`site.live` middleware for the forms).
+  - Unpublished sites can be previewed only through a signed `/preview` link for that tenant, valid for
+    `website.preview_minutes`. Preview pages are marked `noindex`.
+  - The enquiry form needs the leads module and a visible contact form. Online booking needs the booking
+    engine, a visible booking section and online booking switched on.
+  - Both forms have a honeypot field, server-side validation and rate limits keyed on the host and visitor IP
+    (`website-enquiry`, `website-booking`, `website-slots`). There is no captcha (AW-038).
+  - Visitors can only choose active services offered by an active resource, and times that pass the
+    availability check again when booking. The price and duration come from the service, never from the
+    request.
+  - Pages only receive the public fields built by `WebsiteContent`: active services, and each resource's
+    name, description, colour and services. Staff contact details and inactive records are never sent.
 - **New permission groups for existing tenants:** `RbacSeeder` updates the templates, but tenant roles are
-  copies. `TenantBackfillSeeder` calls `ProvisionTenantRoles::grantNewPermissionGroups()` for `services` and
-  `resources`:
+  copies. `TenantBackfillSeeder` calls `ProvisionTenantRoles::grantNewPermissionGroups()` for `services`,
+  `resources` and `website`:
   - it gives each tenant role its template's permissions in those groups;
   - it runs once per tenant and group (recorded in the `rbac_backfilled_groups` setting);
   - it skips roles that already hold any permission of the group.

@@ -2,6 +2,8 @@
 
 namespace Tests\Concerns;
 
+use App\Domain\Module\Models\Module;
+use App\Domain\Module\Models\TenantModule;
 use App\Domain\RBAC\Actions\AssignRole;
 use App\Domain\RBAC\Models\Role;
 use App\Domain\Tenant\Actions\CreateTenant;
@@ -42,5 +44,14 @@ trait CreatesTenants
     protected function ownerOf(Tenant $tenant): User
     {
         return $tenant->memberships()->orderBy('id')->firstOrFail()->user;
+    }
+
+    /** Switches a module row off directly, bypassing dependency checks (engines often require modules). */
+    protected function disableModule(Tenant $tenant, string $code): void
+    {
+        TenantModule::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereIn('module_id', Module::query()->where('code', $code)->select('id'))
+            ->update(['enabled' => false]);
     }
 }
