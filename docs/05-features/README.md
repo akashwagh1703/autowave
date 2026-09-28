@@ -10,7 +10,8 @@ Do not document planned features as if they exist.
 | Onboarding | [onboarding.md](onboarding.md) | ✅ Phase 2 |
 | Tenant management | [tenant-management.md](tenant-management.md) | ✅ Phase 1 (foundation) |
 | RBAC | [rbac.md](rbac.md) | ✅ Phase 1 (foundation) |
-| Lead management | `lead-management.md` | ⏳ |
+| Lead management | [lead-management.md](lead-management.md) | ✅ Phase 3 |
+| Customers | [customers.md](customers.md) | ✅ Phase 3 |
 | Booking | `booking.md` | ⏳ |
 | Commerce | `commerce.md` | ⏳ |
 | Website | [website.md](website.md) | 🚧 Phase 2 (provisioning + rendering) |

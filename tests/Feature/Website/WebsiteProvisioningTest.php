@@ -12,6 +12,7 @@ use App\Domain\Website\Models\WebsiteSection;
 use App\Domain\Website\Models\WebsiteTemplate;
 use Database\Seeders\InternalTenantSeeder;
 use Database\Seeders\PlatformAdminSeeder;
+use Database\Seeders\TenantBackfillSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\Concerns\CreatesTenants;
@@ -93,7 +94,7 @@ class WebsiteProvisioningTest extends TestCase
         });
     }
 
-    public function test_reseeding_backfills_the_internal_tenant_website(): void
+    public function test_the_backfill_seeder_restores_a_missing_website(): void
     {
         $this->seed([PlatformAdminSeeder::class, InternalTenantSeeder::class]);
         $tenant = Tenant::query()->where('slug', config('autowave.internal_tenant.slug'))->sole();
@@ -104,7 +105,7 @@ class WebsiteProvisioningTest extends TestCase
             WebsiteConfig::query()->delete();
         });
 
-        $this->seed(InternalTenantSeeder::class);
+        $this->seed(TenantBackfillSeeder::class);
 
         $this->context()->run($tenant, fn () => $this->assertTrue(WebsiteConfig::query()->exists() && WebsiteSection::query()->exists()));
     }

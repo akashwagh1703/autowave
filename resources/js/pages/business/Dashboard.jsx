@@ -1,13 +1,43 @@
+import { Link } from '@inertiajs/react';
 import Card from '@mui/material/Card';
+import CardActionArea from '@mui/material/CardActionArea';
 import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import AppLayout from '@/layouts/AppLayout';
 import PageHeader from '@/components/PageHeader';
-import { humanize } from '@/utils/format';
+import useTenant from '@/hooks/useTenant';
+import { formatMoney, humanize } from '@/utils/format';
 
-export default function Dashboard({ workspace, modules, engines, widgets }) {
+const widgetLabels = { pending_followups: 'Pending follow-ups' };
+
+function Widget({ code, metric, currency }) {
+    const value = metric ? (metric.type === 'currency' ? formatMoney(metric.value, currency) : metric.value) : '—';
+    const body = (
+        <CardContent>
+            <p className="text-sm text-slate-500">{widgetLabels[code] ?? humanize(code)}</p>
+            <p className={`mt-2 text-2xl font-semibold ${metric ? 'text-slate-900' : 'text-slate-300'}`}>{value}</p>
+            {metric?.hint ? <p className="mt-1 text-xs text-slate-500">{metric.hint}</p> : null}
+        </CardContent>
+    );
+
+    return (
+        <Card variant="outlined">
+            {metric?.href ? (
+                <CardActionArea component={Link} href={metric.href}>
+                    {body}
+                </CardActionArea>
+            ) : (
+                body
+            )}
+        </Card>
+    );
+}
+
+export default function Dashboard({ workspace, modules, engines, widgets, metrics }) {
+    const { currency } = useTenant();
+
     return (
         <AppLayout title="Dashboard">
             <PageHeader
@@ -30,16 +60,11 @@ export default function Dashboard({ workspace, modules, engines, widgets }) {
 
             <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {widgets.map((widget) => (
-                    <Card key={widget} variant="outlined">
-                        <CardContent>
-                            <p className="text-sm text-slate-500">{humanize(widget)}</p>
-                            <p className="mt-2 text-2xl font-semibold text-slate-300">—</p>
-                        </CardContent>
-                    </Card>
+                    <Widget key={widget} code={widget} metric={metrics[widget]} currency={currency} />
                 ))}
             </section>
             <p className="mt-3 text-xs text-slate-500">
-                Widgets come from your business type. Live figures appear as each module is built.
+                Widgets come from your business type. Figures showing “—” go live as their modules are built.
             </p>
 
             <section className="mt-8 grid gap-4 md:grid-cols-2">

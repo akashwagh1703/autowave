@@ -17,6 +17,7 @@ Template: `.env.example`. Never commit `.env`. Production secrets live only on t
 | `AUTOWAVE_ADMIN_NAME` / `AUTOWAVE_ADMIN_EMAIL` | `AutoWave Admin` / `admin@autowave.in` | real values | First platform admin (`PlatformAdminSeeder`) |
 | `AUTOWAVE_ADMIN_PASSWORD` | empty (random, printed once) | set once, then remove | First platform admin password; never changes an existing admin |
 | `AUTOWAVE_MAX_BUSINESSES_PER_USER` | `3` | `3` | Businesses one user may create through onboarding (counted by `tenants.created_by_user_id`) |
+| `AUTOWAVE_DEFAULT_COUNTRY_CODE` | `91` | `91` | Calling code (digits only) added to local phone numbers when normalising them for lead/customer matching (`App\Support\Phone`) |
 | `APP_LOCALE`, `APP_FALLBACK_LOCALE` | `en` | `en` | Locale |
 | `APP_FAKER_LOCALE` | `en_IN` | — | Faker locale for factories |
 | `APP_MAINTENANCE_DRIVER` | `file` | `file` | Maintenance mode storage |

@@ -9,7 +9,6 @@ use App\Domain\Tenant\Enums\MembershipStatus;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Tenant\Models\TenantUser;
 use App\Domain\Tenant\Support\TenantContext;
-use App\Domain\Website\Actions\ProvisionWebsite;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use RuntimeException;
@@ -20,7 +19,7 @@ use RuntimeException;
  */
 class DemoTenantSeeder extends Seeder
 {
-    public function run(CreateTenant $createTenant, AssignRole $assignRole, TenantContext $context, ProvisionWebsite $provisionWebsite): void
+    public function run(CreateTenant $createTenant, AssignRole $assignRole, TenantContext $context): void
     {
         if (app()->isProduction()) {
             throw new RuntimeException('DemoTenantSeeder must not run in production.');
@@ -34,9 +33,6 @@ class DemoTenantSeeder extends Seeder
             'branding' => ['primary_color' => '#16a34a', 'tagline' => 'Floodlit 5-a-side football, open till midnight'],
             'profile' => ['phone' => '+91 91234 56789', 'city' => 'Pune'],
         ]);
-
-        $provisionWebsite->ensureFor($salon);
-        $provisionWebsite->ensureFor($turf);
 
         $staff = $this->user('staff@abc-salon.test', 'Sana Staff');
         $this->member($context, $assignRole, $salon, $staff, 'staff');

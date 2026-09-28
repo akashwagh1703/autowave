@@ -13,6 +13,8 @@ import FlashMessages from '@/components/FlashMessages';
 
 const navigation = [
     { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Leads', href: '/leads', permission: 'leads.view', module: 'leads' },
+    { label: 'Customers', href: '/customers', permission: 'customers.view', module: 'customers' },
     { label: 'Settings', href: '/settings', permission: 'settings.view' },
 ];
 
@@ -21,7 +23,11 @@ export default function AppLayout({ title, children }) {
     const [anchor, setAnchor] = useState(null);
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
 
-    const items = navigation.filter((item) => !item.permission || permissions.includes(item.permission));
+    const items = navigation.filter(
+        (item) =>
+            (!item.permission || permissions.includes(item.permission)) && (!item.module || tenant?.modules?.includes(item.module)),
+    );
+    const isCurrent = (href) => currentPath === href || currentPath.startsWith(`${href}/`);
 
     return (
         <div className="min-h-screen bg-slate-50">
@@ -39,14 +45,14 @@ export default function AppLayout({ title, children }) {
                         </span>
                     ) : null}
 
-                    <nav className="order-last flex w-full gap-1 sm:order-none sm:w-auto">
+                    <nav className="order-last flex w-full gap-1 overflow-x-auto md:order-none md:w-auto">
                         {items.map((item) => (
                             <Button
                                 key={item.href}
                                 component={Link}
                                 href={item.href}
                                 size="small"
-                                color={currentPath === item.href ? 'primary' : 'inherit'}
+                                color={isCurrent(item.href) ? 'primary' : 'inherit'}
                             >
                                 {item.label}
                             </Button>

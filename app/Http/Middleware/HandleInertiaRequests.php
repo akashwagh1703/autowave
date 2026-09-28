@@ -50,9 +50,13 @@ class HandleInertiaRequests extends Middleware
                 'user' => fn () => $request->user()?->only(['id', 'name', 'email']),
             ],
             'tenant' => function () {
-                $tenant = app(TenantContext::class)->get();
+                $context = app(TenantContext::class);
+                $tenant = $context->get();
 
-                return $tenant?->only(['id', 'name', 'slug']);
+                return $tenant ? [
+                    ...$tenant->only(['id', 'name', 'slug', 'timezone', 'currency', 'locale']),
+                    'modules' => $context->enabledModules(),
+                ] : null;
             },
             'permissions' => function () use ($request) {
                 $user = $request->user();

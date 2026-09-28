@@ -34,6 +34,29 @@ Phase 2:
 | `website_configs.website_template_id` | FK side (template deletion is restricted) |
 | `website_sections (tenant_id, sort_order)` | Ordered section list for rendering |
 
+Phase 3 (CRM):
+
+| Index | Serves |
+|---|---|
+| `(id, tenant_id)` unique on `customers`, `lead_stages`, `lead_sources`, `leads` | Targets of the CRM composite FKs |
+| `customers_tenant_phone_unique` partial unique `(tenant_id, phone_normalized)` live rows | One customer per phone; conversion/lead matching |
+| `customers (tenant_id, created_at)`, `(tenant_id, name)`, `(tenant_id, email)` | Customer list sort; email matching |
+| `lead_stages (tenant_id, code)` unique, `(tenant_id, sort_order)` | Stage lookup by code; ordered pipeline |
+| `lead_sources (tenant_id, code)` unique | Source lookup by code (integrations) |
+| `leads (tenant_id, lead_stage_id)` | Pipeline counts; stage filter; open/closed views |
+| `leads (tenant_id, assigned_tenant_user_id)` | "Mine"/assignee filter; auto-assign load count |
+| `leads (tenant_id, next_followup_at)` | Follow-ups due; follow-up sort; dashboard metric |
+| `leads (tenant_id, created_at)` | Newest/oldest sort; "new leads (7 days)" metric |
+| `leads (tenant_id, phone_normalized)` | Duplicate open-lead check; customer matching |
+| `leads.lead_source_id`, `leads.customer_id`, `leads.assigned_tenant_user_id`, `leads.created_by_user_id` | FK side |
+| `activities (tenant_id, lead_id, occurred_at)` | Lead timeline |
+| `activities (tenant_id, customer_id, occurred_at)` | Customer timeline; backfill on conversion |
+| `activities.user_id`, `customers.created_by_user_id` | FK side |
+
+Text search uses `ILIKE '%…%'` on name/email and `LIKE '%digits%'` on `phone_normalized`; these scans
+are filtered by `tenant_id` first and are fine at current volumes. Add `pg_trgm` GIN indexes
+when a tenant's lead count makes the list slow.
+
 ## Guidelines
 
 Review indexes for:

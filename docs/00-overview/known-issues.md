@@ -141,3 +141,76 @@ with the date and commit/PR reference; do not delete it.
 - **Status:** Open — harmless; delete the rows or `migrate:fresh --seed` the dev DB when convenient.
 - **Affected:** Shared dev DB data
 - **Created:** 2026-09-27
+
+### AW-014 — Leads have no `campaign_id` yet
+
+- **Category:** Product
+- **Description:** Master prompt §25 lists a campaign on leads. Campaigns do not exist yet, so the column was
+  not added; the "Campaign" lead source covers the need for now.
+- **Impact:** Leads cannot be attributed to a specific campaign.
+- **Status:** Open — add the column (composite FK) with the campaigns feature.
+- **Affected:** `leads` table
+- **Created:** 2026-09-28
+
+### AW-015 — No kanban pipeline board
+
+- **Category:** Product / UI
+- **Description:** The pipeline is shown as stage chips with counts plus a filterable table. There is no
+  drag-and-drop board.
+- **Impact:** Moving stages takes a click on the lead page or a bulk action.
+- **Status:** Open
+- **Affected:** `resources/js/pages/business/leads/Index.jsx`
+- **Created:** 2026-09-28
+
+### AW-016 — No "own leads only" visibility
+
+- **Category:** Product / Security
+- **Description:** Anyone with `leads.view` sees every lead in the business. There is no permission such as
+  `leads.view_own` to restrict sales staff to their assigned leads.
+- **Impact:** Larger teams cannot hide leads between sales executives.
+- **Status:** Open — add a scoped permission and a query constraint when requested.
+- **Affected:** `LeadController`, `config/rbac.php`
+- **Created:** 2026-09-28
+
+### AW-017 — CRM events have no listeners yet
+
+- **Category:** Technical Debt
+- **Description:** `LeadCreated`, `LeadUpdated`, `LeadStatusChanged`, `LeadAssigned`, `LeadConverted` and
+  `CustomerCreated` are dispatched (after commit) but nothing consumes them until the automation engine.
+- **Impact:** No automatic follow-up messages or notifications yet.
+- **Status:** Open — Phase 5 (together with AW-011).
+- **Affected:** `app/Domain/Lead/Events`, `app/Domain/Customer/Events`
+- **Created:** 2026-09-28
+
+### AW-018 — Removing a membership with assigned leads fails
+
+- **Category:** Technical Debt
+- **Description:** `leads.assigned_tenant_user_id` is a composite FK without `ON DELETE SET NULL`
+  (PostgreSQL 11 cannot null only one column of a composite FK). Deleting a `tenant_users` row that still has
+  leads raises an FK error.
+- **Impact:** None today (no member removal UI). Member management must unassign or reassign leads first.
+- **Status:** Open — handle in the member-management feature.
+- **Affected:** `leads` table, future member removal action
+- **Created:** 2026-09-28
+
+### AW-019 — Timelines show the latest 100 entries
+
+- **Category:** Product
+- **Description:** Lead and customer pages load the 100 most recent activities without pagination.
+- **Impact:** Very active records do not show older history in the UI (data is kept).
+- **Status:** Open — add "load more" when needed.
+- **Affected:** `LeadController::show`, `CustomerController::show`
+- **Created:** 2026-09-28
+
+### AW-020 — Concurrent conversion of two leads with the same phone
+
+- **Category:** Technical Debt
+- **Description:** Two different leads with the same phone (one open, one reactivated or linked by email)
+  converted at the same instant could both try to create a customer. The partial unique index rejects the
+  second one with a database error instead of reusing the first customer.
+- **Impact:** Rare; the second user sees an error and can retry, which then reuses the customer. No
+  duplicate data is created.
+- **Status:** Open — catch the unique violation in `ResolveLeadCustomer` and re-query if it happens in
+  practice.
+- **Affected:** `app/Domain/Lead/Actions/ResolveLeadCustomer.php`
+- **Created:** 2026-09-28

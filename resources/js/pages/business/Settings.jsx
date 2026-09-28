@@ -1,7 +1,10 @@
+import { Link } from '@inertiajs/react';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
 import AppLayout from '@/layouts/AppLayout';
+import useTenant from '@/hooks/useTenant';
 import PageHeader from '@/components/PageHeader';
 import StatusChip from '@/components/StatusChip';
 import { humanize } from '@/utils/format';
@@ -16,11 +19,20 @@ function Detail({ label, value }) {
 }
 
 export default function Settings({ business, branding, profile, website, domains, modules, canUpdate }) {
+    const { hasModule } = useTenant();
+
     return (
         <AppLayout title="Settings">
             <PageHeader
                 title="Business settings"
-                description={canUpdate ? 'Editing arrives in a later release.' : 'You have view-only access.'}
+                description={canUpdate ? 'Business details editing arrives in a later release.' : 'You have view-only access.'}
+                actions={
+                    hasModule('leads') ? (
+                        <Button component={Link} href="/settings/crm" variant="outlined">
+                            CRM settings
+                        </Button>
+                    ) : null
+                }
             />
 
             <div className="grid gap-4 lg:grid-cols-2">

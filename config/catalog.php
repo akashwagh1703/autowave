@@ -79,7 +79,8 @@ return [
 
     /*
     | Business types. `website_templates` lists recommended templates; the first is the default.
-    | `configuration` keys other than website_* are copied into tenant settings on creation.
+    | `configuration` keys other than website_* and lead_* are copied into tenant settings on creation.
+    | `configuration.lead_stages` / `lead_sources` replace the config/crm.php defaults for that type.
     */
     'business_types' => [
         'beauty_salon' => [
@@ -121,6 +122,14 @@ return [
             'configuration' => [
                 'dashboard_widgets' => ['new_enquiries', 'admissions', 'students', 'fees_due', 'demo_classes'],
                 'website_sections' => ['header', 'hero', 'about', 'services', 'team', 'testimonials', 'faq', 'contact', 'footer'],
+                'lead_stages' => [
+                    ['code' => 'new', 'name' => 'New enquiry', 'color' => '#6366f1', 'outcome' => 'open'],
+                    ['code' => 'contacted', 'name' => 'Contacted', 'color' => '#0ea5e9', 'outcome' => 'open'],
+                    ['code' => 'demo_scheduled', 'name' => 'Demo scheduled', 'color' => '#8b5cf6', 'outcome' => 'open'],
+                    ['code' => 'follow_up', 'name' => 'Follow-up', 'color' => '#f59e0b', 'outcome' => 'open'],
+                    ['code' => 'converted', 'name' => 'Admitted', 'color' => '#16a34a', 'outcome' => 'won'],
+                    ['code' => 'lost', 'name' => 'Not interested', 'color' => '#94a3b8', 'outcome' => 'lost'],
+                ],
             ],
         ],
         'cafe' => [

@@ -39,3 +39,23 @@ Phase 2 added `tenants.created_by_user_id` and the website tables (ADR-012).
 `ROLES (id, tenant_id)`, so a membership and its roles always share a tenant (ADR-011).
 
 Laravel default tables (`sessions`, `password_reset_tokens`, cache, jobs) are omitted.
+
+## CRM (Phase 3 — implemented, ADR-013)
+
+```mermaid
+erDiagram
+    TENANTS ||--o{ CUSTOMERS : owns
+    TENANTS ||--o{ LEAD_STAGES : "configures (ordered)"
+    TENANTS ||--o{ LEAD_SOURCES : configures
+    TENANTS ||--o{ LEADS : owns
+    LEAD_STAGES ||--o{ LEADS : "current stage"
+    LEAD_SOURCES ||--o{ LEADS : "came from (nullable)"
+    CUSTOMERS ||--o{ LEADS : "linked / converted to (nullable)"
+    TENANT_USERS ||--o{ LEADS : "assigned (nullable)"
+    LEADS ||--o{ ACTIVITIES : timeline
+    CUSTOMERS ||--o{ ACTIVITIES : timeline
+    USERS ||--o{ ACTIVITIES : "actor (nullable)"
+```
+
+Every arrow between tenant-owned tables is a composite FK `(x_id, tenant_id) → x(id, tenant_id)`. An
+activity can belong to a lead, a customer or both (converted leads' history is copied onto the customer).

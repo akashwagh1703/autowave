@@ -26,6 +26,7 @@ php artisan migrate:fresh --seed           # local only — destroys data
 | 2026-09-27 | Laravel default `users`, `cache`, `jobs` migrations | 0 | Skeleton |
 | 2026-09-27 | `2026_09_27_150000` → `150500`: users status/admin, catalogue, tenants, RBAC, domains, audit logs | 1 | PG11-compatible (partial unique indexes); applied to the shared dev DB |
 | 2026-09-27 | `2026_09_27_160000` `tenants.created_by_user_id`; `160100` website templates/configs/sections | 2 | Applied to the shared dev DB; re-seeding backfills websites for existing tenants (`ProvisionWebsite::ensureFor`) |
+| 2026-09-28 | `2026_09_28_100000` customers, lead stages/sources, leads, activities | 3 | Composite FKs, partial unique phone index (PG11-safe); applied to the shared dev DB; re-seeding backfills stages/sources (`ProvisionCrm::ensureFor`) and local demo CRM data |
 
 ## Compatibility
 

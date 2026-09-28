@@ -4,25 +4,21 @@ namespace Database\Seeders;
 
 use App\Domain\Tenant\Actions\CreateTenant;
 use App\Domain\Tenant\Models\Tenant;
-use App\Domain\Website\Actions\ProvisionWebsite;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 /**
  * Creates the AutoWave Internal tenant (dogfooding), owned by the platform admin.
+ * Defaults added after creation are applied by TenantBackfillSeeder.
  */
 class InternalTenantSeeder extends Seeder
 {
-    public function run(CreateTenant $createTenant, ProvisionWebsite $provisionWebsite): void
+    public function run(CreateTenant $createTenant): void
     {
         $config = config('autowave.internal_tenant');
 
-        $existing = Tenant::query()->where('slug', $config['slug'])->first();
-
-        if ($existing) {
-            $provisionWebsite->ensureFor($existing);
-
+        if (Tenant::query()->where('slug', $config['slug'])->exists()) {
             return;
         }
 

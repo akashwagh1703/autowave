@@ -5,6 +5,7 @@ namespace App\Domain\Tenant\Actions;
 use App\Domain\Business\Models\BusinessType;
 use App\Domain\Domain\Actions\AssignDefaultDomain;
 use App\Domain\Engine\Services\EngineManager;
+use App\Domain\Lead\Actions\ProvisionCrm;
 use App\Domain\Module\Exceptions\CatalogItemUnavailable;
 use App\Domain\Module\Services\ModuleManager;
 use App\Domain\RBAC\Actions\AssignRole;
@@ -24,7 +25,7 @@ use InvalidArgumentException;
 
 /**
  * Creates a fully provisioned tenant from a business type preset (ADR-005):
- * owner membership, roles, modules, engines, default settings, website and subdomain.
+ * owner membership, roles, modules, engines, default settings, website, CRM pipeline and subdomain.
  * All or nothing; TenantCreated fires after commit.
  */
 class CreateTenant
@@ -32,7 +33,7 @@ class CreateTenant
     public const DEFAULT_PRIMARY_COLOR = '#4f46e5';
 
     /** Business type configuration keys that describe the catalogue itself, not tenant settings. */
-    private const CATALOGUE_ONLY_KEYS = ['icon', 'website_templates', 'website_sections'];
+    private const CATALOGUE_ONLY_KEYS = ['icon', 'website_templates', 'website_sections', 'lead_stages', 'lead_sources'];
 
     public function __construct(
         private readonly TenantContext $context,
@@ -42,6 +43,7 @@ class CreateTenant
         private readonly EngineManager $engines,
         private readonly AssignDefaultDomain $assignDomain,
         private readonly ProvisionWebsite $provisionWebsite,
+        private readonly ProvisionCrm $provisionCrm,
     ) {}
 
     /**
@@ -104,6 +106,7 @@ class CreateTenant
                     'tagline' => $branding['tagline'],
                     'about' => $options['profile']['description'] ?? null,
                 ]);
+                $this->provisionCrm->handle($tenant, $type);
                 $this->assignDomain->handle($tenant);
             });
 

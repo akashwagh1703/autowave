@@ -8,6 +8,19 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- Phase 3 CRM:
+  - Leads: add, edit, delete, search, filter by stage/source/assignee, sort, paginate, and bulk
+    assign/move/delete.
+  - Lead page with pipeline bar, convert to customer, mark lost (with reason), reactivate, reassign, one-tap
+    call/WhatsApp, and logging of notes, calls, WhatsApp messages, emails and meetings with next follow-up.
+  - "Follow-ups due" view and duplicate warning when an open lead already has the same phone number.
+  - Customers: add, edit, delete, tags, search and a full timeline that includes the history of their leads.
+  - Converting a lead reuses an existing customer with the same phone or email, otherwise creates one.
+  - CRM settings: rename, recolour, reorder and deactivate pipeline stages and lead sources; optional
+    automatic lead assignment to the least busy team member.
+  - Coaching businesses get an admissions pipeline (New enquiry → Demo scheduled → Admitted).
+  - Dashboard shows new leads, pending follow-ups, potential revenue and new customers.
+  - Leads and Customers menu items (shown only with permission and when the feature is enabled).
 - Phase 2 one-click onboarding:
   - Six-step business setup wizard: business type, details with live web-address check, capabilities,
     branding, website style and review.
@@ -42,6 +55,9 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Security
 
+- CRM records can only reference records of the same business (database-level composite keys); another
+  business's lead or customer id returns 404.
+- Disabled features (modules) return 404 for their pages and actions.
 - Business creation is rate limited and capped per user (default 3).
 - Suspended users are blocked at login and signed out mid-session.
 - Database-level guarantee that roles cannot be assigned across businesses.

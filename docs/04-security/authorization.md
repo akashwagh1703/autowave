@@ -41,8 +41,20 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
   tenant permissions.
 - Permissions for the current tenant are shared to React as `permissions` (for UI visibility only —
   frontend visibility is **not** authorization).
-- Policies for tenant-owned resources (Phase 3+) must check the permission and rely on the tenant scope for
-  ownership.
+- Tenant-owned resources (Phase 3+) check the permission with `can:` route middleware and rely on the tenant
+  scope for ownership. Route model binding runs after tenant resolution (middleware priority in
+  `bootstrap/app.php`), so another tenant's id is a 404, not a 403.
+- **Module gating:** `module:<code>[,<code>…]` middleware (`EnsureModuleEnabled`) returns 404 unless every
+  listed module is enabled for the tenant (e.g. `module:leads`, `module:customers`). Navigation items are
+  hidden for disabled modules.
+- **CRM specifics (Phase 3):**
+  - Converting a lead, marking it lost and logging activities need `leads.update`. Conversion creates the
+    customer through the action, so no `customers.create` is required.
+  - Setting an assignee when creating a lead needs `leads.assign`; otherwise the field is rejected.
+  - Only members whose role grants `leads.update` (or `grants_all`) can be assigned leads.
+  - Bulk actions check the permission of each action: assign → `leads.assign`, stage → `leads.update`,
+    delete → `leads.delete`.
+  - CRM settings: view with `settings.view`, change with `settings.update`.
 - Every permission-guarded action has allowed and forbidden tests (e.g. `/settings`: owner 200, staff 403).
 
 ## Super Admin

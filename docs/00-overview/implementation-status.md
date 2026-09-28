@@ -1,6 +1,6 @@
 # Implementation Status
 
-_Last updated: 2026-09-27_
+_Last updated: 2026-09-28_
 
 Legend: ✅ done · 🚧 in progress · ⏳ not started
 
@@ -17,7 +17,7 @@ Legend: ✅ done · 🚧 in progress · ⏳ not started
 | Feature flags / custom fields | ⏳ | later | AW-009 |
 | One-click onboarding | ✅ | 2 | Wizard, dependency-aware modules, per-user cap; default automations deferred (AW-011) |
 | Website foundation (templates, config, sections, public render) | ✅ | 2 | ADR-012; editor in Phase 6 |
-| Customers / Leads / CRM | ⏳ | 3 | |
+| Customers / Leads / CRM | ✅ | 3 | ADR-013; configurable stages/sources, conversion, timeline, auto-assign; kanban/own-leads/campaigns later (AW-014–016) |
 | Services + Booking | ⏳ | 4 | |
 | Automation engine | ⏳ | 5 | |
 | Website engine (editor, SEO, gallery, booking widget) | ⏳ | 6 | Data model ready (Phase 2) |

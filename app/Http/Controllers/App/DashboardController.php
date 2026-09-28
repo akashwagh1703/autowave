@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Domain\Lead\Services\CrmMetrics;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(TenantContext $context): Response
+    public function __invoke(Request $request, TenantContext $context, CrmMetrics $crmMetrics): Response
     {
         $tenant = $context->tenant()->loadMissing(['businessType:id,code,name', 'primaryDomain']);
+        $widgets = $context->setting('dashboard_widgets', []);
 
         return Inertia::render('business/Dashboard', [
             'workspace' => [
@@ -21,7 +24,8 @@ class DashboardController extends Controller
             ],
             'modules' => $context->enabledModules(),
             'engines' => $context->enabledEngines(),
-            'widgets' => $context->setting('dashboard_widgets', []),
+            'widgets' => $widgets,
+            'metrics' => $crmMetrics->for($request->user(), $widgets),
         ]);
     }
 

@@ -68,10 +68,34 @@ Tenant settings written at creation: `branding` (`business_name`, `primary_color
 `business_profile` (`phone`, `email`, `city`, `address`, `description`), plus business-type configuration
 keys except `icon`, `website_templates`, `website_sections`.
 
+## CRM (Phase 3, `2026_09_28_100000`) — ADR-013
+
+All tables are tenant-owned (`tenant_id` cascade on tenant delete, `BelongsToTenant` models) and carry a
+unique (`id`, `tenant_id`) as the target of composite FKs.
+
+| Table | Key columns |
+|---|---|
+| `customers` | `name` (150), `phone` (raw), `phone_normalized` (`+<digits>`), `email`, `city`, `address`, `tags` jsonb (string array), `notes`, `created_by_user_id` (null on delete), timestamps, soft deletes; partial unique `customers_tenant_phone_unique (tenant_id, phone_normalized) WHERE deleted_at IS NULL AND phone_normalized IS NOT NULL` |
+| `lead_stages` | `code` (unique per tenant), `name`, `color` (hex), `outcome` (`open\|won\|lost`), `sort_order`, `is_active` |
+| `lead_sources` | `code` (unique per tenant), `name`, `sort_order`, `is_active` |
+| `leads` | `lead_stage_id`, `lead_source_id`, `customer_id`, `assigned_tenant_user_id` — each a composite FK `(x, tenant_id)`; `name`, `phone`, `phone_normalized`, `email`, `interest`, `estimated_value` numeric(12,2), `next_followup_at`, `last_contacted_at`, `converted_at`, `lost_at`, `lost_reason`, `created_by_user_id`, timestamps, soft deletes |
+| `activities` | `lead_id`, `customer_id` (composite FKs, cascade), `user_id` (null on delete), `type` (40), `body`, `metadata` jsonb, `occurred_at` |
+
+Activity types — manual: `note`, `call`, `whatsapp`, `email`, `meeting` (`config/crm.php`). System:
+`created`, `updated`, `stage_changed`, `assigned`, `converted`, `lost`, `reactivated`.
+
+Tenant setting `crm.auto_assign` (bool) turns on automatic lead assignment.
+
+New audit actions:
+
+- `lead.deleted`, `customer.deleted`;
+- `leads.bulk_assign`, `leads.bulk_stage`, `leads.bulk_delete`;
+- `crm.stages_updated`, `crm.sources_updated`, `crm.assignment_updated`.
+
 ## Deferred platform tables
 
 `feature_flags`, `custom_fields` — added with the first feature that needs them (AW-009).
 
-## Planned domain tables (Phases 3–8)
+## Planned domain tables (Phases 4–8)
 
 See `docs/01-product/master-prompt.md` §57. Implement only what the current phase needs.
