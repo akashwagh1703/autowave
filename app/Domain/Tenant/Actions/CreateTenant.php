@@ -10,6 +10,7 @@ use App\Domain\Module\Exceptions\CatalogItemUnavailable;
 use App\Domain\Module\Services\ModuleManager;
 use App\Domain\RBAC\Actions\AssignRole;
 use App\Domain\RBAC\Actions\ProvisionTenantRoles;
+use App\Domain\Service\Actions\ProvisionServiceCatalog;
 use App\Domain\Tenant\Enums\MembershipStatus;
 use App\Domain\Tenant\Enums\TenantStatus;
 use App\Domain\Tenant\Events\TenantCreated;
@@ -25,7 +26,8 @@ use InvalidArgumentException;
 
 /**
  * Creates a fully provisioned tenant from a business type preset (ADR-005):
- * owner membership, roles, modules, engines, default settings, website, CRM pipeline and subdomain.
+ * owner membership, roles, modules, engines, default settings, website, CRM pipeline, service
+ * categories and subdomain.
  * All or nothing; TenantCreated fires after commit.
  */
 class CreateTenant
@@ -33,7 +35,7 @@ class CreateTenant
     public const DEFAULT_PRIMARY_COLOR = '#4f46e5';
 
     /** Business type configuration keys that describe the catalogue itself, not tenant settings. */
-    private const CATALOGUE_ONLY_KEYS = ['icon', 'website_templates', 'website_sections', 'lead_stages', 'lead_sources'];
+    public const CATALOGUE_ONLY_KEYS = ['icon', 'website_templates', 'website_sections', 'lead_stages', 'lead_sources', 'service_categories'];
 
     public function __construct(
         private readonly TenantContext $context,
@@ -44,6 +46,7 @@ class CreateTenant
         private readonly AssignDefaultDomain $assignDomain,
         private readonly ProvisionWebsite $provisionWebsite,
         private readonly ProvisionCrm $provisionCrm,
+        private readonly ProvisionServiceCatalog $provisionServiceCatalog,
     ) {}
 
     /**
@@ -107,6 +110,7 @@ class CreateTenant
                     'about' => $options['profile']['description'] ?? null,
                 ]);
                 $this->provisionCrm->handle($tenant, $type);
+                $this->provisionServiceCatalog->handle($tenant, $type);
                 $this->assignDomain->handle($tenant);
             });
 

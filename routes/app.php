@@ -1,11 +1,17 @@
 <?php
 
+use App\Http\Controllers\App\AppointmentActionController;
+use App\Http\Controllers\App\AppointmentController;
+use App\Http\Controllers\App\BookingResourceController;
+use App\Http\Controllers\App\BookingSettingsController;
 use App\Http\Controllers\App\CrmSettingsController;
 use App\Http\Controllers\App\CustomerController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\LeadActionController;
 use App\Http\Controllers\App\LeadController;
 use App\Http\Controllers\App\OnboardingController;
+use App\Http\Controllers\App\ServiceCategoryController;
+use App\Http\Controllers\App\ServiceController;
 use App\Http\Controllers\App\SettingsController;
 use App\Http\Controllers\App\WorkspaceController;
 use Illuminate\Support\Facades\Route;
@@ -59,6 +65,53 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             Route::put('/customers/{customer}', [CustomerController::class, 'update'])->middleware('can:customers.update')->name('customers.update');
             Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->middleware('can:customers.delete')->name('customers.destroy');
             Route::post('/customers/{customer}/activities', [CustomerController::class, 'activity'])->middleware('can:customers.update')->name('customers.activities.store');
+        });
+
+        Route::middleware('engine:service')->group(function () {
+            Route::get('/services', [ServiceController::class, 'index'])->middleware('can:services.view')->name('services.index');
+
+            Route::middleware('can:services.manage')->group(function () {
+                Route::get('/services/create', [ServiceController::class, 'create'])->name('services.create');
+                Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
+                Route::post('/services/bulk', [ServiceController::class, 'bulk'])->name('services.bulk');
+                Route::get('/services/{service}/edit', [ServiceController::class, 'edit'])->name('services.edit');
+                Route::put('/services/{service}', [ServiceController::class, 'update'])->name('services.update');
+                Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
+
+                Route::post('/service-categories', [ServiceCategoryController::class, 'store'])->name('service-categories.store');
+                Route::put('/service-categories/{category}', [ServiceCategoryController::class, 'update'])->name('service-categories.update');
+                Route::delete('/service-categories/{category}', [ServiceCategoryController::class, 'destroy'])->name('service-categories.destroy');
+            });
+        });
+
+        Route::middleware('engine:booking')->group(function () {
+            Route::get('/resources', [BookingResourceController::class, 'index'])->middleware('can:resources.view')->name('resources.index');
+            Route::get('/resources/create', [BookingResourceController::class, 'create'])->middleware('can:resources.manage')->name('resources.create');
+            Route::post('/resources', [BookingResourceController::class, 'store'])->middleware('can:resources.manage')->name('resources.store');
+            Route::get('/resources/{bookingResource}', [BookingResourceController::class, 'show'])->middleware('can:resources.view')->name('resources.show');
+
+            Route::middleware('can:resources.manage')->group(function () {
+                Route::get('/resources/{bookingResource}/edit', [BookingResourceController::class, 'edit'])->name('resources.edit');
+                Route::put('/resources/{bookingResource}', [BookingResourceController::class, 'update'])->name('resources.update');
+                Route::delete('/resources/{bookingResource}', [BookingResourceController::class, 'destroy'])->name('resources.destroy');
+                Route::post('/resources/{bookingResource}/time-off', [BookingResourceController::class, 'storeTimeOff'])->name('resources.time-off.store');
+                Route::delete('/resources/{bookingResource}/time-off/{timeOff}', [BookingResourceController::class, 'destroyTimeOff'])->name('resources.time-off.destroy');
+            });
+
+            Route::get('/appointments', [AppointmentController::class, 'calendar'])->middleware('can:appointments.view')->name('appointments.calendar');
+            Route::get('/appointments/list', [AppointmentController::class, 'index'])->middleware('can:appointments.view')->name('appointments.index');
+            Route::get('/appointments/availability', [AppointmentController::class, 'availability'])->middleware(['can:appointments.view', 'throttle:120,1'])->name('appointments.availability');
+            Route::get('/appointments/customers', [AppointmentController::class, 'customers'])->middleware(['can:appointments.create', 'throttle:120,1'])->name('appointments.customers');
+            Route::get('/appointments/create', [AppointmentController::class, 'create'])->middleware('can:appointments.create')->name('appointments.create');
+            Route::post('/appointments', [AppointmentController::class, 'store'])->middleware('can:appointments.create')->name('appointments.store');
+            Route::post('/appointments/bulk', [AppointmentActionController::class, 'bulk'])->middleware('can:appointments.view')->name('appointments.bulk');
+            Route::get('/appointments/{appointment}', [AppointmentController::class, 'show'])->middleware('can:appointments.view')->name('appointments.show');
+            Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->middleware('can:appointments.update')->name('appointments.update');
+            Route::patch('/appointments/{appointment}/status', [AppointmentActionController::class, 'status'])->middleware('can:appointments.view')->name('appointments.status');
+            Route::patch('/appointments/{appointment}/reschedule', [AppointmentActionController::class, 'reschedule'])->middleware('can:appointments.update')->name('appointments.reschedule');
+
+            Route::get('/settings/booking', [BookingSettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.booking');
+            Route::put('/settings/booking', [BookingSettingsController::class, 'update'])->middleware('can:settings.update')->name('settings.booking.update');
         });
     });
 });

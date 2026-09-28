@@ -18,7 +18,7 @@ Legend: ✅ done · 🚧 in progress · ⏳ not started
 | One-click onboarding | ✅ | 2 | Wizard, dependency-aware modules, per-user cap; default automations deferred (AW-011) |
 | Website foundation (templates, config, sections, public render) | ✅ | 2 | ADR-012; editor in Phase 6 |
 | Customers / Leads / CRM | ✅ | 3 | ADR-013; configurable stages/sources, conversion, timeline, auto-assign; kanban/own-leads/campaigns later (AW-014–016) |
-| Services + Booking | ⏳ | 4 | |
+| Services + Booking | ✅ | 4 | ADR-014; staff-side booking, day calendar, lifecycle, exclusion constraint; online booking in Phase 6 (AW-021–024) |
 | Automation engine | ⏳ | 5 | |
 | Website engine (editor, SEO, gallery, booking widget) | ⏳ | 6 | Data model ready (Phase 2) |
 | Commerce | ⏳ | 7 | |

@@ -8,9 +8,11 @@ import CallIcon from '@mui/icons-material/Call';
 import ChatIcon from '@mui/icons-material/Chat';
 import EditIcon from '@mui/icons-material/Edit';
 import EmailIcon from '@mui/icons-material/Email';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import { useState } from 'react';
 import AppLayout from '@/layouts/AppLayout';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import AppointmentStatusChip from '@/modules/booking/AppointmentStatusChip';
 import StageChip from '@/modules/leads/StageChip';
 import Timeline from '@/modules/crm/Timeline';
 import ActivityComposer from '@/modules/crm/ActivityComposer';
@@ -26,8 +28,9 @@ function Detail({ label, children }) {
     );
 }
 
-export default function Show({ customer, leads, activities, activityTypes }) {
+export default function Show({ customer, leads, activities, activityTypes, appointments }) {
     const { timezone, currency, can, hasModule } = useTenant();
+    const now = Date.now();
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [processing, setProcessing] = useState(false);
     const digits = String(customer.phone ?? '').replace(/\D/g, '');
@@ -57,6 +60,11 @@ export default function Show({ customer, leads, activities, activityTypes }) {
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                    {appointments && can('appointments.create') ? (
+                        <Button component={Link} href={`/appointments/create?customer=${customer.id}`} startIcon={<EventAvailableIcon />} variant="contained" size="small">
+                            Book
+                        </Button>
+                    ) : null}
                     {customer.phone ? (
                         <Button href={`tel:${customer.phone}`} startIcon={<CallIcon />} variant="outlined" size="small">
                             Call
@@ -99,7 +107,7 @@ export default function Show({ customer, leads, activities, activityTypes }) {
                     <Card variant="outlined">
                         <CardContent>
                             <h2 className="mb-4 font-semibold text-slate-900">Timeline</h2>
-                            <Timeline activities={activities} timezone={timezone} showLead={canSeeLeads} />
+                            <Timeline activities={activities} timezone={timezone} showLead={canSeeLeads} showAppointment={Boolean(appointments)} />
                         </CardContent>
                     </Card>
                 </div>
@@ -117,6 +125,34 @@ export default function Show({ customer, leads, activities, activityTypes }) {
                             </dl>
                         </CardContent>
                     </Card>
+
+                    {appointments ? (
+                        <Card variant="outlined">
+                            <CardContent>
+                                <h2 className="font-semibold text-slate-900">Appointments ({appointments.length})</h2>
+                                {appointments.length === 0 ? (
+                                    <p className="mt-2 text-sm text-slate-600">No appointments yet.</p>
+                                ) : (
+                                    <ul className="mt-3 divide-y divide-slate-100">
+                                        {appointments.map((appointment) => (
+                                            <li key={appointment.id} className={`py-2 ${new Date(appointment.ends_at).getTime() < now ? 'opacity-80' : ''}`}>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <Link href={`/appointments/${appointment.id}`} className="text-sm font-medium text-slate-900 hover:text-brand-700">
+                                                        {formatDateTime(appointment.starts_at, timezone, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                    </Link>
+                                                    <AppointmentStatusChip appointment={appointment} />
+                                                </div>
+                                                <p className="text-xs text-slate-500">
+                                                    {[appointment.service?.name, appointment.resource?.name].filter(Boolean).join(' · ')}
+                                                    {appointment.price ? ` · ${formatMoney(appointment.price, currency)}` : ''}
+                                                </p>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </CardContent>
+                        </Card>
+                    ) : null}
 
                     {canSeeLeads ? (
                         <Card variant="outlined">

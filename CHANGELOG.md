@@ -8,6 +8,25 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- Phase 4 Services + Booking:
+  - Services: a catalogue with categories, duration, price and who offers each service. Search, filters,
+    sorting and bulk activate, deactivate and delete. Salons and clinics start with default categories.
+  - Staff and resources (named per business: Staff, Turf, Doctor…): weekly working hours with split shifts,
+    time off, the services each one offers, and an optional link to a team member.
+  - Appointments calendar: a day view with a column per staff member or resource, working hours, time off,
+    a now-line, click-to-book and a "Mine" filter.
+  - Appointment list with upcoming, today, past and all ranges, filters, search and bulk status changes.
+  - Booking form: find a customer or add one on the spot, pick a service and a free slot; staff can
+    deliberately book outside working hours.
+  - Appointment page: confirm, mark completed, mark no-show, cancel with a reason, reschedule (also to
+    another staff member), edit price and notes, and one-tap call or WhatsApp.
+  - Double-booking is impossible, even when two people book the same slot at the same moment.
+  - Booking settings: slot interval, automatic confirmation, what customers book (label) and default working
+    hours.
+  - Customer page shows the customer's appointments, and bookings appear on their timeline.
+  - Dashboard shows appointments today, free slots, no-shows, cancellations, repeat customers, and (with
+    report access) revenue today and service sales.
+  - Existing businesses receive booking settings, service categories and the new permissions automatically.
 - Phase 3 CRM:
   - Leads: add, edit, delete, search, filter by stage/source/assignee, sort, paginate, and bulk
     assign/move/delete.

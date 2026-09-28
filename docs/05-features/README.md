@@ -12,7 +12,8 @@ Do not document planned features as if they exist.
 | RBAC | [rbac.md](rbac.md) | ✅ Phase 1 (foundation) |
 | Lead management | [lead-management.md](lead-management.md) | ✅ Phase 3 |
 | Customers | [customers.md](customers.md) | ✅ Phase 3 |
-| Booking | `booking.md` | ⏳ |
+| Services | [services.md](services.md) | ✅ Phase 4 |
+| Booking | [booking.md](booking.md) | ✅ Phase 4 (staff-side; online booking in Phase 6) |
 | Commerce | `commerce.md` | ⏳ |
 | Website | [website.md](website.md) | 🚧 Phase 2 (provisioning + rendering) |
 | Automation | `automation.md` | ⏳ |

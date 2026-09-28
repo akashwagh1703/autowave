@@ -92,10 +92,56 @@ New audit actions:
 - `leads.bulk_assign`, `leads.bulk_stage`, `leads.bulk_delete`;
 - `crm.stages_updated`, `crm.sources_updated`, `crm.assignment_updated`.
 
+## Services and booking (Phase 4, `2026_09_28_200000`) — ADR-014
+
+All tables are tenant-owned, like the CRM tables. Every cross-row reference is a composite FK
+`(x_id, tenant_id)`.
+
+| Table | Key columns |
+|---|---|
+| `service_categories` | `name` (80, unique per tenant), `sort_order` |
+| `services` | `service_category_id` (nullable), `name` (120), `description`, `duration_minutes`, `price` numeric(12,2), `is_active`, `sort_order`, `created_by_user_id`, timestamps, soft deletes |
+| `booking_resources` | `tenant_user_id` (nullable; the linked team member), `name` (120), `description`, `color` (hex), `is_active`, `sort_order`, timestamps, soft deletes. Partial unique `booking_resources_member_unique (tenant_id, tenant_user_id) WHERE deleted_at IS NULL AND tenant_user_id IS NOT NULL` |
+| `booking_resource_service` | PK (`booking_resource_id`, `service_id`), `tenant_id`; both FKs composite and cascading |
+| `resource_working_hours` | `booking_resource_id` (cascade), `weekday` (ISO 1–7), `starts_at` / `ends_at` (`time`, tenant-local). Check `resource_working_hours_valid`: weekday 1–7 and end > start. No timestamps |
+| `resource_time_off` | `booking_resource_id` (cascade), `starts_at` / `ends_at` (UTC), `reason` (150), `created_by_user_id`. Check `resource_time_off_valid`: end > start |
+| `appointments` | `customer_id`, `booking_resource_id`, `service_id` (nullable); `starts_at` / `ends_at` (UTC); `status` (`pending\|confirmed\|completed\|cancelled\|no_show`); `price` numeric(12,2); `notes`; `source` (`manual`); `confirmed_at`, `completed_at`, `cancelled_at`, `cancellation_reason`, `no_show_at`; `created_by_user_id`; timestamps. Check `appointments_valid`: end > start and a known status. Exclusion constraint `appointments_no_overlap` (below) |
+
+`appointments` has no soft deletes: appointments are cancelled, never deleted.
+
+The constraint `appointments_no_overlap` stops a resource holding two overlapping appointments that occupy
+time:
+
+```sql
+EXCLUDE USING gist (
+    int8range(booking_resource_id, booking_resource_id, '[]') WITH &&,
+    tsrange(starts_at, ends_at, '[)') WITH &&
+) WHERE (status IN ('pending', 'confirmed', 'completed'))
+```
+
+It needs no extension (no `btree_gist`) and works on PostgreSQL 11.
+
+Other changes:
+
+- `activities.appointment_id`: nullable, composite FK, cascade. New activity types: `appointment_booked`,
+  `appointment_rescheduled`, `appointment_confirmed`, `appointment_completed`, `appointment_cancelled`,
+  `appointment_no_show`, `appointment_updated`.
+- New tenant settings:
+  - `booking`: `slot_interval`, `auto_confirm`, `default_hours`. Seeded from the business type's
+    `configuration.booking` if present (turf); otherwise `config/booking.php` defaults apply.
+  - `booking_resource_label`: the word for a resource.
+  - `rbac_backfilled_groups`: permission groups already backfilled.
+
+  `service_categories` in the business type configuration is catalogue-only and is not copied.
+- New audit actions:
+  - `service.deleted`, `service_category.deleted`, `services.bulk_*`;
+  - `booking_resource.deleted`, `booking_resource.time_off_added`, `booking_resource.time_off_removed`;
+  - `booking.settings_updated`, `appointments.bulk_*`.
+
 ## Deferred platform tables
 
 `feature_flags`, `custom_fields` — added with the first feature that needs them (AW-009).
 
-## Planned domain tables (Phases 4–8)
+## Planned domain tables (Phases 5–8)
 
 See `docs/01-product/master-prompt.md` §57. Implement only what the current phase needs.

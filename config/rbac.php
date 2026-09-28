@@ -32,6 +32,14 @@ return [
             'assign' => 'Assign leads to team members',
             'delete' => 'Delete leads',
         ],
+        'services' => [
+            'view' => 'View services',
+            'manage' => 'Create, edit and delete services and categories',
+        ],
+        'resources' => [
+            'view' => 'View staff and bookable resources',
+            'manage' => 'Manage staff and resources, their working hours and time off',
+        ],
         'appointments' => [
             'view' => 'View appointments',
             'create' => 'Create appointments',
@@ -87,7 +95,7 @@ return [
             'name' => 'Manager',
             'description' => 'Runs day-to-day operations.',
             'permissions' => [
-                'customers.*', 'leads.*', 'appointments.*', 'products.*', 'orders.*',
+                'customers.*', 'leads.*', 'services.*', 'resources.*', 'appointments.*', 'products.*', 'orders.*',
                 'automation.*', 'reports.view', 'users.view', 'settings.view',
             ],
         ],
@@ -97,6 +105,7 @@ return [
             'permissions' => [
                 'customers.view', 'customers.create', 'customers.update',
                 'leads.view', 'leads.create', 'leads.update',
+                'services.view', 'resources.view',
                 'appointments.*', 'orders.view', 'orders.create',
             ],
         ],
@@ -106,6 +115,7 @@ return [
             'permissions' => [
                 'customers.view', 'customers.create', 'customers.update',
                 'leads.view', 'leads.create', 'leads.update', 'leads.assign',
+                'services.view', 'resources.view',
                 'appointments.view', 'appointments.create',
             ],
         ],
@@ -113,14 +123,14 @@ return [
             'name' => 'Staff',
             'description' => 'Sees their schedule and assigned customers.',
             'permissions' => [
-                'customers.view', 'appointments.view', 'appointments.update',
+                'customers.view', 'services.view', 'resources.view', 'appointments.view', 'appointments.update',
             ],
         ],
         'accountant' => [
             'name' => 'Accountant',
             'description' => 'Views orders and financial reports.',
             'permissions' => [
-                'customers.view', 'products.view', 'orders.view', 'reports.view',
+                'customers.view', 'services.view', 'products.view', 'orders.view', 'reports.view',
             ],
         ],
     ],

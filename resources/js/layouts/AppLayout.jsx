@@ -13,8 +13,11 @@ import FlashMessages from '@/components/FlashMessages';
 
 const navigation = [
     { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Appointments', href: '/appointments', permission: 'appointments.view', engine: 'booking' },
     { label: 'Leads', href: '/leads', permission: 'leads.view', module: 'leads' },
     { label: 'Customers', href: '/customers', permission: 'customers.view', module: 'customers' },
+    { label: 'Services', href: '/services', permission: 'services.view', engine: 'service' },
+    { label: (tenant) => tenant?.resource_label?.plural ?? 'Staff', href: '/resources', permission: 'resources.view', engine: 'booking' },
     { label: 'Settings', href: '/settings', permission: 'settings.view' },
 ];
 
@@ -25,7 +28,9 @@ export default function AppLayout({ title, children }) {
 
     const items = navigation.filter(
         (item) =>
-            (!item.permission || permissions.includes(item.permission)) && (!item.module || tenant?.modules?.includes(item.module)),
+            (!item.permission || permissions.includes(item.permission)) &&
+            (!item.module || tenant?.modules?.includes(item.module)) &&
+            (!item.engine || tenant?.engines?.includes(item.engine)),
     );
     const isCurrent = (href) => currentPath === href || currentPath.startsWith(`${href}/`);
 
@@ -54,7 +59,7 @@ export default function AppLayout({ title, children }) {
                                 size="small"
                                 color={isCurrent(item.href) ? 'primary' : 'inherit'}
                             >
-                                {item.label}
+                                {typeof item.label === 'function' ? item.label(tenant) : item.label}
                             </Button>
                         ))}
                     </nav>

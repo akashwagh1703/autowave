@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\EnsureEngineEnabled;
 use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -53,6 +54,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.site' => ResolveTenantFromDomain::class,
             'tenant.member' => ResolveTenantFromMembership::class,
             'module' => EnsureModuleEnabled::class,
+            'engine' => EnsureEngineEnabled::class,
             'active' => EnsureAccountIsActive::class,
             'platform.admin' => EnsurePlatformAdmin::class,
         ]);

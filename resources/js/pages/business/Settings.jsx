@@ -19,7 +19,7 @@ function Detail({ label, value }) {
 }
 
 export default function Settings({ business, branding, profile, website, domains, modules, canUpdate }) {
-    const { hasModule } = useTenant();
+    const { hasModule, hasEngine } = useTenant();
 
     return (
         <AppLayout title="Settings">
@@ -27,11 +27,18 @@ export default function Settings({ business, branding, profile, website, domains
                 title="Business settings"
                 description={canUpdate ? 'Business details editing arrives in a later release.' : 'You have view-only access.'}
                 actions={
-                    hasModule('leads') ? (
-                        <Button component={Link} href="/settings/crm" variant="outlined">
-                            CRM settings
-                        </Button>
-                    ) : null
+                    <>
+                        {hasEngine('booking') ? (
+                            <Button component={Link} href="/settings/booking" variant="outlined">
+                                Booking settings
+                            </Button>
+                        ) : null}
+                        {hasModule('leads') ? (
+                            <Button component={Link} href="/settings/crm" variant="outlined">
+                                CRM settings
+                            </Button>
+                        ) : null}
+                    </>
                 }
             />
 

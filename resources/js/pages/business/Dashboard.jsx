@@ -10,7 +10,7 @@ import PageHeader from '@/components/PageHeader';
 import useTenant from '@/hooks/useTenant';
 import { formatMoney, humanize } from '@/utils/format';
 
-const widgetLabels = { pending_followups: 'Pending follow-ups' };
+const widgetLabels = { pending_followups: 'Pending follow-ups', no_shows: 'No-shows' };
 
 function Widget({ code, metric, currency }) {
     const value = metric ? (metric.type === 'currency' ? formatMoney(metric.value, currency) : metric.value) : '—';

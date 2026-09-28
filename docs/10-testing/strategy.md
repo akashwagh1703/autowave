@@ -30,7 +30,7 @@ tests/
 | Integration | Provider adapters with `Http::fake()` | AI, messaging, payments |
 | Queue | Jobs dispatched, idempotent, retry/failure | Every job |
 | Automation | Trigger, condition pass/fail, delay, execution, retry, failure log, duplicate prevention | Automation engine |
-| Booking | Create, cancel, reschedule, unavailable slot, duplicate, concurrent attempt, timezone, resource availability | Booking engine |
+| Booking | Create, cancel, reschedule, unavailable slot, duplicate, concurrent attempt, timezone, resource availability | Booking engine (`tests/Feature/Booking`; concurrency is simulated, AW-021) |
 | E2E | Full customer workflows | Milestones (tooling TBD) |
 
 ## Current coverage (Phase 0)

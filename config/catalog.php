@@ -79,8 +79,11 @@ return [
 
     /*
     | Business types. `website_templates` lists recommended templates; the first is the default.
-    | `configuration` keys other than website_* and lead_* are copied into tenant settings on creation.
+    | `configuration` keys other than website_*, lead_* and service_categories are copied into tenant
+    | settings on creation.
     | `configuration.lead_stages` / `lead_sources` replace the config/crm.php defaults for that type.
+    | `configuration.service_categories` are created for tenants with the service engine.
+    | `configuration.booking` overrides config/booking.php defaults (slot_interval, auto_confirm, default_hours).
     */
     'business_types' => [
         'beauty_salon' => [
@@ -95,6 +98,7 @@ return [
                 'dashboard_widgets' => ['revenue_today', 'appointments_today', 'new_leads', 'pending_followups', 'service_sales', 'product_sales', 'repeat_customers', 'potential_revenue'],
                 'website_sections' => ['header', 'hero', 'about', 'services', 'products', 'packages', 'gallery', 'team', 'testimonials', 'offers', 'faq', 'contact', 'booking', 'footer'],
                 'booking_resource_label' => 'Staff',
+                'service_categories' => ['Hair', 'Skin', 'Nails', 'Makeup', 'Spa'],
             ],
         ],
         'turf' => [
@@ -109,6 +113,18 @@ return [
                 'dashboard_widgets' => ['bookings_today', 'available_slots', 'revenue_today', 'cancellations', 'new_leads'],
                 'website_sections' => ['header', 'hero', 'about', 'gallery', 'booking', 'faq', 'contact', 'footer'],
                 'booking_resource_label' => 'Turf',
+                'booking' => [
+                    'slot_interval' => 60,
+                    'default_hours' => [
+                        ['weekday' => 1, 'starts_at' => '06:00', 'ends_at' => '23:00'],
+                        ['weekday' => 2, 'starts_at' => '06:00', 'ends_at' => '23:00'],
+                        ['weekday' => 3, 'starts_at' => '06:00', 'ends_at' => '23:00'],
+                        ['weekday' => 4, 'starts_at' => '06:00', 'ends_at' => '23:00'],
+                        ['weekday' => 5, 'starts_at' => '06:00', 'ends_at' => '23:00'],
+                        ['weekday' => 6, 'starts_at' => '06:00', 'ends_at' => '23:00'],
+                        ['weekday' => 7, 'starts_at' => '06:00', 'ends_at' => '23:00'],
+                    ],
+                ],
             ],
         ],
         'coaching' => [
@@ -157,6 +173,7 @@ return [
                 'dashboard_widgets' => ['appointments_today', 'new_leads', 'pending_followups', 'no_shows'],
                 'website_sections' => ['header', 'hero', 'about', 'services', 'team', 'faq', 'contact', 'booking', 'footer'],
                 'booking_resource_label' => 'Doctor',
+                'service_categories' => ['Consultation', 'Procedures', 'Diagnostics'],
             ],
         ],
         'local_store' => [
@@ -185,6 +202,7 @@ return [
                 'dashboard_widgets' => ['new_leads', 'pending_followups', 'demos_booked', 'trials_started'],
                 'website_sections' => ['header', 'hero', 'services', 'testimonials', 'faq', 'contact', 'booking', 'footer'],
                 'booking_resource_label' => 'Sales Executive',
+                'service_categories' => ['Demos', 'Onboarding'],
             ],
         ],
     ],

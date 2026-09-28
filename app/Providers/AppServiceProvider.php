@@ -35,7 +35,15 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Numeric ids only, so a malformed URL is a 404 rather than a database error.
-        Route::patterns(['lead' => '[0-9]+', 'customer' => '[0-9]+']);
+        Route::patterns([
+            'lead' => '[0-9]+',
+            'customer' => '[0-9]+',
+            'service' => '[0-9]+',
+            'category' => '[0-9]+',
+            'bookingResource' => '[0-9]+',
+            'timeOff' => '[0-9]+',
+            'appointment' => '[0-9]+',
+        ]);
 
         // Business creation attempts (including validation failures) per user.
         RateLimiter::for('onboarding', fn (Request $request) => Limit::perHour(20)->by('onboarding|'.($request->user()?->getKey() ?? $request->ip())));

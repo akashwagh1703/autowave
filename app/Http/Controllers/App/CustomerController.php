@@ -4,12 +4,14 @@ namespace App\Http\Controllers\App;
 
 use App\Domain\Activity\Actions\LogActivity;
 use App\Domain\Activity\Models\Activity;
+use App\Domain\Booking\Models\Appointment;
 use App\Domain\Customer\Actions\CreateCustomer;
 use App\Domain\Customer\Actions\DeleteCustomer;
 use App\Domain\Customer\Actions\UpdateCustomer;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\BookingPresenter;
 use App\Http\Presenters\CrmOptions;
 use App\Http\Presenters\CrmPresenter;
 use App\Http\Requests\Crm\CustomerRequest;
@@ -89,9 +91,20 @@ class CustomerController extends Controller
         return to_route('customers.show', $customer)->with('success', __('Customer added.'));
     }
 
-    public function show(Customer $customer): Response
+    public function show(Request $request, Customer $customer): Response
     {
+        $showAppointments = $this->context->hasEngine('booking') && $request->user()->can('appointments.view');
+
         return Inertia::render('business/customers/Show', [
+            'appointments' => $showAppointments
+                ? Appointment::query()
+                    ->where('customer_id', $customer->id)
+                    ->with(['resource', 'service'])
+                    ->orderByDesc('starts_at')
+                    ->limit(20)
+                    ->get()
+                    ->map(fn (Appointment $appointment) => BookingPresenter::appointment($appointment))
+                : null,
             'customer' => CrmPresenter::customer($customer),
             'leads' => $customer->leads()
                 ->with(['stage', 'assignee.user:id,name'])

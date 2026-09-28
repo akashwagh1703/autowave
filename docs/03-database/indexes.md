@@ -53,6 +53,26 @@ Phase 3 (CRM):
 | `activities (tenant_id, customer_id, occurred_at)` | Customer timeline; backfill on conversion |
 | `activities.user_id`, `customers.created_by_user_id` | FK side |
 
+Phase 4 (services and booking):
+
+| Index / constraint | Serves |
+|---|---|
+| `(id, tenant_id)` unique on `service_categories`, `services`, `booking_resources`, `appointments` | Targets of the booking composite FKs |
+| `appointments_no_overlap` exclusion (GiST on `int8range(resource)` + `tsrange(starts_at, ends_at)`, blocking statuses) | Double-booking guarantee; also speeds up overlap lookups per resource |
+| `appointments (tenant_id, booking_resource_id, starts_at)` | Availability and busy periods per resource; calendar columns |
+| `appointments (tenant_id, starts_at)` | Calendar day, list ranges, "today" metrics |
+| `appointments (tenant_id, customer_id, starts_at)` | Customer appointments card; repeat-customer metric |
+| `appointments (tenant_id, status)` | Status filters; pending and no-show counts |
+| `appointments.customer_id`, `.booking_resource_id`, `.service_id`, `.created_by_user_id` | FK side |
+| `booking_resources_member_unique` partial unique `(tenant_id, tenant_user_id)` live, linked rows | One calendar per team member; "My schedule" lookup |
+| `booking_resources (tenant_id, sort_order)` | Ordered calendar columns and lists |
+| `services (tenant_id, service_category_id)`, `(tenant_id, name)` | Category filter; name uniqueness check |
+| `service_categories (tenant_id, name)` unique | Category names per tenant |
+| `booking_resource_service` PK `(booking_resource_id, service_id)`, `(tenant_id, service_id)` | "Who offers this service" both ways |
+| `resource_working_hours (booking_resource_id, weekday)` | Working windows for a day |
+| `resource_time_off (tenant_id, booking_resource_id, starts_at)` | Time off overlapping a day or booking |
+| `activities (tenant_id, appointment_id, occurred_at)` | Appointment history |
+
 Text search uses `ILIKE '%…%'` on name/email and `LIKE '%digits%'` on `phone_normalized`; these scans
 are filtered by `tenant_id` first and are fine at current volumes. Add `pg_trgm` GIN indexes
 when a tenant's lead count makes the list slow.
@@ -66,7 +86,7 @@ Review indexes for:
 - common filters: `status`, `source`, `assigned_to`
 - date ranges: `created_at`, `next_followup_at`, `starts_at`
 - domain lookup: `domains.domain` unique
-- booking availability: `(tenant_id, resource_id, starts_at)` plus an exclusion constraint on time ranges
-  (`btree_gist`) to prevent overlaps
+- booking availability: `(tenant_id, booking_resource_id, starts_at)` plus the `appointments_no_overlap`
+  exclusion constraint (range form, no `btree_gist`; ADR-014)
 
 Record every non-trivial index here with the query it serves.

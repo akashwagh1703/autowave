@@ -20,6 +20,8 @@ Source of truth: `config/rbac.php` (synced by `RbacSeeder`). Keys are `{group}.{
 ```text
 customers.view  customers.create  customers.update  customers.delete
 leads.view  leads.create  leads.update  leads.assign  leads.delete
+services.view  services.manage
+resources.view  resources.manage
 appointments.view  appointments.create  appointments.update  appointments.cancel
 products.view  products.create  products.update  products.delete
 orders.view  orders.create  orders.update
@@ -55,6 +57,28 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
   - Bulk actions check the permission of each action: assign → `leads.assign`, stage → `leads.update`,
     delete → `leads.delete`.
   - CRM settings: view with `settings.view`, change with `settings.update`.
+- **Engine gating (Phase 4):** `engine:<code>` middleware (`EnsureEngineEnabled`) returns 404 unless the
+  tenant has the engine: `engine:service` for services, `engine:booking` for resources, appointments and
+  booking settings. Navigation hides disabled engines (the `tenant.engines` share).
+- **Booking specifics (Phase 4):**
+  - Status changes need `appointments.update`, except cancelling, which needs `appointments.cancel`. The
+    route requires `appointments.view`; the controller checks the right ability for the requested status,
+    including bulk actions.
+  - Rescheduling and editing price or notes need `appointments.update`.
+  - Resources: `resources.view` to see them, `resources.manage` for create, edit, delete and time off.
+  - Services and categories: `services.view` / `services.manage`.
+  - Money dashboard widgets (revenue today, service sales) also need `reports.view`.
+  - The customer page includes appointments only for users with `appointments.view`.
+  - "My schedule" is a calendar filter, not a restriction: anyone with `appointments.view` sees every
+    resource (AW-022).
+- **New permission groups for existing tenants:** `RbacSeeder` updates the templates, but tenant roles are
+  copies. `TenantBackfillSeeder` calls `ProvisionTenantRoles::grantNewPermissionGroups()` for `services` and
+  `resources`:
+  - it gives each tenant role its template's permissions in those groups;
+  - it runs once per tenant and group (recorded in the `rbac_backfilled_groups` setting);
+  - it skips roles that already hold any permission of the group.
+
+  A tenant that later removes a permission does not get it back on the next deploy.
 - Every permission-guarded action has allowed and forbidden tests (e.g. `/settings`: owner 200, staff 403).
 
 ## Super Admin

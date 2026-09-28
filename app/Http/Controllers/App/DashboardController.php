@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Domain\Booking\Services\BookingMetrics;
 use App\Domain\Lead\Services\CrmMetrics;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
@@ -11,7 +12,7 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request, TenantContext $context, CrmMetrics $crmMetrics): Response
+    public function __invoke(Request $request, TenantContext $context, CrmMetrics $crmMetrics, BookingMetrics $bookingMetrics): Response
     {
         $tenant = $context->tenant()->loadMissing(['businessType:id,code,name', 'primaryDomain']);
         $widgets = $context->setting('dashboard_widgets', []);
@@ -25,7 +26,10 @@ class DashboardController extends Controller
             'modules' => $context->enabledModules(),
             'engines' => $context->enabledEngines(),
             'widgets' => $widgets,
-            'metrics' => $crmMetrics->for($request->user(), $widgets),
+            'metrics' => [
+                ...$crmMetrics->for($request->user(), $widgets),
+                ...$bookingMetrics->for($request->user(), $widgets),
+            ],
         ]);
     }
 

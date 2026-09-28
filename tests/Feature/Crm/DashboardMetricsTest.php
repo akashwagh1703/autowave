@@ -28,7 +28,7 @@ class DashboardMetricsTest extends TestCase
                 ->where('metrics.pending_followups.value', 1)
                 ->where('metrics.potential_revenue.value', '30000.00')
                 ->where('metrics.potential_revenue.type', 'currency')
-                ->missing('metrics.revenue_today'));
+                ->missing('metrics.product_sales'));
     }
 
     public function test_widgets_are_hidden_from_users_who_cannot_see_leads(): void

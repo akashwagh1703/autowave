@@ -214,3 +214,50 @@ with the date and commit/PR reference; do not delete it.
   practice.
 - **Affected:** `app/Domain/Lead/Actions/ResolveLeadCustomer.php`
 - **Created:** 2026-09-28
+
+### AW-021 — Concurrency test simulates, rather than runs, parallel bookings
+
+- **Category:** Testing
+- **Description:** Feature tests run inside one database transaction (`RefreshDatabase`), so two real
+  parallel requests cannot be run. The concurrency test inserts a conflicting row between
+  `BookAppointment`'s availability check and its insert. It proves the exclusion constraint and the error
+  handling; the row lock (`SELECT … FOR UPDATE`) is not exercised under real parallelism.
+- **Impact:** Low. The constraint is the guarantee (ADR-014); the lock only makes the friendly check race-free.
+- **Status:** Open. Add a non-transactional test with two database connections (or a load test on staging)
+  if booking volume grows.
+- **Affected:** `tests/Feature/Booking/AppointmentBookingTest.php`
+- **Created:** 2026-09-28
+
+### AW-022 — Staff see every resource's appointments
+
+- **Category:** Product / Security
+- **Description:** `appointments.view` shows the whole calendar. "My schedule" (the `resource=mine` filter)
+  only narrows the view; there is no permission such as `appointments.view_own`.
+- **Impact:** Staff can see colleagues' appointments and customer names. This is normal for small salons but
+  not suitable for every business.
+- **Status:** Open. Add a scoped permission and query constraint when requested (same approach as AW-016).
+- **Affected:** `AppointmentController`, `config/rbac.php`
+- **Created:** 2026-09-28
+
+### AW-023 — Default service categories return if a tenant deletes them all
+
+- **Category:** Technical Debt
+- **Description:** `ProvisionServiceCatalog::ensureFor()` (run by `TenantBackfillSeeder` on each deploy)
+  creates the default categories whenever a service-engine tenant has none. A tenant that deliberately
+  deletes every category gets the defaults back.
+- **Impact:** Cosmetic; the tenant can delete them again, and services are unaffected.
+- **Status:** Open. Record "catalogue provisioned" in a tenant setting (as `rbac_backfilled_groups` does)
+  if it bothers users.
+- **Affected:** `app/Domain/Service/Actions/ProvisionServiceCatalog.php`
+- **Created:** 2026-09-28
+
+### AW-024 — Booking events have no listeners yet; no reminders
+
+- **Category:** Technical Debt / Product
+- **Description:** `AppointmentCreated`, `AppointmentConfirmed`, `AppointmentCompleted`,
+  `AppointmentCancelled`, `AppointmentNoShow` and `AppointmentRescheduled` are dispatched after commit, but
+  nothing consumes them. Customers receive no confirmations or reminders.
+- **Impact:** Staff must contact customers themselves (the appointment page has call and WhatsApp buttons).
+- **Status:** Open. Phase 5 (automation) and messaging, together with AW-017.
+- **Affected:** `app/Domain/Booking/Events`
+- **Created:** 2026-09-28

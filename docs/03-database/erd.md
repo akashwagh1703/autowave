@@ -59,3 +59,24 @@ erDiagram
 
 Every arrow between tenant-owned tables is a composite FK `(x_id, tenant_id) → x(id, tenant_id)`. An
 activity can belong to a lead, a customer or both (converted leads' history is copied onto the customer).
+
+## Services and booking (Phase 4 — implemented, ADR-014)
+
+```mermaid
+erDiagram
+    TENANTS ||--o{ SERVICE_CATEGORIES : configures
+    SERVICE_CATEGORIES ||--o{ SERVICES : "groups (nullable)"
+    TENANTS ||--o{ BOOKING_RESOURCES : owns
+    TENANT_USERS ||--o| BOOKING_RESOURCES : "own calendar (nullable)"
+    BOOKING_RESOURCES ||--o{ BOOKING_RESOURCE_SERVICE : offers
+    SERVICES ||--o{ BOOKING_RESOURCE_SERVICE : "offered by"
+    BOOKING_RESOURCES ||--o{ RESOURCE_WORKING_HOURS : "weekly hours"
+    BOOKING_RESOURCES ||--o{ RESOURCE_TIME_OFF : "time off"
+    BOOKING_RESOURCES ||--o{ APPOINTMENTS : "booked on"
+    CUSTOMERS ||--o{ APPOINTMENTS : books
+    SERVICES ||--o{ APPOINTMENTS : "for (nullable)"
+    APPOINTMENTS ||--o{ ACTIVITIES : timeline
+```
+
+All arrows are composite FKs. An appointment's activities also carry its `customer_id`, so they show on the
+customer timeline.

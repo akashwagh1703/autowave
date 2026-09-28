@@ -75,6 +75,7 @@ final class CrmPresenter
             'lead' => $activity->relationLoaded('lead') && $activity->lead
                 ? ['id' => $activity->lead->id, 'name' => $activity->lead->name, 'deleted' => $activity->lead->trashed()]
                 : null,
+            'appointment_id' => $activity->appointment_id,
         ];
     }
 

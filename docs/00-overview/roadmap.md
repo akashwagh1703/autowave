@@ -3,32 +3,23 @@
 Do not implement roadmap items unless explicitly requested. Work phase-by-phase; after every phase:
 Build → Test → Review → Document → Commit → Update status.
 
-## Current
+## Done
 
-**Phase 1 — Platform Foundation** (awaiting approval to start)
+What exists is described in [current-state.md](current-state.md).
 
-- Authentication (login, logout, registration, email verification, password reset, remember me, account status)
-- Tenants, `TenantContext`, tenant resolution middleware, tenant-scoped models
-- Tenant membership (`tenant_users`)
-- RBAC (roles, permissions, role/user assignment, policies)
-- Business types, engines, module registry, module dependencies
-- Domains and domain resolution
-- Cross-tenant isolation test harness
+- **Phase 0 — Foundation**
+- **Phase 1 — Platform foundation:** authentication, tenancy, RBAC, catalogue, domains, isolation harness.
+- **Phase 2 — Onboarding** → _Milestone 1 reached._ Default automations are deferred (AW-011).
+- **Phase 3 — CRM:** customers, leads, stages, sources, assignment, activities.
+- **Phase 4 — Service + Booking** → _Milestone 2 reached: create service, staff, customer, lead, appointment._
 
 ## Next
 
-**Phase 2 — Onboarding** → _Milestone 1: a user can create a Beauty Salon business and receive a working isolated tenant workspace._
-
-- Signup → choose business type → details → capabilities → branding → website template → workspace → dashboard
-- Automatic tenant, owner, role, business type, engines, modules, settings, website config, default domain, default automations, dashboard
-
-**Phase 3 — CRM**: customers, leads, lead stages, lead sources, assignment, activities.
-
-**Phase 4 — Service + Booking** → _Milestone 2: create service, staff, customer, lead, appointment._
+**Phase 5 — Automation** → _Milestone 3: lead created → follow-up job → Redis → worker → message action → execution log._
+It will also consume the CRM and booking events (AW-017, AW-024) and add default automations (AW-011).
 
 ## Later
 
-- **Phase 5 — Automation** → _Milestone 3: lead created → follow-up job → Redis → worker → message action → execution log._
 - **Phase 6 — Website** → _Milestone 4: `abc-salon.autowave.in` shows business info, services, products, booking, enquiry form, WhatsApp CTA._
 - **Phase 7 — Commerce**: products, categories, inventory, cart, orders.
 

@@ -1,6 +1,6 @@
 # Current State
 
-_Last updated: 2026-09-28 — end of Phase 3 (CRM)._
+_Last updated: 2026-09-28 — end of Phase 4 (Services + Booking)._
 
 This document describes what **actually exists** in the repository today. Planned work is in
 [roadmap.md](roadmap.md).
@@ -70,16 +70,56 @@ This document describes what **actually exists** in the repository today. Planne
 - **Tests**: 172 feature tests. Phase 3 adds 74 across CRM isolation, lifecycle, assignment, HTTP/bulk,
   customers, settings, provisioning, metrics and phone normalisation.
 
+### Phase 4 — Services + Booking (ADR-014)
+- **Services** (service engine: salon, clinic, internal):
+  - catalogue with categories, duration, price, active flag, and who offers each service;
+  - list with category, status and search filters, sorting and bulk actions;
+  - default categories per business type; categories are managed inline.
+- **Resources** (booking engine: salon, turf, clinic, internal): staff members or things such as turfs and
+  courts.
+  - The label is configurable per tenant (Staff, Turf, Doctor…).
+  - A resource can be linked to a team member.
+  - Weekly working hours with split shifts, dated time off, and the services it offers.
+- **Appointments:**
+  - a day calendar with a column per resource, working hours, time off, a now-line, click-to-book and a
+    "Mine" filter;
+  - a list with ranges, filters, search and bulk status changes;
+  - a booking form with customer search or inline new customer, and a slot picker;
+  - an appointment page with confirm, complete, no-show, cancel with reason, reschedule (including to
+    another resource), price and notes, and history.
+- **Double-booking prevention:** resource row lock, availability re-check, and the `appointments_no_overlap`
+  exclusion constraint (range form, no `btree_gist`). Concurrent conflicts become a friendly validation
+  error.
+- **Time zones:** working hours are in the tenant's local time and storage is UTC. Slots are built per local
+  date, so daylight-saving changes are handled.
+- **Lifecycle events** (after commit): `AppointmentCreated`, `Confirmed`, `Completed`, `Cancelled`,
+  `NoShow`, `Rescheduled`. Appointment entries appear on the customer timeline.
+- **Booking settings** (`/settings/booking`): slot interval, auto-confirm, resource label, default hours.
+- **Engine gating** (`engine:` middleware returns 404). Navigation follows the tenant's engines.
+- **Dashboard:** appointments or bookings today, free slots today, no-shows, cancellations, repeat
+  customers. Revenue today and service sales need `reports.view`.
+- **Customer page:** appointments card and a "Book" button.
+- **Backfill:** `TenantBackfillSeeder` adds booking settings, service categories and the new `services` and
+  `resources` permissions to existing tenants, once.
+- **Demo data:** the local-only `DemoBookingSeeder` adds services, two stylists and appointments for ABC
+  Salon, and turfs for ABC Turf.
+- **Tests:** 251 feature tests. Phase 4 adds 79 in `tests/Feature/Booking`: booking, lifecycle,
+  availability and timezone, resources, services, isolation, HTTP and permissions, settings, metrics, and
+  provisioning.
+
 ## In progress
 
-- Nothing. Phase 3 is complete and awaiting approval before Phase 4 (Services + Booking).
+- Nothing. Phase 4 is complete and awaiting approval before Phase 5 (Automation engine).
 
 ## Not implemented
 
-Invitations/member management, role editor, editable business settings, website editor, logo upload, custom
-domain UI, default automations, feature flags, custom fields, services, booking, commerce, automation,
-messaging, AI, analytics, billing. CRM gaps: kanban board, own-leads visibility, campaigns, import/export.
+- **Platform:** invitations and member management, role editor, editable business settings, website editor,
+  logo upload, custom domain UI, default automations, feature flags, custom fields, commerce, automation,
+  messaging, AI, analytics, billing.
+- **CRM gaps:** kanban board, own-leads visibility, campaigns, import/export.
+- **Booking gaps:** online booking (Phase 6), reminders, "any staff", buffers, recurring or group bookings,
+  week view, packages, scoped staff visibility.
 
 ## Known technical debt
 
-See [known-issues.md](known-issues.md) (AW-001 → AW-020).
+See [known-issues.md](known-issues.md) (AW-001 → AW-024).

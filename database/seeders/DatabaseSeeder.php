@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
         $this->call(TenantBackfillSeeder::class);
 
         if (app()->environment('local')) {
-            $this->call(DemoCrmSeeder::class);
+            $this->call([DemoCrmSeeder::class, DemoBookingSeeder::class]);
         }
     }
 }
