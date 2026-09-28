@@ -16,9 +16,9 @@ use App\Domain\Automation\Actions\Steps\TagCustomerStep;
 | Trigger → Condition → Wait → Action. A tenant's automations are built from
 | the catalogues below; nothing about a specific business is hard-coded.
 |
-| Subjects: the record an automation runs for (lead, customer, appointment).
-| Entities: the records a step can read or change for that subject — an
-| appointment also exposes its customer, a lead its linked customer (if any).
+| Subjects: the record an automation runs for (lead, customer, appointment,
+| order). Entities: the records a step can read or change for that subject — an
+| appointment or order also exposes its customer, a lead its linked customer (if any).
 |
 */
 
@@ -29,6 +29,7 @@ return [
         'lead' => ['label' => 'lead', 'entities' => ['lead', 'customer']],
         'customer' => ['label' => 'customer', 'entities' => ['customer']],
         'appointment' => ['label' => 'appointment', 'entities' => ['appointment', 'customer']],
+        'order' => ['label' => 'order', 'entities' => ['order', 'customer']],
     ],
 
     /*
@@ -49,11 +50,18 @@ return [
         'appointment.completed' => ['label' => 'Appointment completed', 'group' => 'Appointments', 'subject' => 'appointment', 'engine' => 'booking', 'description' => 'An appointment is marked completed.'],
         'appointment.cancelled' => ['label' => 'Appointment cancelled', 'group' => 'Appointments', 'subject' => 'appointment', 'engine' => 'booking', 'description' => 'An appointment is cancelled.'],
         'appointment.no_show' => ['label' => 'Appointment no-show', 'group' => 'Appointments', 'subject' => 'appointment', 'engine' => 'booking', 'description' => 'The customer did not turn up.'],
+        'order.created' => ['label' => 'Order placed', 'group' => 'Orders', 'subject' => 'order', 'engine' => 'commerce', 'description' => 'A new order is placed, by the team or on your website.'],
+        'order.confirmed' => ['label' => 'Order confirmed', 'group' => 'Orders', 'subject' => 'order', 'engine' => 'commerce', 'description' => 'An order is confirmed (including orders confirmed automatically).'],
+        'order.ready' => ['label' => 'Order ready', 'group' => 'Orders', 'subject' => 'order', 'engine' => 'commerce', 'description' => 'An order is ready for pickup or out for delivery.'],
+        'order.completed' => ['label' => 'Order completed', 'group' => 'Orders', 'subject' => 'order', 'engine' => 'commerce', 'description' => 'An order is handed over or delivered.'],
+        'order.cancelled' => ['label' => 'Order cancelled', 'group' => 'Orders', 'subject' => 'order', 'engine' => 'commerce', 'description' => 'An order is cancelled.'],
+        'order.paid' => ['label' => 'Order paid', 'group' => 'Orders', 'subject' => 'order', 'engine' => 'commerce', 'description' => 'The payments recorded for an order cover its total.'],
     ],
 
     /*
     | Condition fields. `options` names a tenant list resolved at runtime:
-    | lead_stages, lead_sources, appointment_statuses, services, booking_resources.
+    | lead_stages, lead_sources, appointment_statuses, services, booking_resources,
+    | order_statuses, order_sources, order_fulfilment, payment_statuses.
     */
     'fields' => [
         'lead.stage' => ['label' => 'Lead stage', 'entity' => 'lead', 'type' => 'enum', 'options' => 'lead_stages'],
@@ -73,6 +81,11 @@ return [
         'appointment.resource' => ['label' => 'Appointment with', 'entity' => 'appointment', 'type' => 'enum', 'options' => 'booking_resources'],
         'appointment.price' => ['label' => 'Appointment price', 'entity' => 'appointment', 'type' => 'number'],
         'appointment.source' => ['label' => 'Appointment source', 'entity' => 'appointment', 'type' => 'enum', 'options' => 'appointment_sources'],
+        'order.status' => ['label' => 'Order status', 'entity' => 'order', 'type' => 'enum', 'options' => 'order_statuses'],
+        'order.source' => ['label' => 'Order source', 'entity' => 'order', 'type' => 'enum', 'options' => 'order_sources'],
+        'order.fulfilment' => ['label' => 'Order type', 'entity' => 'order', 'type' => 'enum', 'options' => 'order_fulfilment'],
+        'order.payment_status' => ['label' => 'Order payment', 'entity' => 'order', 'type' => 'enum', 'options' => 'payment_statuses'],
+        'order.total' => ['label' => 'Order total', 'entity' => 'order', 'type' => 'number'],
     ],
 
     'operators' => [
@@ -108,7 +121,7 @@ return [
     'actions' => [
         'send_whatsapp' => ['label' => 'Send WhatsApp message', 'group' => 'Messages', 'class' => SendWhatsAppStep::class, 'entities' => ['lead', 'customer'], 'module' => 'messaging'],
         'send_email' => ['label' => 'Send email', 'group' => 'Messages', 'class' => SendEmailStep::class, 'entities' => ['lead', 'customer'], 'module' => 'messaging'],
-        'send_notification' => ['label' => 'Notify the team', 'group' => 'Messages', 'class' => NotifyTeamStep::class, 'entities' => ['lead', 'customer', 'appointment']],
+        'send_notification' => ['label' => 'Notify the team', 'group' => 'Messages', 'class' => NotifyTeamStep::class, 'entities' => ['lead', 'customer', 'appointment', 'order']],
         'create_task' => ['label' => 'Create follow-up task', 'group' => 'Records', 'class' => CreateTaskStep::class, 'entities' => ['lead', 'customer']],
         'assign_lead' => ['label' => 'Assign lead', 'group' => 'Records', 'class' => AssignLeadStep::class, 'entities' => ['lead'], 'module' => 'leads'],
         'update_lead' => ['label' => 'Move lead to stage', 'group' => 'Records', 'class' => MoveLeadStageStep::class, 'entities' => ['lead'], 'module' => 'leads'],
@@ -131,6 +144,10 @@ return [
         'appointment.time' => ['label' => 'Appointment time', 'entity' => 'appointment'],
         'appointment.service' => ['label' => 'Appointment service', 'entity' => 'appointment'],
         'appointment.resource' => ['label' => 'Appointment with', 'entity' => 'appointment'],
+        'order.number' => ['label' => 'Order number', 'entity' => 'order'],
+        'order.total' => ['label' => 'Order total', 'entity' => 'order'],
+        'order.items' => ['label' => 'Order items', 'entity' => 'order'],
+        'order.fulfilment' => ['label' => 'Order type (pickup, delivery…)', 'entity' => 'order'],
     ],
 
     /*
@@ -163,7 +180,7 @@ return [
     | actions the tenant cannot use are skipped. Message templates start paused
     | so nothing is sent to customers until the owner turns them on.
     */
-    'default_templates' => ['new_lead_welcome', 'new_lead_followup', 'appointment_confirmation', 'appointment_reminder', 'no_show_followup', 'thank_you'],
+    'default_templates' => ['new_lead_welcome', 'new_lead_followup', 'appointment_confirmation', 'appointment_reminder', 'no_show_followup', 'thank_you', 'new_online_order_alert', 'order_ready'],
 
     'templates' => [
         'new_lead_welcome' => [
@@ -224,6 +241,29 @@ return [
             'steps' => [
                 ['type' => 'wait', 'config' => ['mode' => 'delay', 'amount' => 2, 'unit' => 'hours']],
                 ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => 'Thank you for visiting {{business.name}}, {{customer.first_name}}! We hope to see you again soon.']],
+            ],
+        ],
+        'new_online_order_alert' => [
+            'name' => 'Tell the team about website orders',
+            'description' => 'Emails the owners as soon as a customer orders on your website.',
+            'trigger' => 'order.created',
+            'active' => true,
+            'steps' => [
+                ['type' => 'condition', 'config' => ['match' => 'all', 'rules' => [['field' => 'order.source', 'operator' => 'equals', 'value' => 'website']]]],
+                ['type' => 'action', 'action' => 'send_notification', 'config' => [
+                    'recipients' => 'owners',
+                    'subject' => 'New website order {{order.number}}',
+                    'message' => '{{customer.name}} ({{customer.phone}}) ordered {{order.items}}. Total: {{order.total}} ({{order.fulfilment}}).',
+                ]],
+            ],
+        ],
+        'order_ready' => [
+            'name' => 'Tell customers their order is ready',
+            'description' => 'Sends a WhatsApp message when an order is ready for pickup or out for delivery.',
+            'trigger' => 'order.ready',
+            'active' => false,
+            'steps' => [
+                ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => 'Hi {{customer.first_name}}, your order {{order.number}} from {{business.name}} is ready ({{order.fulfilment}}). Total: {{order.total}}.']],
             ],
         ],
     ],

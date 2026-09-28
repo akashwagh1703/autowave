@@ -72,14 +72,14 @@ return [
         ],
         'products' => [
             'label' => 'Products',
-            'description' => 'Products you sell.',
+            'description' => 'Your active products, straight from Products. Visitors can order them when online ordering is on.',
             'engine' => 'commerce',
             'data' => 'products',
-            'empty_hint' => 'Products appear here once the product catalogue is available (Commerce).',
+            'empty_hint' => 'Add active products to show this section.',
             'fields' => [
-                'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Products'],
+                'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Shop our products'],
                 'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300],
-                'show_prices' => ['type' => 'boolean', 'label' => 'Show prices', 'default' => true],
+                'show_prices' => ['type' => 'boolean', 'label' => 'Show prices', 'default' => true, 'help' => 'Prices are always shown in the cart.'],
             ],
         ],
         'packages' => [
@@ -87,7 +87,7 @@ return [
             'description' => 'Bundles of services and products.',
             'engine' => 'service',
             'data' => 'packages',
-            'empty_hint' => 'Packages appear here once packages are available (Commerce).',
+            'empty_hint' => 'Packages are not available yet; this section stays hidden until they are.',
             'fields' => [
                 'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Packages'],
                 'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300],
@@ -188,16 +188,6 @@ return [
                 'success_message' => ['type' => 'text', 'label' => 'Message after booking', 'max' => 200, 'default' => 'Thank you! Your booking request has been received.'],
             ],
         ],
-        'shop' => [
-            'label' => 'Shop',
-            'description' => 'Buy products online.',
-            'engine' => 'commerce',
-            'data' => 'products',
-            'empty_hint' => 'The shop appears once online ordering is available (Commerce).',
-            'fields' => [
-                'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Shop'],
-            ],
-        ],
         'footer' => [
             'label' => 'Footer',
             'description' => 'Copyright line and social links.',
@@ -223,6 +213,8 @@ return [
             'logo' => ['label' => 'Logo', 'max' => 1, 'path' => 'logo'],
             'hero' => ['label' => 'Hero image', 'max' => 1, 'path' => 'website'],
             'gallery' => ['label' => 'Gallery', 'max' => 24, 'path' => 'website'],
+            // One image per product (products.image_media_id); managed on the product page.
+            'product' => ['label' => 'Product image', 'max' => 2000, 'path' => 'products', 'website' => false],
         ],
     ],
 

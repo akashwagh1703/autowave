@@ -9,6 +9,12 @@ use App\Domain\Booking\Events\AppointmentConfirmed;
 use App\Domain\Booking\Events\AppointmentCreated;
 use App\Domain\Booking\Events\AppointmentNoShow;
 use App\Domain\Booking\Events\AppointmentRescheduled;
+use App\Domain\Commerce\Events\OrderCancelled;
+use App\Domain\Commerce\Events\OrderCompleted;
+use App\Domain\Commerce\Events\OrderConfirmed;
+use App\Domain\Commerce\Events\OrderCreated;
+use App\Domain\Commerce\Events\OrderPaid;
+use App\Domain\Commerce\Events\OrderReady;
 use App\Domain\Customer\Events\CustomerCreated;
 use App\Domain\Lead\Events\LeadAssigned;
 use App\Domain\Lead\Events\LeadConverted;
@@ -44,6 +50,12 @@ class StartAutomations
         AppointmentCancelled::class,
         AppointmentNoShow::class,
         WebsiteEnquiryReceived::class,
+        OrderCreated::class,
+        OrderConfirmed::class,
+        OrderReady::class,
+        OrderCompleted::class,
+        OrderCancelled::class,
+        OrderPaid::class,
     ];
 
     public function __construct(private readonly AutomationResolver $resolver) {}
@@ -87,6 +99,13 @@ class StartAutomations
             $event instanceof AppointmentCancelled => ['appointment.cancelled', $event->appointment, "appointment:{$event->appointment->id}", []],
             $event instanceof AppointmentNoShow => ['appointment.no_show', $event->appointment, "appointment:{$event->appointment->id}", []],
             $event instanceof WebsiteEnquiryReceived => ['website.enquiry', $event->lead, null, ['new_lead' => $event->newLead]],
+            $event instanceof OrderCreated => ['order.created', $event->order, "order:{$event->order->id}", []],
+            $event instanceof OrderConfirmed => ['order.confirmed', $event->order, "order:{$event->order->id}", []],
+            $event instanceof OrderReady => ['order.ready', $event->order, "order:{$event->order->id}", []],
+            $event instanceof OrderCompleted => ['order.completed', $event->order, "order:{$event->order->id}", []],
+            $event instanceof OrderCancelled => ['order.cancelled', $event->order, "order:{$event->order->id}", []],
+            // A removed payment can make an order unpaid again, so "paid" can happen more than once.
+            $event instanceof OrderPaid => ['order.paid', $event->order, "order:{$event->order->id}:paid:".$event->order->payments()->max('id'), []],
             default => null,
         };
     }

@@ -79,3 +79,29 @@ export async function getJson(url, params = {}) {
 
     return response.json();
 }
+
+/** POST JSON with Laravel's XSRF cookie; rejects with { status, errors } on failure. */
+export async function postJson(url, body) {
+    const token = document.cookie
+        .split('; ')
+        .find((cookie) => cookie.startsWith('XSRF-TOKEN='))
+        ?.slice('XSRF-TOKEN='.length);
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            ...(token ? { 'X-XSRF-TOKEN': decodeURIComponent(token) } : {}),
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw { status: response.status, errors: data.errors ?? {} };
+    }
+
+    return data;
+}

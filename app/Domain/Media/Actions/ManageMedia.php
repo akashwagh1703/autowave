@@ -30,6 +30,12 @@ class ManageMedia
         private readonly AuditLogger $audit,
     ) {}
 
+    /** @return list<string> collections managed in the website editor (not product images) */
+    public static function websiteCollections(): array
+    {
+        return array_keys(array_filter(config('website.media.collections'), fn (array $definition) => $definition['website'] ?? true));
+    }
+
     public function upload(mixed $file, string $collection, ?User $actor = null, ?string $alt = null): Media
     {
         $collections = config('website.media.collections');

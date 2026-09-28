@@ -3,15 +3,17 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { useCallback, useMemo, useState } from 'react';
 import BookingSection from '@/modules/website/BookingSection';
 import ContactSection from '@/modules/website/ContactSection';
+import { CartDrawer, Products, useCart } from '@/modules/website/ShopSection';
 import { About, Faq, Footer, Gallery, Header, Hero, Offers, Services, Team, Testimonials } from '@/modules/website/sections';
 import { SiteContext, scrollToSection, siteTheme } from '@/modules/website/site';
 
-// Section types without a renderer (products, packages, reviews, shop) never reach the page while they have no data.
+// Section types without a renderer (packages, reviews) never reach the page while they have no data.
 const RENDERERS = {
     header: Header,
     hero: Hero,
     about: About,
     services: Services,
+    products: Products,
     team: Team,
     gallery: Gallery,
     testimonials: Testimonials,
@@ -22,10 +24,15 @@ const RENDERERS = {
     footer: Footer,
 };
 
-export default function Home({ business, template, seo, contact, social, locale, sections, booking, enquiry, preview, enquirySent, bookingConfirmation }) {
+export default function Home({ business, template, seo, contact, social, locale, sections, booking, shop, enquiry, preview, enquirySent, bookingConfirmation, orderConfirmation }) {
     const theme = siteTheme(template, business.primary_color);
     const [selectedService, setSelectedService] = useState(null);
     const types = useMemo(() => new Set(sections.map((section) => section.type)), [sections]);
+    const products = useMemo(
+        () => Object.fromEntries(sections.filter((section) => section.type === 'products').flatMap((section) => section.data.flatMap((group) => group.products)).map((product) => [product.id, product])),
+        [sections],
+    );
+    const cart = useCart(shop, products);
 
     const bookService = useCallback((id) => {
         setSelectedService({ id, at: Date.now() });
@@ -42,6 +49,9 @@ export default function Home({ business, template, seo, contact, social, locale,
         enquiry,
         enquirySent,
         bookingConfirmation,
+        shop,
+        cart,
+        orderConfirmation,
         selectedService,
         bookService,
         has: (type) => types.has(type),
@@ -65,6 +75,8 @@ export default function Home({ business, template, seo, contact, social, locale,
 
                     return Renderer ? <Renderer key={section.id} config={section.config} data={section.data} /> : null;
                 })}
+
+                {shop ? <CartDrawer products={products} /> : null}
 
                 {contact.whatsapp_url ? (
                     <a

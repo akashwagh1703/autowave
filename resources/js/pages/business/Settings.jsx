@@ -38,6 +38,11 @@ export default function Settings({ business, branding, profile, website, domains
                                 Booking settings
                             </Button>
                         ) : null}
+                        {hasEngine('commerce') ? (
+                            <Button component={Link} href="/settings/commerce" variant="outlined">
+                                Order settings
+                            </Button>
+                        ) : null}
                         {hasModule('leads') ? (
                             <Button component={Link} href="/settings/crm" variant="outlined">
                                 CRM settings

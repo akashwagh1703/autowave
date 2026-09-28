@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getJson } from '@/utils/booking';
 
 /** Search existing customers by name, phone or email. */
-export default function CustomerPicker({ value, onChange, error, autoFocus = false }) {
+export default function CustomerPicker({ value, onChange, error, autoFocus = false, endpoint = '/appointments/customers' }) {
     const [input, setInput] = useState('');
     const [options, setOptions] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ export default function CustomerPicker({ value, onChange, error, autoFocus = fal
         let cancelled = false;
         setLoading(true);
         timer.current = setTimeout(() => {
-            getJson('/appointments/customers', { search: input.trim() })
+            getJson(endpoint, { search: input.trim() })
                 .then((data) => !cancelled && setOptions(data.data))
                 .catch(() => !cancelled && setOptions([]))
                 .finally(() => !cancelled && setLoading(false));
@@ -34,7 +34,7 @@ export default function CustomerPicker({ value, onChange, error, autoFocus = fal
             cancelled = true;
             clearTimeout(timer.current);
         };
-    }, [input, value]);
+    }, [input, value, endpoint]);
 
     return (
         <Autocomplete

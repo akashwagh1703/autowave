@@ -103,7 +103,10 @@ class BookingMetricsTest extends TestCase
 
         $this->actingAs($accountant)
             ->get($this->appUrl('/dashboard'))
-            ->assertInertia(fn (Assert $page) => $page->missing('metrics.appointments_today')->missing('metrics.revenue_today'));
+            ->assertInertia(fn (Assert $page) => $page
+                ->missing('metrics.appointments_today')
+                // The accountant can see orders, so revenue counts completed orders only.
+                ->where('metrics.revenue_today.hint', 'Completed orders today'));
     }
 
     private function changeStatus(Tenant $tenant, Appointment $appointment, AppointmentStatus $status): void

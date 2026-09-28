@@ -4,6 +4,7 @@ namespace App\Domain\Automation\Models;
 
 use App\Domain\Automation\Enums\RunStatus;
 use App\Domain\Booking\Models\Appointment;
+use App\Domain\Commerce\Models\Order;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Lead\Models\Lead;
 use App\Domain\Messaging\Models\OutboundMessage;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * One execution of an automation for one subject (lead, customer or appointment). `steps` is a
+ * One execution of an automation for one subject (lead, customer, appointment or order). `steps` is a
  * snapshot taken when the run started, so editing the automation never changes a run in flight.
  */
 #[Fillable([
@@ -30,6 +31,7 @@ class AutomationRun extends Model
         'lead' => Lead::class,
         'customer' => Customer::class,
         'appointment' => Appointment::class,
+        'order' => Order::class,
     ];
 
     protected function casts(): array

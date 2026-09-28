@@ -86,6 +86,7 @@ return [
     | `configuration.automation_templates` picks keys from config/automation.php `templates`
     | (default: automation.default_templates).
     | `configuration.booking` overrides config/booking.php defaults (slot_interval, auto_confirm, default_hours).
+    | `configuration.commerce.online` overrides config/commerce.php `online` defaults (pickup, delivery, fees…).
     */
     'business_types' => [
         'beauty_salon' => [
@@ -189,6 +190,7 @@ return [
             'configuration' => [
                 'dashboard_widgets' => ['orders_today', 'revenue_today', 'low_stock', 'repeat_customers'],
                 'website_sections' => ['header', 'hero', 'about', 'products', 'offers', 'contact', 'footer'],
+                'commerce' => ['online' => ['pickup' => true, 'delivery' => true]],
             ],
         ],
         'autowave_internal' => [

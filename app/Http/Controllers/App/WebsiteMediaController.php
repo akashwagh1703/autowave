@@ -9,13 +9,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
-/** Website images: logo, hero image and gallery. */
+/** Website images: logo, hero image and gallery. Product images are managed on the product page. */
 class WebsiteMediaController extends Controller
 {
     public function store(Request $request, ManageMedia $manager): RedirectResponse
     {
         $collection = (string) $request->validate([
-            'collection' => ['required', 'string', Rule::in(array_keys(config('website.media.collections')))],
+            'collection' => ['required', 'string', Rule::in(ManageMedia::websiteCollections())],
         ])['collection'];
 
         $manager->upload($request->file('file'), $collection, $request->user(), $request->input('alt'));
@@ -25,6 +25,7 @@ class WebsiteMediaController extends Controller
 
     public function update(Request $request, Media $media, ManageMedia $manager): RedirectResponse
     {
+        $this->ensureWebsiteImage($media);
         $manager->updateAlt($media, $request->input('alt'));
 
         return back()->with('success', __('Image description saved.'));
@@ -33,7 +34,7 @@ class WebsiteMediaController extends Controller
     public function reorder(Request $request, ManageMedia $manager): RedirectResponse
     {
         $validated = $request->validate([
-            'collection' => ['required', 'string', Rule::in(array_keys(config('website.media.collections')))],
+            'collection' => ['required', 'string', Rule::in(ManageMedia::websiteCollections())],
             'ids' => ['required', 'array', 'max:100'],
             'ids.*' => ['integer'],
         ]);
@@ -45,8 +46,14 @@ class WebsiteMediaController extends Controller
 
     public function destroy(Media $media, ManageMedia $manager): RedirectResponse
     {
+        $this->ensureWebsiteImage($media);
         $manager->delete($media);
 
         return back()->with('success', __('Image removed.'));
+    }
+
+    private function ensureWebsiteImage(Media $media): void
+    {
+        abort_unless(in_array($media->collection, ManageMedia::websiteCollections(), true), 404);
     }
 }

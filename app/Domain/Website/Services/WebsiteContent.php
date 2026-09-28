@@ -4,6 +4,7 @@ namespace App\Domain\Website\Services;
 
 use App\Domain\Booking\Models\BookingResource;
 use App\Domain\Booking\Support\BookingSettings;
+use App\Domain\Commerce\Models\Product;
 use App\Domain\Media\Models\Media;
 use App\Domain\Service\Models\Service;
 use App\Domain\Tenant\Support\TenantContext;
@@ -27,6 +28,7 @@ class WebsiteContent
         private readonly SectionCatalog $catalog,
         private readonly OnlineBooking $booking,
         private readonly BookingSettings $bookingSettings,
+        private readonly OnlineShop $shop,
     ) {}
 
     /** @return array<string, mixed> */
@@ -66,6 +68,7 @@ class WebsiteContent
             'locale' => ['currency' => $tenant->currency, 'timezone' => $tenant->timezone],
             'sections' => $sections,
             'booking' => in_array('booking', $types, true) ? $this->bookingProps() : null,
+            'shop' => in_array('products', $types, true) && $this->shop->isOpen() ? $this->shop->props() : null,
             'enquiry' => in_array('contact', $types, true) ? $this->enquiryProps($sections) : null,
         ];
     }
@@ -118,8 +121,9 @@ class WebsiteContent
                     ->map(fn (Media $media) => ['url' => $media->url(), 'alt' => $media->alt, 'width' => $media->width, 'height' => $media->height])
                     ->all(),
                 'items' => $config['items'] ?? [],
-                // Filled by the Commerce and Reviews phases; until then these sections stay hidden.
-                'products', 'packages', 'reviews' => [],
+                'products' => $this->products(),
+                // Filled by later phases; until then these sections stay hidden.
+                'packages', 'reviews' => [],
                 default => [],
             },
         };
@@ -144,6 +148,40 @@ class WebsiteContent
                     'duration_minutes' => $service->duration_minutes,
                     'price' => $service->price !== null ? (float) $service->price : null,
                     'bookable' => in_array($service->id, $bookable, true),
+                ])->values()->all(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Active products by category. Stock counts stay private: visitors only see whether a product
+     * is in stock and the most they can order.
+     *
+     * @return list<array{name: ?string, products: list<array<string, mixed>>}>
+     */
+    private function products(): array
+    {
+        if (! $this->context->hasEngine('commerce')) {
+            return [];
+        }
+
+        $max = (int) config('commerce.limits.max_quantity');
+
+        return Product::query()->active()->with(['category', 'image'])->get()
+            ->sortBy(fn (Product $product) => [$product->category === null ? 1 : 0, $product->category?->sort_order ?? 0, $product->category?->name ?? '', $product->sort_order, $product->name])
+            ->groupBy(fn (Product $product) => $product->category?->name ?? '')
+            ->map(fn ($products, string $category) => [
+                'name' => $category !== '' ? $category : null,
+                'products' => $products->map(fn (Product $product) => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'description' => $product->description,
+                    'price' => (string) $product->price,
+                    'compare_at_price' => $product->compare_at_price !== null ? (string) $product->compare_at_price : null,
+                    'image' => $product->image?->url(),
+                    'in_stock' => $product->isInStock(),
+                    'max_quantity' => $product->track_stock ? min($product->available(), $max) : $max,
                 ])->values()->all(),
             ])
             ->values()

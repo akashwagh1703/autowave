@@ -33,6 +33,7 @@ class HomeController extends Controller
             'preview' => $previewing && ! $config->isPublished(),
             'enquirySent' => (bool) $request->session()->get('enquiry_sent'),
             'bookingConfirmation' => $request->session()->get('booking_confirmation'),
+            'orderConfirmation' => $request->session()->get('order_confirmation'),
         ]);
     }
 }

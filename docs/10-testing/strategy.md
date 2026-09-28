@@ -32,6 +32,7 @@ tests/
 | Automation | Trigger, condition pass/fail, delay, execution, retry, failure log, duplicate prevention | Automation engine (`tests/Feature/Automation`; helpers in `tests/Concerns/CreatesAutomations.php`) |
 | Booking | Create, cancel, reschedule, unavailable slot, duplicate, concurrent attempt, timezone, resource availability | Booking engine (`tests/Feature/Booking`; concurrency is simulated, AW-021) |
 | Public website | Render, publish/preview, SEO meta, forms (validation, honeypot, throttle), online booking, cross-tenant hosts | Website engine (`tests/Feature/Website`; requests go to `$this->siteUrl('abc-salon.autowave.test', '/path')`) |
+| Commerce | Server pricing (tampered prices ignored), stock never below zero, cancel restocks once, lifecycle, payments up to the balance, numbering, website checkout, cross-tenant products and customers | Commerce engine (`tests/Feature/Commerce`, `tests/Feature/Website/OnlineShopTest`; helpers in `tests/Concerns/CreatesCommerceRecords.php`) |
 | E2E | Full customer workflows | Milestones (tooling TBD) |
 
 ## Testing queued work
@@ -65,6 +66,12 @@ Other helpers:
   towards the limit too.
 - Postgres `jsonb` does not keep object key order; compare stored arrays with `assertEquals`, not
   `assertSame`.
+- Session flash (for example the website order confirmation) is consumed by the first GET after the POST.
+  Assert it on that GET, and assert it is gone on the next one.
+- Commerce helpers (`CreatesCommerceRecords`): `makeProduct($tenant, [...], $stock)` (tracks stock when
+  `$stock` is given), `placeOrder($tenant, [[$product, $qty]], [...])`, `setOnlineOrdering($tenant, [...])`
+  and `stockOf($tenant, $product)`.
+- Audit rows are in `audit_logs` with the column `action`.
 
 ## Current coverage (Phase 0)
 

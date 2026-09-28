@@ -1,6 +1,6 @@
 # Implementation Status
 
-_Last updated: 2026-09-30_
+_Last updated: 2026-10-01_
 
 Legend: ✅ done · 🚧 in progress · ⏳ not started
 
@@ -19,9 +19,9 @@ Legend: ✅ done · 🚧 in progress · ⏳ not started
 | Website foundation (templates, config, sections, public render) | ✅ | 2 | ADR-012; editor added in Phase 6 |
 | Customers / Leads / CRM | ✅ | 3 | ADR-013; configurable stages/sources, conversion, timeline, auto-assign; kanban/own-leads/campaigns later (AW-014–016) |
 | Services + Booking | ✅ | 4 | ADR-014; staff-side booking, day calendar, lifecycle, exclusion constraint; online booking added in Phase 6 (AW-021–024, AW-037) |
-| Automation engine | ✅ | 5 | ADR-015; 12 triggers, conditions, waits, 7 actions, run history, retry/cancel, default templates; linear flows (AW-025–033) |
-| Website engine (editor, SEO, gallery, booking widget) | ✅ | 6 | ADR-016; section editor, design, details, media, publish and preview, enquiry form → leads, online booking, WhatsApp button, SEO meta; products/packages/reviews/shop sections wait for their phases (AW-034–040) |
-| Commerce | ⏳ | 7 | |
+| Automation engine | ✅ | 5 | ADR-015; lead, customer and appointment triggers (order triggers added in Phase 7), conditions, waits, 7 actions, run history, retry/cancel, default templates; linear flows (AW-025–033) |
+| Website engine (editor, SEO, gallery, booking widget) | ✅ | 6 | ADR-016; section editor, design, details, media, publish and preview, enquiry form → leads, online booking, WhatsApp button, SEO meta; products section and cart added in Phase 7; packages and reviews wait for their phases (AW-034–040) |
+| Commerce | ✅ | 7 | ADR-017; products with categories, images and optional stock tracking, stock ledger and low-stock alerts, staff orders (in store, pickup, delivery), lifecycle with restock on cancel, manual payments, order settings, website products section with cart and checkout, order automations and dashboard widgets; no gateway, variants, refunds or taxes (AW-041–049) |
 | Messaging (WhatsApp, Instagram, email) | 🚧 | 5 / 8 | Outbound pipeline, provider abstraction and email in Phase 5; WhatsApp simulated (AW-025); real providers and inbox in Phase 8 |
 | AI | ⏳ | 9 | |
 | Additional verticals (Turf, Coaching, Cafe, Local Commerce) | ⏳ | 10 | |

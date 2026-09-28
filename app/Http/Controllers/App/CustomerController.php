@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Domain\Activity\Actions\LogActivity;
 use App\Domain\Activity\Models\Activity;
 use App\Domain\Booking\Models\Appointment;
+use App\Domain\Commerce\Models\Order;
 use App\Domain\Customer\Actions\CreateCustomer;
 use App\Domain\Customer\Actions\DeleteCustomer;
 use App\Domain\Customer\Actions\UpdateCustomer;
@@ -12,6 +13,7 @@ use App\Domain\Customer\Models\Customer;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\BookingPresenter;
+use App\Http\Presenters\CommercePresenter;
 use App\Http\Presenters\CrmOptions;
 use App\Http\Presenters\CrmPresenter;
 use App\Http\Requests\Crm\CustomerRequest;
@@ -94,8 +96,18 @@ class CustomerController extends Controller
     public function show(Request $request, Customer $customer): Response
     {
         $showAppointments = $this->context->hasEngine('booking') && $request->user()->can('appointments.view');
+        $showOrders = $this->context->hasEngine('commerce') && $request->user()->can('orders.view');
 
         return Inertia::render('business/customers/Show', [
+            'orders' => $showOrders
+                ? Order::query()
+                    ->where('customer_id', $customer->id)
+                    ->with('items')
+                    ->orderByDesc('created_at')->orderByDesc('id')
+                    ->limit(20)
+                    ->get()
+                    ->map(fn (Order $order) => CommercePresenter::order($order))
+                : null,
             'appointments' => $showAppointments
                 ? Appointment::query()
                     ->where('customer_id', $customer->id)

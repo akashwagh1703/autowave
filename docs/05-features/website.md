@@ -1,7 +1,7 @@
 # Website
 
-- **Status:** ✅ Phase 6: builder, public site, enquiry form and online booking
-- **Last updated:** 2026-09-30
+- **Status:** ✅ Phase 6: builder, public site, enquiry form and online booking; products and cart in Phase 7
+- **Last updated:** 2026-10-01
 
 ## Purpose
 
@@ -43,6 +43,9 @@ business can edit it without help: design, content, images, publishing, the enqu
   5. details;
   6. confirmation ("We will confirm shortly" while the booking is pending).
 - **Book** on a service card jumps to the booking section with that service chosen.
+- **Online ordering** (products section, Phase 7): add to cart, a cart button in the header, a cart drawer
+  with server-priced totals, and checkout for pickup or delivery. The rules are in
+  [commerce.md](commerce.md#online-ordering-website).
 
 ## Section types (`config/website.php`)
 
@@ -52,7 +55,8 @@ business can edit it without help: design, content, images, publishing, the enqu
 | hero | Headline, subheadline, main button (book, contact, WhatsApp or call), optional image | — |
 | about | Heading and text (falls back to the business description) | — |
 | services | Active services by category, prices, durations, **Book** buttons | service engine |
-| products, packages, shop | Hidden until Commerce (Phase 7) supplies products | commerce / service engine |
+| products | Active products by category, optional prices, "Out of stock", **Add to cart** when online ordering is open ([commerce.md](commerce.md)) | commerce engine, at least one active product |
+| packages | Hidden until packages exist | service engine |
 | gallery | Uploaded photos with a lightbox | — |
 | team | Active staff or resources and what they offer | booking engine |
 | testimonials, offers, faq | Items entered in the editor | — |
@@ -124,7 +128,8 @@ business can edit it without help: design, content, images, publishing, the enqu
   `website.*`).
 - **Public forms:**
   - honeypot field;
-  - rate limits per IP and website host (enquiry 5/min and 20/hour, booking 10/hour, slots 60/min);
+  - rate limits per IP and website host (enquiry 5/min and 20/hour, booking 10/hour, slots 60/min,
+    orders 10/hour, cart quotes 60/min);
   - forms answer only while the website is live;
   - input is validated server-side;
   - leads and appointments are created in the tenant resolved from the host.
@@ -147,9 +152,11 @@ business can edit it without help: design, content, images, publishing, the enqu
 - `OnlineBookingTest`: slots, notice and window, "Any available", pending vs auto-confirm, rules, turf
   without services, switch-off, honeypot and throttle, the `appointment.source` condition.
 - `WebsiteProvisioningTest`: provisioning.
+- `OnlineShopTest` (Phase 7): products section, cart quote, website orders, delivery rules, honeypot and
+  throttle, owner alert.
 
 ## Known limitations
 
-See `docs/00-overview/known-issues.md` (AW-034 to AW-040): products, packages, reviews and shop stay hidden
-until their phases; images are not resized; the section content isn't server-rendered; there's no customer
+See `docs/00-overview/known-issues.md` (AW-034 to AW-040, AW-045): packages and reviews stay hidden until
+their phases; carts don't reserve stock; images are not resized; the section content isn't server-rendered; there's no customer
 self-cancel or reschedule; there's no captcha; there are no custom domains yet.

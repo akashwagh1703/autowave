@@ -61,6 +61,26 @@ export function formatMoney(value, currency) {
     }
 }
 
+// Prices and order totals: paise/cents are kept ("₹249.50"), whole amounts stay short ("₹250").
+export function formatPrice(value, currency) {
+    if (value === null || value === undefined || value === '') {
+        return '—';
+    }
+
+    const amount = Number(value);
+
+    try {
+        return new Intl.NumberFormat(undefined, {
+            style: 'currency',
+            currency: currency || 'INR',
+            minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+            maximumFractionDigits: 2,
+        }).format(amount);
+    } catch {
+        return String(value);
+    }
+}
+
 // ISO timestamp -> "YYYY-MM-DDTHH:mm" wall-clock time in the timezone (for datetime-local inputs).
 export function toLocalInput(iso, timeZone) {
     if (!iso) {

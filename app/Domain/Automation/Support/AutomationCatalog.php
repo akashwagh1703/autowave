@@ -5,6 +5,8 @@ namespace App\Domain\Automation\Support;
 use App\Domain\Automation\Actions\Steps\StepAction;
 use App\Domain\Booking\Enums\AppointmentStatus;
 use App\Domain\Booking\Models\BookingResource;
+use App\Domain\Commerce\Enums\OrderStatus;
+use App\Domain\Commerce\Enums\PaymentStatus;
 use App\Domain\Lead\Actions\AssignLead;
 use App\Domain\Lead\Models\LeadSource;
 use App\Domain\Lead\Models\LeadStage;
@@ -112,6 +114,10 @@ class AutomationCatalog
                 ->map(fn (LeadSource $source) => ['value' => $source->code, 'label' => $source->name])->all(),
             'appointment_statuses' => array_map(fn (AppointmentStatus $status) => ['value' => $status->value, 'label' => $status->label()], AppointmentStatus::cases()),
             'appointment_sources' => array_map(fn (string $value, string $label) => ['value' => $value, 'label' => $label], array_keys(config('booking.sources')), config('booking.sources')),
+            'order_statuses' => array_map(fn (OrderStatus $status) => ['value' => $status->value, 'label' => $status->label()], OrderStatus::cases()),
+            'order_sources' => array_map(fn (string $value, string $label) => ['value' => $value, 'label' => $label], array_keys(config('commerce.sources')), config('commerce.sources')),
+            'order_fulfilment' => array_map(fn (string $value, array $method) => ['value' => $value, 'label' => $method['label']], array_keys(config('commerce.fulfilment')), config('commerce.fulfilment')),
+            'payment_statuses' => array_map(fn (PaymentStatus $status) => ['value' => $status->value, 'label' => $status->label()], PaymentStatus::cases()),
             'services' => $this->context->hasEngine('service')
                 ? Service::query()->orderBy('name')->get()->map(fn (Service $service) => ['value' => (string) $service->id, 'label' => $service->name])->all()
                 : [],

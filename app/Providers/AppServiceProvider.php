@@ -57,6 +57,10 @@ class AppServiceProvider extends ServiceProvider
             'message' => '[0-9]+',
             'section' => '[0-9]+',
             'media' => '[0-9]+',
+            'product' => '[0-9]+',
+            'productCategory' => '[0-9]+',
+            'order' => '[0-9]+',
+            'payment' => '[0-9]+',
         ]);
 
         // Business creation attempts (including validation failures) per user.
@@ -71,5 +75,7 @@ class AppServiceProvider extends ServiceProvider
         ]);
         RateLimiter::for('website-booking', fn (Request $request) => Limit::perHour((int) config('booking.online_per_hour'))->by($site('booking', $request)));
         RateLimiter::for('website-slots', fn (Request $request) => Limit::perMinute(60)->by($site('slots', $request)));
+        RateLimiter::for('website-cart', fn (Request $request) => Limit::perMinute(60)->by($site('cart', $request)));
+        RateLimiter::for('website-order', fn (Request $request) => Limit::perHour((int) config('commerce.online_per_hour'))->by($site('order', $request)));
     }
 }

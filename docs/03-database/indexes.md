@@ -98,6 +98,26 @@ Phase 5 (automation and messaging):
 | `outbound_messages (tenant_id, status, created_at)` | Message lists and counts |
 | `outbound_messages.lead_id`, `.customer_id`, `.tenant_user_id`, `.automation_run_id` | FK side; messages on the run page |
 
+Phase 7 (commerce):
+
+| Index / constraint | Serves |
+|---|---|
+| `(id, tenant_id)` unique on `product_categories`, `products`, `orders` | Targets of the commerce composite FKs |
+| `product_categories (tenant_id, name)` unique | Category names per tenant |
+| `products (tenant_id, product_category_id)`, `(tenant_id, name)` | Category filter and counts; name uniqueness check; name sort |
+| `products_sku_unique` partial unique `(tenant_id, lower(sku))` live rows with a SKU | One live product per SKU, case-insensitive; a deleted product's SKU can be reused |
+| `products.product_category_id`, `.image_media_id`, `.created_by_user_id` | FK side (category delete, image delete sets null) |
+| `orders (tenant_id, number)` unique | Order number lookup and search; next number (`max + 1` under a tenant lock) |
+| `orders (tenant_id, created_at)` | Order list sort and date range; "orders today" metric |
+| `orders (tenant_id, status)` | Status tabs and counts |
+| `orders (tenant_id, customer_id, created_at)` | Customer orders card; repeat-customer metric |
+| `order_items (tenant_id, order_id)`, `(tenant_id, product_id)` | Order lines; open orders containing a product; product sales metric |
+| `order_payments (tenant_id, paid_at)` | Payments by date (reports) |
+| `stock_movements (tenant_id, product_id, created_at)` | Stock history on the product page |
+| `order_items.order_id`, `.product_id`, `order_payments.order_id`, `stock_movements.product_id`, `.order_id`, user columns | FK side |
+| `activities (tenant_id, order_id, occurred_at)` | Order history |
+| Checks `products_valid`, `orders_valid`, `order_items_valid`, `order_payments_valid`, `stock_movements_valid` | Stock never below zero, totals add up, payments never exceed the total (last line of defence behind the application rules) |
+
 Text search uses `ILIKE '%…%'` on name/email and `LIKE '%digits%'` on `phone_normalized`; these scans
 are filtered by `tenant_id` first and are fine at current volumes. Add `pg_trgm` GIN indexes
 when a tenant's lead count makes the list slow.

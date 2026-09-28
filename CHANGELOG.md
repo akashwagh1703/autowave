@@ -8,6 +8,30 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- Phase 7 Commerce:
+  - Products: a catalogue with categories, SKU, price and original price, description, a photo and an
+    active flag. Search, category, status and stock filters, sorting, and bulk activate, deactivate and
+    delete.
+  - Stock: switch on stock tracking per product, set the opening stock and a low-stock level, and adjust
+    stock (new stock received, count correction, damaged, used in the business) with a full history. Stock
+    never goes below zero, and a banner and dashboard widget show low-stock products.
+  - Orders: take an order for a new or existing customer, in store, for pickup or for delivery (address and
+    fee), with an optional discount. Mark it handed over and paid in the same step for counter sales.
+  - Order page: confirm, mark ready ("Ready for pickup" / "Out for delivery"), mark completed or delivered,
+    cancel with a reason (the stock goes back), record payments (cash, UPI, card, bank transfer, other) and
+    remove one recorded by mistake. Orders show on the customer page and timeline.
+  - Orders list with open, pending, confirmed, ready, completed and cancelled tabs, search, and payment,
+    source and date filters.
+  - Order settings: online ordering, auto-confirm, pickup, delivery fee, free delivery above an amount,
+    minimum order and a delivery note.
+  - Website shop: the Products section shows the catalogue with prices and "Out of stock". Visitors add
+    products to a cart, see the total with any delivery fee, and order for pickup or delivery. Website
+    orders appear in Orders (pending until confirmed, unless auto-confirm is on) and the owners get an email.
+  - Automations: triggers for orders placed, confirmed, ready, completed, cancelled and paid; conditions on
+    order status, source, type, payment and total; order number, items, total and type in messages. A new
+    paused template tells customers when their order is ready.
+  - Dashboard: orders today, revenue today, low stock and repeat customers for local stores (orders and
+    revenue for cafes too). Salons get product sales, and their revenue today now includes completed orders.
 - Phase 6 Website:
   - Website page in the business app: the site's status and address, a setup checklist, publish and
     unpublish, and a preview link for sites that are not published yet.
@@ -26,7 +50,7 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
     Settings for minimum notice, how far ahead and "Any available".
   - Automations: new trigger "Website enquiry received" and the condition "Appointment source is Online
     booking".
-  - The Products section is ready and will appear once products are added in Phase 7.
+  - The Products section is ready and appears once products are added (Phase 7).
 - Phase 5 Automation:
   - Automations page: every automation with its steps in plain language, run counts, an on/off switch,
     and figures for runs, completed, in progress and failed in the last 7 days.

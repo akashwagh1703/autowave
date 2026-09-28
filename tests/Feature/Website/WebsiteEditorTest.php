@@ -46,13 +46,13 @@ class WebsiteEditorTest extends TestCase
                     $products = $sections->firstWhere('type', 'products');
                     $this->assertTrue($products['enabled']);
                     $this->assertFalse($products['live']);
-                    $this->assertStringContainsString('Commerce', $products['empty_hint']);
+                    $this->assertStringContainsString('Add active products', $products['empty_hint']);
                     $this->assertTrue($sections->firstWhere('type', 'contact')['live']);
                     $this->assertFalse($sections->firstWhere('type', 'header')['removable']);
 
                     return true;
                 })
-                ->where('addable', fn ($addable) => collect($addable)->pluck('type')->all() === ['reviews', 'shop'])
+                ->where('addable', fn ($addable) => collect($addable)->pluck('type')->all() === ['reviews'])
                 ->where('checklist', fn ($checklist) => collect($checklist)->firstWhere('key', 'published')['done'] === true)
                 ->where('onlineBooking.settings.enabled', true)
                 ->where('canManage', true));
@@ -175,7 +175,7 @@ class WebsiteEditorTest extends TestCase
         $this->actingAs($this->ownerOf($turf));
 
         $this->post($this->appUrl('/website/sections'), ['type' => 'services'])->assertSessionHasErrors('type');
-        $this->post($this->appUrl('/website/sections'), ['type' => 'shop'])->assertSessionHasErrors('type');
+        $this->post($this->appUrl('/website/sections'), ['type' => 'products'])->assertSessionHasErrors('type');
         $this->post($this->appUrl('/website/sections'), ['type' => 'testimonials'])->assertSessionHasNoErrors();
     }
 

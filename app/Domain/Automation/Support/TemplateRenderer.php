@@ -28,6 +28,7 @@ class TemplateRenderer
         $lead = $context->lead;
         $customer = $context->customer;
         $appointment = $context->appointment;
+        $order = $context->order;
         $timezone = $context->tenant->timezone;
 
         return (string) match ($variable) {
@@ -45,6 +46,10 @@ class TemplateRenderer
             'appointment.time' => $appointment?->starts_at->setTimezone($timezone)->format('g:i A'),
             'appointment.service' => $appointment?->service?->name,
             'appointment.resource' => $appointment?->resource?->name,
+            'order.number' => $order?->reference(),
+            'order.total' => $order ? number_format((float) $order->total, 2) : null,
+            'order.items' => $order?->itemSummary(),
+            'order.fulfilment' => $order ? config("commerce.fulfilment.{$order->fulfilment}.label", $order->fulfilment) : null,
             default => null,
         };
     }

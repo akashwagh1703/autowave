@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\App;
 
 use App\Domain\Booking\Services\BookingMetrics;
+use App\Domain\Commerce\Services\CommerceMetrics;
 use App\Domain\Lead\Services\CrmMetrics;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
@@ -12,8 +13,13 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request, TenantContext $context, CrmMetrics $crmMetrics, BookingMetrics $bookingMetrics): Response
-    {
+    public function __invoke(
+        Request $request,
+        TenantContext $context,
+        CrmMetrics $crmMetrics,
+        BookingMetrics $bookingMetrics,
+        CommerceMetrics $commerceMetrics,
+    ): Response {
         $tenant = $context->tenant()->loadMissing(['businessType:id,code,name', 'primaryDomain']);
         $widgets = $context->setting('dashboard_widgets', []);
 
@@ -28,9 +34,33 @@ class DashboardController extends Controller
             'widgets' => $widgets,
             'metrics' => [
                 ...$crmMetrics->for($request->user(), $widgets),
-                ...$bookingMetrics->for($request->user(), $widgets),
+                ...self::combineRevenue(
+                    $bookingMetrics->for($request->user(), $widgets),
+                    $commerceMetrics->for($request->user(), $widgets),
+                ),
             ],
         ]);
+    }
+
+    /**
+     * Booking and commerce figures together. When both engines report today's revenue, the widget
+     * shows the sum of completed appointments and completed orders.
+     *
+     * @param  array<string, array<string, mixed>>  $booking
+     * @param  array<string, array<string, mixed>>  $commerce
+     * @return array<string, array<string, mixed>>
+     */
+    private static function combineRevenue(array $booking, array $commerce): array
+    {
+        if (isset($booking['revenue_today'], $commerce['revenue_today'])) {
+            $commerce['revenue_today'] = [
+                ...$booking['revenue_today'],
+                'value' => bcadd((string) $booking['revenue_today']['value'], (string) $commerce['revenue_today']['value'], 2),
+                'hint' => 'Completed appointments and orders today',
+            ];
+        }
+
+        return [...$booking, ...$commerce];
     }
 
     private function port(): string

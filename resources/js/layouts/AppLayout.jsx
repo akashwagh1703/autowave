@@ -14,9 +14,11 @@ import FlashMessages from '@/components/FlashMessages';
 const navigation = [
     { label: 'Dashboard', href: '/dashboard' },
     { label: 'Appointments', href: '/appointments', permission: 'appointments.view', engine: 'booking' },
+    { label: 'Orders', href: '/orders', permission: 'orders.view', engine: 'commerce' },
     { label: 'Leads', href: '/leads', permission: 'leads.view', module: 'leads' },
     { label: 'Customers', href: '/customers', permission: 'customers.view', module: 'customers' },
     { label: 'Services', href: '/services', permission: 'services.view', engine: 'service' },
+    { label: 'Products', href: '/products', permission: 'products.view', engine: 'commerce' },
     { label: (tenant) => tenant?.resource_label?.plural ?? 'Staff', href: '/resources', permission: 'resources.view', engine: 'booking' },
     { label: 'Automations', href: '/automations', permission: 'automation.view', module: 'automation' },
     { label: 'Website', href: '/website', permission: 'website.view', module: 'website' },

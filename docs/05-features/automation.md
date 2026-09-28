@@ -2,7 +2,7 @@
 
 - **Status:** ✅ Phase 5
 - **Issue(s):** AW-025 – AW-032 (limitations)
-- **Last updated:** 2026-09-29
+- **Last updated:** 2026-10-01
 - **Decision:** [ADR-015](../12-decisions/ADR-015-automation-engine.md)
 
 ## Purpose
@@ -58,10 +58,13 @@ different workflows, and they must be configurable without code.
   - Leads: `lead.created`, `lead.updated`, `lead.status_changed`, `lead.assigned`, `lead.converted`.
   - Customers: `customer.created`.
   - Appointments: `appointment.created`, `confirmed`, `rescheduled`, `completed`, `cancelled`, `no_show`.
+  - Orders (Phase 7): `order.created`, `confirmed`, `ready`, `completed`, `cancelled`, `paid`.
   - Lead triggers need the `leads` module, customer triggers the `customers` module, appointment triggers
-    the `booking` engine.
-- **Subjects:** a run is for a lead, a customer or an appointment. A step can read the subject and its
-  related records: a lead's customer (once converted), an appointment's customer.
+    the `booking` engine, order triggers the `commerce` engine.
+- **Subjects:** a run is for a lead, a customer, an appointment or an order. A step can read the subject and
+  its related records: a lead's customer (once converted), an appointment's or order's customer.
+- **Order fields and variables:** conditions on order status, source, type (fulfilment), payment status and
+  total; variables `{{order.number}}`, `{{order.total}}`, `{{order.items}}`, `{{order.fulfilment}}`.
 - **Limits** (`config/automation.php` `limits`): 100 automations per business, 20 steps, 10 rules per
   condition, messages up to 1000 characters, waits up to 90 days.
 - **At least one action** is required, and a wait cannot be the last step.
@@ -84,6 +87,8 @@ different workflows, and they must be configurable without code.
   | Appointment reminder | Paused | until 24 h before → still confirmed → WhatsApp |
   | Rebook no-shows | **On** | task "Call … to rebook" |
   | Thank customers after a visit | Paused | wait 2 h → WhatsApp |
+  | Tell the team about website orders | **On** | source is website → email the owners |
+  | Tell customers their order is ready | Paused | WhatsApp with order number and total |
 
   Templates that message customers start paused. A business type can choose its own list
   (`configuration.automation_templates`). A template the business cannot use is skipped: coaching has no
@@ -118,7 +123,7 @@ Manager template role has `automation.*`.
 
 ## Events
 
-- **Consumed:** the 12 lead, customer and appointment events above (`StartAutomations`), plus
+- **Consumed:** the lead, customer, appointment and order events above (`StartAutomations`), plus
   `AppointmentRescheduled` (`RetimeAppointmentWaits` moves pending "before/after the appointment" waits).
 - **Payload recorded on the run:**
   - `lead.updated`: changed fields;
@@ -186,5 +191,5 @@ is why the loop guard exists.
 
 ## Future Extensions
 
-Branching, per-automation statistics, webhook and AI actions, triggers for forms, orders and payments,
+Branching, per-automation statistics, webhook and AI actions, triggers for forms,
 quiet hours, per-tenant message templates, and a test run against a sample record.

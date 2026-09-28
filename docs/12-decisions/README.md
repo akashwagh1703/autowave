@@ -23,3 +23,4 @@ Format: **Title, Status, Date, Context, Decision, Alternatives, Consequences.**
 | [ADR-014](ADR-014-booking-model.md) | Booking model: generic resources, range exclusion constraint, locked bookings | Accepted |
 | [ADR-015](ADR-015-automation-engine.md) | Automation engine: one queued job per step, database-backed waits, idempotent actions | Accepted |
 | [ADR-016](ADR-016-website-builder.md) | Website builder: schema-driven sections, tenant media, public forms through domain actions | Accepted |
+| [ADR-017](ADR-017-commerce-engine.md) | Commerce engine: server-priced orders, a locked stock ledger, manual payments | Accepted |

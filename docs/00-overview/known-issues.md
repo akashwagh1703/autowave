@@ -375,7 +375,9 @@ with the date and commit/PR reference; do not delete it.
   content builder reads them. But the records they display (products, packages, reviews, online orders) come
   in later phases, so these sections are never shown on the site. The editor lists them with a hint instead.
 - **Impact:** Milestone 4 (master prompt §115) is complete except for products on the public site.
-- **Status:** Open — Products arrive with Commerce (Phase 7), reviews with the Reviews module.
+- **Status:** Partly resolved 2026-10-01 (Phase 7). The Products section now shows active products, with
+  the cart when online ordering is on; the separate Shop section was removed because the cart lives in
+  Products. Packages and Reviews stay hidden until their modules exist.
 - **Affected:** `config/website.php`, `WebsiteContent`
 - **Created:** 2026-09-30
 
@@ -419,7 +421,7 @@ with the date and commit/PR reference; do not delete it.
   captcha.
 - **Impact:** A determined bot that rotates IPs can still create spam leads or pending bookings.
 - **Status:** Open — add a captcha (e.g. Cloudflare Turnstile) as a per-tenant option if spam appears.
-- **Affected:** `EnquiryController`, `BookingController` (tenant site)
+- **Affected:** `EnquiryController`, `BookingController`, `ShopController` (tenant site)
 - **Created:** 2026-09-30
 
 ### AW-039 — No custom domains
@@ -442,3 +444,98 @@ with the date and commit/PR reference; do not delete it.
   later cleanup.
 - **Affected:** Tenant settings
 - **Created:** 2026-09-30
+
+### AW-041 — No online payments
+
+- **Category:** Product
+- **Description:** Orders are paid at pickup, on delivery or at the counter. Staff record each payment by
+  hand (cash, UPI, card, bank transfer, other). There is no payment gateway, payment link or webhook.
+- **Impact:** Website customers cannot pay in advance. Businesses reconcile UPI and card payments
+  themselves.
+- **Status:** Open — decided for Phase 7 (ADR-017). A gateway would write to `order_payments`.
+- **Affected:** Orders, website checkout
+- **Created:** 2026-10-01
+
+### AW-042 — No product variants
+
+- **Category:** Product
+- **Description:** Each product has one price and one stock level. Sizes, colours or pack sizes are separate
+  products.
+- **Impact:** Stores with many variants (e.g. 100 ml / 250 ml) need one product per variant.
+- **Status:** Open — decided for Phase 7 (ADR-017).
+- **Affected:** Products, orders
+- **Created:** 2026-10-01
+
+### AW-043 — No returns or refunds
+
+- **Category:** Product
+- **Description:** Completed orders are final. Cancelling an open order returns its stock but keeps the
+  recorded payments. A payment can be removed if it was recorded by mistake, but that is not a refund.
+- **Impact:** A refund given in cash or UPI is not visible in AutoWave; the order still shows as paid.
+- **Status:** Open — add returns (restock and refund lines) with reports.
+- **Affected:** `ChangeOrderStatus`, `RecordOrderPayment`
+- **Created:** 2026-10-01
+
+### AW-044 — No coupons, taxes or website discounts
+
+- **Category:** Product
+- **Description:** Staff can give a flat discount on an order. There are no coupon codes, no percentage
+  discounts, no discounts on website orders, and no tax (GST) lines or tax invoices.
+- **Impact:** Prices must include tax. Promotions are shown with the original ("compare at") price only.
+- **Status:** Open — tax handling belongs with invoices and reports.
+- **Affected:** `PlaceOrder`, website checkout
+- **Created:** 2026-10-01
+
+### AW-045 — Carts do not reserve stock
+
+- **Category:** Product
+- **Description:** The website cart is stored in the visitor's browser. Stock is taken only when the order
+  is placed. The cart quote warns about low stock, but another order can take the last item between the
+  quote and checkout. There are no abandoned-cart reminders.
+- **Impact:** A visitor may see "Only 1 left" at checkout and have to change the cart. Overselling is still
+  impossible.
+- **Status:** Open — by design for now (ADR-017).
+- **Affected:** `OnlineShop`, website cart
+- **Created:** 2026-10-01
+
+### AW-046 — Receptionists can create orders but not update them
+
+- **Category:** Product / RBAC
+- **Description:** The default Receptionist role has `orders.view` and `orders.create`. Changing an order's
+  status, recording payments and editing notes need `orders.update`, which only Owner and Manager have.
+- **Impact:** At a busy counter the receptionist can complete a sale in one step (handed over now, payment
+  received), but cannot mark a later pickup as completed.
+- **Status:** Open — tenants can add `orders.update` to the role in Roles. Revisit the default with users.
+- **Affected:** `config/rbac.php`
+- **Created:** 2026-10-01
+
+### AW-047 — Orders cannot be edited after they are placed
+
+- **Category:** Product
+- **Description:** Items, quantities, discount, delivery fee and customer are fixed once an order exists.
+  Only notes, status and payments change.
+- **Impact:** A wrong order must be cancelled (its stock goes back) and placed again under a new number.
+- **Status:** Open — add item editing for open orders, going through `StockLedger`.
+- **Affected:** Orders
+- **Created:** 2026-10-01
+
+### AW-048 — Customers get no order messages by default and cannot track orders
+
+- **Category:** Product
+- **Description:** The website shows a confirmation after checkout, and the owners get an email about each
+  website order. The customer gets no message unless the business turns on the paused "Order ready"
+  automation or builds its own. There is no order status page for customers.
+- **Impact:** Businesses contact customers themselves about confirmation and pickup.
+- **Status:** Open — add signed order-status links (see AW-037 for bookings).
+- **Affected:** Automations, website checkout
+- **Created:** 2026-10-01
+
+### AW-049 — Delivery is a flat fee with no area check
+
+- **Category:** Product
+- **Description:** Delivery has one flat fee, optional free delivery above a subtotal and a free-text note
+  (e.g. "within 5 km"). There are no delivery zones, distance pricing, delivery slots or address validation.
+- **Impact:** The business must turn down out-of-area orders by cancelling them.
+- **Status:** Open
+- **Affected:** `CommerceSettings`, website checkout
+- **Created:** 2026-10-01

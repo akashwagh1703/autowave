@@ -18,7 +18,12 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
 import EmptyState from '@/components/EmptyState';
 import LanguageIcon from '@mui/icons-material/Language';
-import { formatDateTime, formatRelative, humanize } from '@/utils/format';
+import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
+import PaymentsIcon from '@mui/icons-material/PaymentsOutlined';
+import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCartOutlined';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBagOutlined';
+import useTenant from '@/hooks/useTenant';
+import { formatDateTime, formatPrice, formatRelative, humanize } from '@/utils/format';
 
 const icons = {
     created: AddCircleOutlineIcon,
@@ -42,7 +47,25 @@ const icons = {
     appointment_updated: EditNoteIcon,
     task: AssignmentIcon,
     website_enquiry: LanguageIcon,
+    order_placed: ShoppingBagIcon,
+    order_confirmed: ShoppingBagIcon,
+    order_ready: LocalShippingIcon,
+    order_completed: TaskAltIcon,
+    order_cancelled: RemoveShoppingCartIcon,
+    payment_recorded: PaymentsIcon,
+    payment_removed: PaymentsIcon,
 };
+
+const orderVerbs = {
+    order_confirmed: 'confirmed',
+    order_ready: 'marked ready',
+    order_completed: 'completed',
+    order_cancelled: 'cancelled',
+};
+
+function orderLabel(meta) {
+    return meta.number ? `order #${meta.number}` : 'the order';
+}
 
 const sent = { whatsapp: 'sent a WhatsApp message', email: 'sent an email' };
 
@@ -73,14 +96,24 @@ function appointmentLabel(meta, timezone) {
     return `the appointment on ${when}${meta.resource ? ` with ${meta.resource}` : ''}${meta.service ? ` (${meta.service})` : ''}`;
 }
 
-function describe(activity, timezone) {
+function describe(activity, timezone, currency) {
     const meta = activity.metadata ?? {};
 
     if (appointmentVerbs[activity.type]) {
         return `${appointmentVerbs[activity.type]} ${appointmentLabel(meta, timezone)}`;
     }
 
+    if (orderVerbs[activity.type]) {
+        return `${orderVerbs[activity.type]} ${orderLabel(meta)}`;
+    }
+
     switch (activity.type) {
+        case 'order_placed':
+            return `placed ${orderLabel(meta)}${meta.source === 'website' ? ' on the website' : ''}${meta.items ? `: ${meta.items}` : ''}`;
+        case 'payment_recorded':
+            return `recorded a payment of ${formatPrice(meta.amount, currency)}${meta.method_label ? ` (${meta.method_label})` : ''} for ${orderLabel(meta)}`;
+        case 'payment_removed':
+            return `removed a payment of ${formatPrice(meta.amount, currency)} from ${orderLabel(meta)}`;
         case 'created':
             if (activity.lead_id) {
                 return `created the lead${meta.source ? ` from ${meta.source}` : ''}`;
@@ -92,6 +125,14 @@ function describe(activity, timezone) {
 
             if (meta.via === 'online_booking') {
                 return 'added the customer from an online booking';
+            }
+
+            if (meta.via === 'order') {
+                return 'added the customer while creating an order';
+            }
+
+            if (meta.via === 'online_order') {
+                return 'added the customer from a website order';
             }
 
             return meta.lead_name ? `added the customer when converting ${meta.lead_name}` : 'added the customer';
@@ -133,7 +174,9 @@ function describe(activity, timezone) {
     }
 }
 
-export default function Timeline({ activities, timezone, showLead = false, showAppointment = false }) {
+export default function Timeline({ activities, timezone, showLead = false, showAppointment = false, showOrder = false }) {
+    const { currency } = useTenant();
+
     if (!activities.length) {
         return <EmptyState title="No activity yet" description="Calls, notes and changes will appear here." />;
     }
@@ -149,7 +192,15 @@ export default function Timeline({ activities, timezone, showLead = false, showA
                             <Icon sx={{ fontSize: 16 }} />
                         </span>
                         <p className="text-sm text-slate-900">
-                            <span className="font-medium">{actorName(activity)}</span> {describe(activity, timezone)}
+                            <span className="font-medium">{actorName(activity)}</span> {describe(activity, timezone, currency)}
+                            {showOrder && activity.order_id ? (
+                                <>
+                                    {' · '}
+                                    <Link href={`/orders/${activity.order_id}`} className="text-brand-700 hover:underline">
+                                        View
+                                    </Link>
+                                </>
+                            ) : null}
                             {showAppointment && activity.appointment_id ? (
                                 <>
                                     {' · '}

@@ -10,10 +10,12 @@ import YouTubeIcon from '@mui/icons-material/YouTube';
 import { useState } from 'react';
 import { formatDuration } from '@/utils/booking';
 import { formatMoney } from '@/utils/format';
+import { CartButton } from './ShopSection';
 import { ActionButton, Card, Section, SectionHeading, useSite } from './site';
 
 const NAV = [
     { type: 'services', label: 'Services' },
+    { type: 'products', label: 'Shop' },
     { type: 'team', label: 'Team' },
     { type: 'gallery', label: 'Gallery' },
     { type: 'offers', label: 'Offers' },
@@ -22,7 +24,7 @@ const NAV = [
 ];
 
 export function Header({ config }) {
-    const { business, contact, theme, has } = useSite();
+    const { business, contact, theme, has, shop } = useSite();
     const links = NAV.filter((item) => has(item.type));
 
     return (
@@ -49,6 +51,7 @@ export function Header({ config }) {
                         </ActionButton>
                     ) : null}
                     {config.show_book && has('booking') ? <ActionButton href="#booking">Book now</ActionButton> : null}
+                    {shop ? <CartButton /> : null}
                 </div>
             </div>
         </header>

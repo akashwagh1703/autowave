@@ -11,17 +11,17 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditIcon from '@mui/icons-material/Edit';
 import { useState } from 'react';
 
-function CategoryRow({ category }) {
+function CategoryRow({ category, endpoint, countKey, noun }) {
     const [editing, setEditing] = useState(false);
     const [confirming, setConfirming] = useState(false);
     const form = useForm({ name: category.name });
 
     const save = (event) => {
         event.preventDefault();
-        form.put(`/service-categories/${category.id}`, { preserveScroll: true, onSuccess: () => setEditing(false) });
+        form.put(`${endpoint}/${category.id}`, { preserveScroll: true, onSuccess: () => setEditing(false) });
     };
 
-    const destroy = () => router.delete(`/service-categories/${category.id}`, { preserveScroll: true });
+    const destroy = () => router.delete(`${endpoint}/${category.id}`, { preserveScroll: true });
 
     return (
         <li className="flex items-center gap-2 py-2">
@@ -45,7 +45,7 @@ function CategoryRow({ category }) {
                 <>
                     <span className="flex-1 text-sm text-slate-900">{category.name}</span>
                     <span className="text-xs text-slate-500">
-                        {category.services_count} {category.services_count === 1 ? 'service' : 'services'}
+                        {category[countKey]} {category[countKey] === 1 ? noun[0] : noun[1]}
                     </span>
                     <IconButton size="small" aria-label={`Rename ${category.name}`} onClick={() => setEditing(true)}>
                         <EditIcon fontSize="small" />
@@ -65,22 +65,31 @@ function CategoryRow({ category }) {
     );
 }
 
-export default function CategoryManager({ open, onClose, categories }) {
+export default function CategoryManager({
+    open,
+    onClose,
+    categories,
+    endpoint = '/service-categories',
+    title = 'Service categories',
+    description = 'Group services on your price list. Deleting a category keeps its services, uncategorised.',
+    countKey = 'services_count',
+    noun = ['service', 'services'],
+}) {
     const form = useForm({ name: '' });
 
     const add = (event) => {
         event.preventDefault();
-        form.post('/service-categories', { preserveScroll: true, onSuccess: () => form.reset() });
+        form.post(endpoint, { preserveScroll: true, onSuccess: () => form.reset() });
     };
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>Service categories</DialogTitle>
+            <DialogTitle>{title}</DialogTitle>
             <DialogContent>
-                <p className="text-sm text-slate-600">Group services on your price list. Deleting a category keeps its services, uncategorised.</p>
+                <p className="text-sm text-slate-600">{description}</p>
                 <ul className="mt-2 divide-y divide-slate-100">
                     {categories.map((category) => (
-                        <CategoryRow key={`${category.id}-${category.name}`} category={category} />
+                        <CategoryRow key={`${category.id}-${category.name}`} category={category} endpoint={endpoint} countKey={countKey} noun={noun} />
                     ))}
                 </ul>
                 <form onSubmit={add} className="mt-4 flex items-start gap-2">

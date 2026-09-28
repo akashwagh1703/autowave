@@ -9,7 +9,7 @@ use App\Domain\Automation\Support\ActionResult;
 use App\Domain\Automation\Support\TemplateRenderer;
 
 /**
- * Adds a follow-up task to the timeline (lead, or the customer / appointment). For an open lead it
+ * Adds a follow-up task to the timeline (lead, or the customer / appointment / order). For an open lead it
  * also brings the lead's next follow-up forward to the task's due time, so it shows up in
  * "Pending follow-ups".
  */
@@ -61,6 +61,7 @@ class CreateTaskStep implements StepAction
                 'idempotency_key' => $context->idempotencyKey,
             ],
             appointment: $subject->appointment,
+            order: $subject->order,
         );
 
         $lead = $subject->lead;

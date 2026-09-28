@@ -26,7 +26,7 @@ class AutomationProvisioningTest extends TestCase
         $automations = $this->inTenant($tenant, fn () => Automation::query()->with('nodes')->get()->keyBy('template_key'));
 
         $this->assertEqualsCanonicalizing(config('automation.default_templates'), $automations->keys()->all());
-        $this->assertSame(['new_lead_followup', 'no_show_followup'], $automations->where('is_active', true)->keys()->sort()->values()->all());
+        $this->assertSame(['new_lead_followup', 'new_online_order_alert', 'no_show_followup'], $automations->where('is_active', true)->keys()->sort()->values()->all());
         $this->assertSame(['wait', 'condition', 'action'], $automations['new_lead_followup']->nodes->pluck('type.value')->all());
 
         // Catalogue-only key: not copied into tenant settings.
@@ -39,7 +39,7 @@ class AutomationProvisioningTest extends TestCase
 
         $keys = $this->inTenant($tenant, fn () => Automation::query()->pluck('template_key')->sort()->values()->all());
 
-        // No booking engine: the appointment templates do not apply.
+        // No booking or commerce engine: the appointment and order templates do not apply.
         $this->assertSame(['new_lead_followup', 'new_lead_welcome'], $keys);
     }
 
@@ -62,7 +62,7 @@ class AutomationProvisioningTest extends TestCase
         $created = app(ProvisionAutomations::class)->ensureFor($tenant);
 
         $this->assertSame([], $created);
-        $this->assertSame(5, $this->inTenant($tenant, fn () => Automation::query()->count()));
+        $this->assertSame(7, $this->inTenant($tenant, fn () => Automation::query()->count()));
     }
 
     public function test_the_backfill_provisions_tenants_that_had_no_automations(): void
@@ -72,7 +72,7 @@ class AutomationProvisioningTest extends TestCase
 
         $this->seed(TenantBackfillSeeder::class);
 
-        $this->assertSame(6, $this->inTenant($tenant, fn () => Automation::query()->count()));
+        $this->assertSame(8, $this->inTenant($tenant, fn () => Automation::query()->count()));
     }
 
     public function test_no_automations_without_the_module(): void
@@ -83,6 +83,6 @@ class AutomationProvisioningTest extends TestCase
 
         // Without the messaging module only the templates that send nothing apply.
         app(ModuleManager::class)->enable($tenant, 'automation');
-        $this->assertEqualsCanonicalizing(['new_lead_followup', 'no_show_followup'], app(ProvisionAutomations::class)->ensureFor($tenant));
+        $this->assertEqualsCanonicalizing(['new_lead_followup', 'no_show_followup', 'new_online_order_alert'], app(ProvisionAutomations::class)->ensureFor($tenant));
     }
 }

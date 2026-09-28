@@ -6,12 +6,17 @@ use App\Http\Controllers\App\AutomationController;
 use App\Http\Controllers\App\AutomationRunController;
 use App\Http\Controllers\App\BookingResourceController;
 use App\Http\Controllers\App\BookingSettingsController;
+use App\Http\Controllers\App\CommerceSettingsController;
 use App\Http\Controllers\App\CrmSettingsController;
 use App\Http\Controllers\App\CustomerController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\LeadActionController;
 use App\Http\Controllers\App\LeadController;
 use App\Http\Controllers\App\OnboardingController;
+use App\Http\Controllers\App\OrderActionController;
+use App\Http\Controllers\App\OrderController;
+use App\Http\Controllers\App\ProductCategoryController;
+use App\Http\Controllers\App\ProductController;
 use App\Http\Controllers\App\ServiceCategoryController;
 use App\Http\Controllers\App\ServiceController;
 use App\Http\Controllers\App\SettingsController;
@@ -117,6 +122,42 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
 
             Route::get('/settings/booking', [BookingSettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.booking');
             Route::put('/settings/booking', [BookingSettingsController::class, 'update'])->middleware('can:settings.update')->name('settings.booking.update');
+        });
+
+        Route::middleware('engine:commerce')->group(function () {
+            Route::get('/products', [ProductController::class, 'index'])->middleware('can:products.view')->name('products.index');
+            Route::get('/products/create', [ProductController::class, 'create'])->middleware('can:products.create')->name('products.create');
+            Route::post('/products', [ProductController::class, 'store'])->middleware('can:products.create')->name('products.store');
+            Route::post('/products/bulk', [ProductController::class, 'bulk'])->middleware('can:products.view')->name('products.bulk');
+            Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->middleware('can:products.update')->name('products.edit');
+            Route::delete('/products/{product}', [ProductController::class, 'destroy'])->middleware('can:products.delete')->name('products.destroy');
+
+            Route::middleware('can:products.update')->group(function () {
+                Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+                Route::post('/products/{product}/stock', [ProductController::class, 'stock'])->name('products.stock');
+                Route::post('/products/{product}/image', [ProductController::class, 'uploadImage'])->middleware('throttle:60,1')->name('products.image.store');
+                Route::delete('/products/{product}/image', [ProductController::class, 'removeImage'])->name('products.image.destroy');
+
+                Route::post('/product-categories', [ProductCategoryController::class, 'store'])->name('product-categories.store');
+                Route::put('/product-categories/{productCategory}', [ProductCategoryController::class, 'update'])->name('product-categories.update');
+                Route::delete('/product-categories/{productCategory}', [ProductCategoryController::class, 'destroy'])->name('product-categories.destroy');
+            });
+
+            Route::get('/orders', [OrderController::class, 'index'])->middleware('can:orders.view')->name('orders.index');
+            Route::get('/orders/customers', [OrderController::class, 'customers'])->middleware(['can:orders.create', 'throttle:120,1'])->name('orders.customers');
+            Route::get('/orders/create', [OrderController::class, 'create'])->middleware('can:orders.create')->name('orders.create');
+            Route::post('/orders', [OrderController::class, 'store'])->middleware('can:orders.create')->name('orders.store');
+            Route::get('/orders/{order}', [OrderController::class, 'show'])->middleware('can:orders.view')->name('orders.show');
+
+            Route::middleware('can:orders.update')->group(function () {
+                Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+                Route::patch('/orders/{order}/status', [OrderActionController::class, 'status'])->name('orders.status');
+                Route::post('/orders/{order}/payments', [OrderActionController::class, 'storePayment'])->name('orders.payments.store');
+                Route::delete('/orders/{order}/payments/{payment}', [OrderActionController::class, 'destroyPayment'])->name('orders.payments.destroy');
+            });
+
+            Route::get('/settings/commerce', [CommerceSettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.commerce');
+            Route::put('/settings/commerce', [CommerceSettingsController::class, 'update'])->middleware('can:settings.update')->name('settings.commerce.update');
         });
 
         Route::middleware('module:website')->group(function () {

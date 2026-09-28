@@ -1,6 +1,6 @@
 # Current State
 
-_Last updated: 2026-09-30 — end of Phase 6 (Website)._
+_Last updated: 2026-10-01 — end of Phase 7 (Commerce)._
 
 This document describes what **actually exists** in the repository today. Planned work is in
 [roadmap.md](roadmap.md).
@@ -176,26 +176,64 @@ This document describes what **actually exists** in the repository today. Planne
   Creates the customer and an appointment with `source = website`, pending unless auto-confirm is on. Turfs
   without the service engine book fixed slots. The `appointment.source` automation condition tells online
   bookings apart.
-- **Products section:** built and reading from the product catalogue, but hidden until Phase 7 creates
-  products (AW-034). Packages, reviews and shop sections likewise.
+- **Products section:** built and reading from the product catalogue, hidden until Phase 7 created
+  products (AW-034). Packages and reviews sections likewise.
 - **Backfill:** `TenantBackfillSeeder` grants the `website` permission group to existing roles, once.
 - **Demo data:** the local-only `DemoWebsiteSeeder` fills the profile and section content of ABC Salon and
   ABC Turf.
 - **Tests:** 326 feature tests. Phase 6 adds 43 in `tests/Feature/Website`: public site, preview and
   SEO, enquiry, online booking, editor and permissions, media, isolation.
 
+### Phase 7 — Commerce (ADR-017)
+
+- **Products** (`/products`, commerce engine: salon, cafe, local store):
+  - catalogue with categories, SKU, price and original price, description, one image, active flag;
+  - list with category buttons, search, status and stock filters, sorting, a low-stock banner and bulk
+    actions; categories are managed inline;
+  - optional stock tracking per product with opening stock, a low-stock level, "Adjust stock" (add, remove,
+    set, with a reason) and a movement history. Stock never goes below zero (row lock plus a check
+    constraint).
+- **Orders** (`/orders`):
+  - a list with status tabs, search, payment, source and date filters;
+  - a new-order form: customer search or a new customer, products from the catalogue, in store, pickup or
+    delivery (address and fee), discount, "handed over now" and "payment received now";
+  - an order page: confirm, ready, completed, cancel with a reason (stock goes back once), record and
+    remove payments (cash, UPI, card, bank transfer, other), notes, customer call and WhatsApp, history.
+  - Prices, totals and stock are always computed on the server. Order numbers run per business from #1001.
+- **Order settings** (`/settings/commerce`): online ordering, auto-confirm, pickup, delivery fee, free
+  delivery threshold, minimum order, delivery note.
+- **Website shop:** the products section now shows the catalogue. When online ordering is open, visitors add
+  products to a cart (kept in the browser), see a server-priced quote, and check out for pickup or delivery.
+  Website orders start pending (or confirmed with auto-confirm) and the owners get an email. Honeypot and
+  rate limits.
+- **Automations:** triggers order placed, confirmed, ready, completed, cancelled and paid; order conditions
+  and variables; default templates "Tell the team about website orders" (on) and "Tell customers their
+  order is ready" (paused).
+- **Dashboard:** orders today, low stock and repeat customers (local store); revenue today (orders added to
+  appointments for a salon) and product sales (salon) need `reports.view`.
+- **Customer page:** an orders card and a "New order" button; order entries on the timeline.
+- **Backfill:** `TenantBackfillSeeder` adds the two order automation templates to existing tenants.
+- **Demo data:** the local-only `DemoCommerceSeeder` adds ABC Salon's product categories, seven products
+  (one out of stock, one low) and four orders in different states.
+- **Tests:** 372 feature tests. Phase 7 adds 46 in `tests/Feature/Commerce` and `tests/Feature/Website/OnlineShopTest`:
+  products and stock, orders and payments, settings, dashboard and automations, isolation, and website
+  ordering.
+
 ## In progress
 
-- Nothing. Phase 6 is complete and awaiting approval before Phase 7 (Commerce).
+- Nothing. Phase 7 is complete and awaiting approval before Phase 8 (Messaging).
 
 ## Not implemented
 
 - **Platform:** invitations and member management, role editor, logo upload during onboarding, custom
-  domain UI, feature flags, custom fields, commerce, AI, analytics, billing.
+  domain UI, feature flags, custom fields, AI, analytics, billing.
+- **Commerce gaps:** online payments (AW-041), variants (AW-042), returns and refunds (AW-043), coupons and
+  taxes (AW-044), stock reservation for carts (AW-045), receptionist order updates (AW-046), editing orders
+  (AW-047), customer order messages and tracking (AW-048), delivery zones (AW-049).
 - **CRM gaps:** kanban board, own-leads visibility, campaigns, import/export.
 - **Booking gaps:** buffers, recurring or group bookings, week view, packages, scoped staff visibility,
   customer self-cancel and reschedule (AW-037).
-- **Website gaps:** products, packages, reviews and shop content (AW-034), image resizing (AW-035), server
+- **Website gaps:** packages and reviews content (AW-034), image resizing (AW-035), server
   rendering of section content (AW-036), captcha (AW-038), custom domains (AW-039).
 - **Automation gaps:**
   - branches;
@@ -206,4 +244,4 @@ This document describes what **actually exists** in the repository today. Planne
 
 ## Known technical debt
 
-See [known-issues.md](known-issues.md) (AW-001 → AW-040).
+See [known-issues.md](known-issues.md) (AW-001 → AW-049).

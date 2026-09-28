@@ -9,15 +9,17 @@ import ChatIcon from '@mui/icons-material/Chat';
 import EditIcon from '@mui/icons-material/Edit';
 import EmailIcon from '@mui/icons-material/Email';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBagOutlined';
 import { useState } from 'react';
 import AppLayout from '@/layouts/AppLayout';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import AppointmentStatusChip from '@/modules/booking/AppointmentStatusChip';
+import { OrderStatusChip } from '@/modules/orders/OrderChips';
 import StageChip from '@/modules/leads/StageChip';
 import Timeline from '@/modules/crm/Timeline';
 import ActivityComposer from '@/modules/crm/ActivityComposer';
 import useTenant from '@/hooks/useTenant';
-import { formatDate, formatDateTime, formatMoney } from '@/utils/format';
+import { formatDate, formatDateTime, formatMoney, formatPrice } from '@/utils/format';
 
 function Detail({ label, children }) {
     return (
@@ -28,7 +30,7 @@ function Detail({ label, children }) {
     );
 }
 
-export default function Show({ customer, leads, activities, activityTypes, appointments }) {
+export default function Show({ customer, leads, activities, activityTypes, appointments, orders }) {
     const { timezone, currency, can, hasModule } = useTenant();
     const now = Date.now();
     const [confirmDelete, setConfirmDelete] = useState(false);
@@ -63,6 +65,11 @@ export default function Show({ customer, leads, activities, activityTypes, appoi
                     {appointments && can('appointments.create') ? (
                         <Button component={Link} href={`/appointments/create?customer=${customer.id}`} startIcon={<EventAvailableIcon />} variant="contained" size="small">
                             Book
+                        </Button>
+                    ) : null}
+                    {orders && can('orders.create') ? (
+                        <Button component={Link} href={`/orders/create?customer=${customer.id}`} startIcon={<ShoppingBagIcon />} variant={appointments ? 'outlined' : 'contained'} size="small">
+                            New order
                         </Button>
                     ) : null}
                     {customer.phone ? (
@@ -107,7 +114,7 @@ export default function Show({ customer, leads, activities, activityTypes, appoi
                     <Card variant="outlined">
                         <CardContent>
                             <h2 className="mb-4 font-semibold text-slate-900">Timeline</h2>
-                            <Timeline activities={activities} timezone={timezone} showLead={canSeeLeads} showAppointment={Boolean(appointments)} />
+                            <Timeline activities={activities} timezone={timezone} showLead={canSeeLeads} showAppointment={Boolean(appointments)} showOrder={Boolean(orders)} />
                         </CardContent>
                     </Card>
                 </div>
@@ -145,6 +152,33 @@ export default function Show({ customer, leads, activities, activityTypes, appoi
                                                 <p className="text-xs text-slate-500">
                                                     {[appointment.service?.name, appointment.resource?.name].filter(Boolean).join(' · ')}
                                                     {appointment.price ? ` · ${formatMoney(appointment.price, currency)}` : ''}
+                                                </p>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </CardContent>
+                        </Card>
+                    ) : null}
+
+                    {orders ? (
+                        <Card variant="outlined">
+                            <CardContent>
+                                <h2 className="font-semibold text-slate-900">Orders ({orders.length})</h2>
+                                {orders.length === 0 ? (
+                                    <p className="mt-2 text-sm text-slate-600">No orders yet.</p>
+                                ) : (
+                                    <ul className="mt-3 divide-y divide-slate-100">
+                                        {orders.map((order) => (
+                                            <li key={order.id} className="py-2">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <Link href={`/orders/${order.id}`} className="text-sm font-medium text-slate-900 hover:text-brand-700">
+                                                        {order.reference} · {formatPrice(order.total, currency)}
+                                                    </Link>
+                                                    <OrderStatusChip order={order} />
+                                                </div>
+                                                <p className="truncate text-xs text-slate-500">
+                                                    {formatDateTime(order.created_at, timezone, { dateStyle: 'medium' })} · {order.item_summary}
                                                 </p>
                                             </li>
                                         ))}

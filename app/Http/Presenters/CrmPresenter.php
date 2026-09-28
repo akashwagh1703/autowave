@@ -76,6 +76,7 @@ final class CrmPresenter
                 ? ['id' => $activity->lead->id, 'name' => $activity->lead->name, 'deleted' => $activity->lead->trashed()]
                 : null,
             'appointment_id' => $activity->appointment_id,
+            'order_id' => $activity->order_id,
         ];
     }
 

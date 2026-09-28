@@ -194,10 +194,48 @@ Other changes:
   - `media.uploaded`, `media.deleted`;
   - `booking.online_settings_updated`.
 
+## Commerce (Phase 7, `2026_10_01_100000`) — ADR-017
+
+All tables are tenant-owned. Cross-row references are composite FKs `(x_id, tenant_id)`, except
+`products.image_media_id` (see below). Money is `numeric(12,2)`.
+
+| Table | Key columns |
+|---|---|
+| `product_categories` | `name` (80, unique per tenant), `sort_order`, timestamps |
+| `products` | `product_category_id` (nullable), `name` (120), `description`, `sku` (60, nullable), `price`, `compare_at_price` (nullable), `image_media_id` (nullable), `is_active`, `track_stock`, `stock_quantity` (int), `low_stock_threshold` (nullable), `sort_order`, `created_by_user_id`, timestamps, soft deletes. Check `products_valid`: prices ≥ 0 and `stock_quantity >= 0`. Partial unique `products_sku_unique (tenant_id, lower(sku)) WHERE deleted_at IS NULL AND sku IS NOT NULL` |
+| `orders` | `number` (unique per tenant, from 1001), `customer_id`, `status` (`pending\|confirmed\|ready\|completed\|cancelled`), `source` (`manual\|website`), `fulfilment` (`in_store\|pickup\|delivery`), `subtotal`, `discount`, `delivery_fee`, `total`, `amount_paid`, `payment_status` (`unpaid\|partial\|paid`), `delivery_address` (500), `notes`, `confirmed_at`, `ready_at`, `completed_at`, `cancelled_at`, `cancellation_reason`, `created_by_user_id`, timestamps. Check `orders_valid`: known status and payment status, `discount <= subtotal`, `total = subtotal - discount + delivery_fee`, `0 <= amount_paid <= total` |
+| `order_items` | `order_id` (cascade), `product_id` (restrict), `product_name` (120) and `sku` (copied at order time), `unit_price`, `quantity`, `line_total`, `stock_deducted`. Check `order_items_valid`: `quantity > 0`, `line_total = unit_price * quantity` |
+| `order_payments` | `order_id` (cascade), `amount` (check `> 0`), `method` (20, a `config('commerce.payment_methods')` key), `reference` (100), `paid_at`, `recorded_by_user_id`, timestamps |
+| `stock_movements` | `product_id` (cascade), `quantity_change` (≠ 0), `balance_after` (≥ 0), `reason` (20, a `config('commerce.stock_reasons')` key), `order_id` (nullable), `note` (255), `created_by_user_id`, `created_at` only (append-only) |
+
+`orders` and `order_items` have no soft deletes: orders are cancelled, never deleted. Products are soft
+deleted and keep their order items (the FK has no cascade).
+
+`products.image_media_id` references `media.id` alone with `ON DELETE SET NULL`. PostgreSQL 11 cannot null
+one column of a composite key, so the application links only images of the same tenant (`ManageMedia` in
+the tenant context).
+
+Other changes:
+
+- `activities.order_id`: nullable, composite FK, cascade. New activity types: `order_placed`,
+  `order_confirmed`, `order_ready`, `order_completed`, `order_cancelled`, `payment_recorded`,
+  `payment_removed`. Customers created by an order carry `metadata.via = order` or `online_order`.
+- `media.collection` gains `product` (path `tenant/{tenant_id}/products/`; not shown in the website media
+  manager).
+- `automation_runs.subject_type` gains `order`.
+- New tenant setting `commerce`: `online` (`enabled`, `auto_confirm`, `pickup`, `delivery`, `delivery_fee`,
+  `free_delivery_over`, `min_order`, `delivery_note`). Seeded from the business type's
+  `configuration.commerce` if present (local store); otherwise `config('commerce.online')` applies.
+- New audit actions:
+  - `product.created`, `product.deleted`, `product.stock_adjusted`, `product_category.deleted`,
+    `products.bulk_*`;
+  - `order.payment_recorded`, `order.payment_removed`;
+  - `commerce.settings_updated`.
+
 ## Deferred platform tables
 
 `feature_flags`, `custom_fields` — added with the first feature that needs them (AW-009).
 
-## Planned domain tables (Phases 5–8)
+## Planned domain tables (Phase 8 onwards)
 
 See `docs/01-product/master-prompt.md` §57. Implement only what the current phase needs.

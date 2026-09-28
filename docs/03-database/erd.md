@@ -96,7 +96,8 @@ erDiagram
     TENANT_USERS ||--o{ OUTBOUND_MESSAGES : "team notification (nullable)"
 ```
 
-A run's subject (`subject_type`, `subject_id`) is polymorphic: a lead, customer or appointment. It has no
+A run's subject (`subject_type`, `subject_id`) is polymorphic: a lead, customer, appointment or order
+(Phase 7). It has no
 FK, so deleting the subject does not delete the run's history; the run is cancelled at its next step.
 Other arrows are composite FKs.
 
@@ -114,3 +115,23 @@ erDiagram
 Sections don't reference business records. The public page reads services, booking resources, working
 hours, media and the `branding` / `business_profile` settings at request time. Online bookings are ordinary
 `appointments` rows with `source = website`, and enquiries are ordinary `leads` and `activities`.
+
+## Commerce (Phase 7 — implemented, ADR-017)
+
+```mermaid
+erDiagram
+    TENANTS ||--o{ PRODUCT_CATEGORIES : configures
+    PRODUCT_CATEGORIES ||--o{ PRODUCTS : "groups (nullable)"
+    MEDIA ||--o| PRODUCTS : "image (nullable)"
+    PRODUCTS ||--o{ STOCK_MOVEMENTS : "stock ledger"
+    CUSTOMERS ||--o{ ORDERS : places
+    ORDERS ||--o{ ORDER_ITEMS : contains
+    PRODUCTS ||--o{ ORDER_ITEMS : "sold as (copy of name, price)"
+    ORDERS ||--o{ ORDER_PAYMENTS : "paid by"
+    ORDERS ||--o{ STOCK_MOVEMENTS : "sale / cancellation (nullable)"
+    ORDERS ||--o{ ACTIVITIES : timeline
+```
+
+All arrows are composite FKs except `products.image_media_id`, which references `media.id` alone so it can
+be set to null when the image is deleted (PG11). An order's activities also carry its `customer_id`, so they
+show on the customer timeline. Website orders are ordinary `orders` rows with `source = website`.

@@ -42,6 +42,7 @@ class ConditionEvaluator
         $lead = $context->lead;
         $customer = $context->customer;
         $appointment = $context->appointment;
+        $order = $context->order;
 
         return match ($field) {
             'lead.stage' => $lead?->stage?->code,
@@ -61,6 +62,11 @@ class ConditionEvaluator
             'appointment.resource' => $appointment ? (string) $appointment->booking_resource_id : null,
             'appointment.price' => $appointment?->price !== null ? (float) $appointment->price : null,
             'appointment.source' => $appointment?->source,
+            'order.status' => $order?->status->value,
+            'order.source' => $order?->source,
+            'order.fulfilment' => $order?->fulfilment,
+            'order.payment_status' => $order?->payment_status->value,
+            'order.total' => $order ? (float) $order->total : null,
             default => null,
         };
     }

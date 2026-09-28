@@ -14,8 +14,8 @@ Do not document planned features as if they exist.
 | Customers | [customers.md](customers.md) | ✅ Phase 3 |
 | Services | [services.md](services.md) | ✅ Phase 4 |
 | Booking | [booking.md](booking.md) | ✅ Phase 4 (staff-side); online booking in Phase 6 ([website.md](website.md)) |
-| Commerce | `commerce.md` | ⏳ |
-| Website | [website.md](website.md) | ✅ Phase 6 (products section waits for Phase 7) |
+| Commerce | [commerce.md](commerce.md) | ✅ Phase 7 (products, stock, orders, manual payments, website cart) |
+| Website | [website.md](website.md) | ✅ Phase 6; products section and cart in Phase 7 |
 | Automation | [automation.md](automation.md) | ✅ Phase 5 |
 | Messaging | [messaging.md](messaging.md) | 🚧 Phase 5 (outbound pipeline; WhatsApp simulated) |
 | AI | `ai.md` | ⏳ |

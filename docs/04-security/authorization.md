@@ -60,7 +60,8 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
   - CRM settings: view with `settings.view`, change with `settings.update`.
 - **Engine gating (Phase 4):** `engine:<code>` middleware (`EnsureEngineEnabled`) returns 404 unless the
   tenant has the engine: `engine:service` for services, `engine:booking` for resources, appointments and
-  booking settings. Navigation hides disabled engines (the `tenant.engines` share).
+  booking settings, `engine:commerce` for products, orders and order settings (Phase 7). Navigation hides
+  disabled engines (the `tenant.engines` share).
 - **Booking specifics (Phase 4):**
   - Status changes need `appointments.update`, except cancelling, which needs `appointments.cancel`. The
     route requires `appointments.view`; the controller checks the right ability for the requested status,
@@ -108,6 +109,33 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
     request.
   - Pages only receive the public fields built by `WebsiteContent`: active services, and each resource's
     name, description, colour and services. Staff contact details and inactive records are never sent.
+- **Commerce specifics (Phase 7):**
+  - Every business-app route is behind `engine:commerce` (404 without it).
+  - `products.view`: the product list. `products.create`: add a product. `products.update`: edit, adjust
+    stock, product images and categories. `products.delete`: delete. Bulk actions check the ability of the
+    requested action (delete → `products.delete`, otherwise `products.update`).
+  - `orders.view`: the order list and order pages. `orders.create`: the new-order form, the customer search
+    it uses and placing orders. `orders.update`: status changes (including cancel), recording and removing
+    payments, and notes.
+  - Order settings: view with `settings.view`, change with `settings.update`.
+  - Default roles: Manager has `products.*` and `orders.*`; Receptionist has `orders.view` and
+    `orders.create` only, so they can take an order but not confirm, cancel or take payment on it (AW-046);
+    Accountant has `products.view` and `orders.view`; Sales Executive and Staff have none.
+  - Money dashboard widgets (revenue today, product sales) also need `reports.view`. The low-stock widget
+    needs `products.view`; the orders widgets need `orders.view`.
+  - The customer page includes orders only for users with `orders.view` in a tenant with the engine.
+  - Order lines, customers and payments are resolved inside the tenant scope: another tenant's product,
+    customer, order or payment id is a 404 (routes) or a validation error (order lines, customer id).
+    A payment id from another order of the same tenant is also a 404.
+  - Prices, discounts and delivery fees are computed on the server. Staff can enter a discount and a
+    delivery fee; website visitors cannot.
+- **Online ordering (Phase 7):** `POST /cart/quote` and `POST /orders` on the tenant site run behind
+  `site.live`, and only while the shop is open (commerce engine, online ordering on, a visible products
+  section). They have a honeypot field on checkout, server-side validation and rate limits keyed on the host
+  and visitor IP (`website-cart`, `website-order`). Website orders never accept a discount, a status, a
+  payment or an in-store handover. The public products data has no stock field, only `in_stock` and
+  `max_quantity` (the most that can be added: the stock for tracked products, capped at 999). The page does
+  not show stock, but a visitor reading the page data can infer a low stock count.
 - **New permission groups for existing tenants:** `RbacSeeder` updates the templates, but tenant roles are
   copies. `TenantBackfillSeeder` calls `ProvisionTenantRoles::grantNewPermissionGroups()` for `services`,
   `resources` and `website`:

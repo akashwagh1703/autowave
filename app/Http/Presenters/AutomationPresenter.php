@@ -9,6 +9,7 @@ use App\Domain\Automation\Models\AutomationLog;
 use App\Domain\Automation\Models\AutomationRun;
 use App\Domain\Automation\Support\AutomationCatalog;
 use App\Domain\Booking\Models\Appointment;
+use App\Domain\Commerce\Models\Order;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Lead\Models\Lead;
 use App\Domain\Messaging\Enums\MessageStatus;
@@ -255,7 +256,7 @@ class AutomationPresenter
                 $query->withTrashed();
             }
 
-            if ($class === Appointment::class) {
+            if ($class === Appointment::class || $class === Order::class) {
                 $query->with('customer');
             }
 
@@ -268,12 +269,14 @@ class AutomationPresenter
                     'label' => match (true) {
                         $model instanceof Lead, $model instanceof Customer => $model->name,
                         $model instanceof Appointment => trim(($model->customer?->name ?? 'Appointment').' · '.$model->starts_at->setTimezone(TenantTime::timezone())->format('D j M, g:i A')),
+                        $model instanceof Order => 'Order '.$model->reference().($model->customer ? ' · '.$model->customer->name : ''),
                         default => Str::headline($type).' #'.$model->getKey(),
                     },
                     'url' => $deleted ? null : match ($type) {
                         'lead' => route('leads.show', $model->getKey(), false),
                         'customer' => route('customers.show', $model->getKey(), false),
                         'appointment' => route('appointments.show', $model->getKey(), false),
+                        'order' => route('orders.show', $model->getKey(), false),
                         default => null,
                     },
                     'deleted' => $deleted,
