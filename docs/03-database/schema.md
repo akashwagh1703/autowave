@@ -232,10 +232,43 @@ Other changes:
   - `order.payment_recorded`, `order.payment_removed`;
   - `commerce.settings_updated`.
 
+## Messaging (Phase 8, `2026_10_02_100000`) — ADR-018
+
+All tables are tenant-owned with unique (`id`, `tenant_id`) and composite FKs `(x_id, tenant_id)`.
+
+| Table | Key columns |
+|---|---|
+| `messaging_channels` | `channel` (`whatsapp\|instagram`), `status` (`connected\|disconnected`), `external_id` (64; phone number id or Instagram account id), `business_account_id` (64; WABA id), `display_name`, `display_handle`, `credentials` (text, `encrypted:array`: `access_token`, `app_secret`, `verify_token`), `webhook_key` (64, globally unique), `last_error`, `connected_by_user_id` (null on delete), `connected_at`, `last_webhook_at`. Unique (`tenant_id`, `channel`); unique (`channel`, `external_id`) so a number feeds one tenant only |
+| `conversations` | `channel`, `contact_handle` (191; `+<digits>` for WhatsApp, Instagram-scoped id for Instagram), `contact_name`, `customer_id`, `lead_id` (composite, cascade), `assigned_tenant_user_id` (composite, no action — memberships are suspended, never deleted), `status` (`open\|closed`), `unread_count`, `last_message_at`, `last_message_preview` (200), `last_message_direction` (`inbound\|outbound`), `last_inbound_at` (24-hour window), `opted_out_at`. Unique (`tenant_id`, `channel`, `contact_handle`) |
+| `conversation_messages` | `conversation_id` (cascade), `channel`, `direction`, `type` (`text`, `template`, `image`, …), `body`, `provider_message_id` (191), `outbound_message_id` (composite, cascade), `meta` jsonb (`template`, `reply_to`), `sent_at`, `created_at` only. Partial unique `conversation_messages_provider_unique (tenant_id, channel, provider_message_id) WHERE provider_message_id IS NOT NULL` |
+| `message_templates` | `channel`, `name` (512), `language` (20), `category`, `status` (Meta's, e.g. `APPROVED`), `body` (BODY text), `variables` (highest `{{n}}`), `provider_template_id`, `synced_at`. Unique (`tenant_id`, `channel`, `name`, `language`) |
+| `messaging_webhook_calls` | `messaging_channel_id` (cascade), `payload` jsonb, `status` (`pending\|processed\|failed`), `attempts`, `error`, `processed_at`, timestamps. Pruned after `messaging.webhooks.retention_days` |
+
+`outbound_messages` gains:
+
+- `conversation_id` (composite, cascade), `sent_by_user_id` (null on delete);
+- `template` jsonb (`name`, `language`, `params`), `scheduled_for` (quiet hours), `delivered_at`, `read_at`;
+- `status` values `delivered` and `read`; `channel` value `instagram`;
+- unique (`id`, `tenant_id`) and index (`tenant_id`, `provider_message_id`).
+
+Other changes:
+
+- Activity types `whatsapp` and new `instagram` are written for inbound messages with
+  `metadata.direction = inbound`, `conversation_id`, `from_name` and `opt_out` (`out|in`). Outbound message
+  activities add `direction = outbound`, `via` (`automation|inbox|system`), `conversation_id` and
+  `template`. Leads created from a message use the source `whatsapp` or `instagram`.
+- Automation `send_whatsapp` config may be `{mode: template, template: {name, language}, params: [...]}`.
+- New tenant setting `messaging`: `quiet_hours` (`enabled`, `start`, `end`), `email` (`from_name`,
+  `reply_to`).
+- New permission group `conversations` (`view`, `reply`, `assign`).
+- New audit actions: `messaging.channel_connected`, `messaging.channel_disconnected`,
+  `messaging.templates_synced`, `messaging.settings_updated`, `conversation.opted_out`,
+  `conversation.opted_in`.
+
 ## Deferred platform tables
 
 `feature_flags`, `custom_fields` — added with the first feature that needs them (AW-009).
 
-## Planned domain tables (Phase 8 onwards)
+## Planned domain tables (Phase 9 onwards)
 
 See `docs/01-product/master-prompt.md` §57. Implement only what the current phase needs.

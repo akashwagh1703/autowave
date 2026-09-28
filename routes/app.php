@@ -10,8 +10,10 @@ use App\Http\Controllers\App\CommerceSettingsController;
 use App\Http\Controllers\App\CrmSettingsController;
 use App\Http\Controllers\App\CustomerController;
 use App\Http\Controllers\App\DashboardController;
+use App\Http\Controllers\App\InboxController;
 use App\Http\Controllers\App\LeadActionController;
 use App\Http\Controllers\App\LeadController;
+use App\Http\Controllers\App\MessagingSettingsController;
 use App\Http\Controllers\App\OnboardingController;
 use App\Http\Controllers\App\OrderActionController;
 use App\Http\Controllers\App\OrderController;
@@ -184,6 +186,32 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
                 Route::put('/website/media/order', [WebsiteMediaController::class, 'reorder'])->name('website.media.reorder');
                 Route::patch('/website/media/{media}', [WebsiteMediaController::class, 'update'])->name('website.media.update');
                 Route::delete('/website/media/{media}', [WebsiteMediaController::class, 'destroy'])->name('website.media.destroy');
+            });
+        });
+
+        Route::middleware('module:messaging')->group(function () {
+            Route::middleware('can:conversations.view')->group(function () {
+                Route::get('/inbox', [InboxController::class, 'index'])->name('inbox.index');
+                Route::get('/inbox/{conversation}', [InboxController::class, 'show'])->name('inbox.show');
+                Route::post('/customers/{customer}/chat', [InboxController::class, 'startForCustomer'])->middleware('can:customers.view')->name('customers.chat');
+                Route::post('/leads/{lead}/chat', [InboxController::class, 'startForLead'])->middleware(['module:leads', 'can:leads.view'])->name('leads.chat');
+            });
+
+            Route::middleware('can:conversations.reply')->group(function () {
+                Route::post('/inbox/{conversation}/messages', [InboxController::class, 'reply'])->middleware('throttle:60,1')->name('inbox.reply');
+                Route::post('/inbox/{conversation}/template', [InboxController::class, 'template'])->middleware('throttle:30,1')->name('inbox.template');
+                Route::patch('/inbox/{conversation}/status', [InboxController::class, 'status'])->name('inbox.status');
+                Route::patch('/inbox/{conversation}/opt-out', [InboxController::class, 'optOut'])->name('inbox.opt-out');
+            });
+            Route::patch('/inbox/{conversation}/assign', [InboxController::class, 'assign'])->middleware('can:conversations.assign')->name('inbox.assign');
+
+            Route::get('/settings/messaging', [MessagingSettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.messaging');
+            Route::middleware('can:settings.update')->group(function () {
+                Route::post('/settings/messaging/whatsapp', [MessagingSettingsController::class, 'connectWhatsApp'])->middleware('throttle:10,1')->name('settings.messaging.whatsapp');
+                Route::post('/settings/messaging/instagram', [MessagingSettingsController::class, 'connectInstagram'])->middleware('throttle:10,1')->name('settings.messaging.instagram');
+                Route::post('/settings/messaging/disconnect', [MessagingSettingsController::class, 'disconnect'])->name('settings.messaging.disconnect');
+                Route::post('/settings/messaging/templates/sync', [MessagingSettingsController::class, 'syncTemplates'])->middleware('throttle:10,1')->name('settings.messaging.templates');
+                Route::put('/settings/messaging', [MessagingSettingsController::class, 'updatePreferences'])->name('settings.messaging.update');
             });
         });
 

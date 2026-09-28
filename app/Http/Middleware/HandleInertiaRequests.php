@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Domain\Booking\Support\BookingSettings;
+use App\Domain\Messaging\Enums\ConversationStatus;
+use App\Domain\Messaging\Models\Conversation;
 use App\Domain\RBAC\Support\PermissionResolver;
 use App\Domain\Tenant\Support\TenantContext;
 use Illuminate\Http\Request;
@@ -73,6 +75,17 @@ class HandleInertiaRequests extends Middleware
                 return $user && app(TenantContext::class)->check()
                     ? app(PermissionResolver::class)->permissionsFor($user)
                     : [];
+            },
+            // The nav badge: open conversations with unread messages.
+            'inbox' => function () use ($request) {
+                $context = app(TenantContext::class);
+                $user = $request->user();
+
+                if (! $user || ! $context->check() || ! $context->hasModule('messaging') || ! $user->can('conversations.view')) {
+                    return null;
+                }
+
+                return ['unread' => Conversation::query()->where('status', ConversationStatus::Open)->where('unread_count', '>', 0)->count()];
             },
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

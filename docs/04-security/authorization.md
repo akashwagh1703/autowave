@@ -27,6 +27,7 @@ products.view  products.create  products.update  products.delete
 orders.view  orders.create  orders.update
 automation.view  automation.create  automation.update  automation.delete
 website.view  website.manage
+conversations.view  conversations.reply  conversations.assign
 reports.view
 users.view  users.manage
 roles.manage
@@ -136,9 +137,26 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
   payment or an in-store handover. The public products data has no stock field, only `in_stock` and
   `max_quantity` (the most that can be added: the stock for tracked products, capped at 999). The page does
   not show stock, but a visitor reading the page data can infer a low stock count.
+- **Messaging specifics (Phase 8):**
+  - Every business-app route is behind `module:messaging` (404 without it).
+  - `conversations.view`: the inbox, conversation pages, the nav unread badge, and the **Chat** buttons on
+    customer pages (also `customers.view`) and lead pages (also `module:leads` and `leads.view`).
+  - `conversations.reply`: text replies (60/minute), templates (30/minute), close/reopen and opt-out.
+  - `conversations.assign`: assigning. Only active members whose role grants `conversations.view` (or
+    `grants_all`) can be chosen; the member list is only sent to users who can assign.
+  - Everyone with `conversations.view` sees every conversation, not only their own (AW-052).
+  - Default roles: Manager has all three; Receptionist and Sales Executive have `view` and `reply`; Staff
+    and Accountant have none.
+  - Settings → Messaging: view with `settings.view`; connect, disconnect, sync templates (10/minute) and
+    preferences with `settings.update`. The webhook callback URL and verify token are only sent to users
+    with `settings.update`. Tokens and app secrets are never sent to the browser.
+  - Conversations, templates and members are resolved inside the tenant scope: another tenant's id is a
+    404 (routes) or a validation error (template, assignee).
+  - The Meta webhook routes have no user: they are authenticated by the URL key and the payload signature
+    (see [webhook-security.md](webhook-security.md)).
 - **New permission groups for existing tenants:** `RbacSeeder` updates the templates, but tenant roles are
   copies. `TenantBackfillSeeder` calls `ProvisionTenantRoles::grantNewPermissionGroups()` for `services`,
-  `resources` and `website`:
+  `resources`, `website` and `conversations`:
   - it gives each tenant role its template's permissions in those groups;
   - it runs once per tenant and group (recorded in the `rbac_backfilled_groups` setting);
   - it skips roles that already hold any permission of the group.

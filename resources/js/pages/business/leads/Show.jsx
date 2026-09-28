@@ -125,7 +125,11 @@ export default function Show({ lead, activities, stages, members, activityTypes 
                             Call
                         </Button>
                     ) : null}
-                    {whatsapp ? (
+                    {whatsapp && hasModule('messaging') && can('conversations.view') ? (
+                        <Button onClick={() => router.post(`/leads/${lead.id}/chat`)} startIcon={<ChatIcon />} variant="outlined" size="small">
+                            Chat
+                        </Button>
+                    ) : whatsapp ? (
                         <Button href={whatsapp} target="_blank" rel="noreferrer" startIcon={<ChatIcon />} variant="outlined" size="small">
                             WhatsApp
                         </Button>

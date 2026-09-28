@@ -37,6 +37,7 @@ export default function Show({ customer, leads, activities, activityTypes, appoi
     const [processing, setProcessing] = useState(false);
     const digits = String(customer.phone ?? '').replace(/\D/g, '');
     const canSeeLeads = hasModule('leads') && can('leads.view');
+    const canChat = hasModule('messaging') && can('conversations.view');
 
     const destroy = () => {
         router.delete(`/customers/${customer.id}`, {
@@ -77,7 +78,11 @@ export default function Show({ customer, leads, activities, activityTypes, appoi
                             Call
                         </Button>
                     ) : null}
-                    {digits.length >= 7 ? (
+                    {digits.length >= 7 && canChat ? (
+                        <Button onClick={() => router.post(`/customers/${customer.id}/chat`)} startIcon={<ChatIcon />} variant="outlined" size="small">
+                            Chat
+                        </Button>
+                    ) : digits.length >= 7 ? (
                         <Button href={`https://wa.me/${digits}`} target="_blank" rel="noreferrer" startIcon={<ChatIcon />} variant="outlined" size="small">
                             WhatsApp
                         </Button>

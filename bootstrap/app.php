@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function (): void {
+            Route::middleware('throttle:meta-webhooks')->domain(config('autowave.hosts.app'))->group(base_path('routes/webhooks.php'));
             Route::middleware('web')->domain(config('autowave.hosts.admin'))->group(base_path('routes/admin.php'));
             Route::middleware('web')->domain(config('autowave.hosts.app'))->group(base_path('routes/app.php'));
             Route::middleware('web')->domain(config('autowave.hosts.marketing'))->group(base_path('routes/web.php'));
@@ -79,7 +80,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->respond(function (Response $response, Throwable $exception, Request $request) {
             $status = $response->getStatusCode();
 
-            if ($request->expectsJson() && ! $request->header('X-Inertia')) {
+            if (($request->expectsJson() && ! $request->header('X-Inertia')) || $request->is('webhooks/*')) {
                 return $response;
             }
 

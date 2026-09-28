@@ -12,3 +12,4 @@ Artisan::command('inspire', function () {
 // entry for `schedule:run` (production) — see docs/08-devops/queue-workers.md.
 Schedule::command('automation:dispatch-due')->everyMinute()->withoutOverlapping()->onOneServer();
 Schedule::command('messaging:dispatch-pending')->everyMinute()->withoutOverlapping()->onOneServer();
+Schedule::command('messaging:prune-webhooks')->dailyAt('03:15')->withoutOverlapping()->onOneServer();

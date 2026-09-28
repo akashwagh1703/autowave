@@ -22,14 +22,17 @@ What exists is described in [current-state.md](current-state.md).
 - **Phase 7 — Commerce** → _Milestone 4 complete: the website's Products section shows the catalogue and
   takes orders._ Products, categories, stock tracking and ledger, staff and website orders (pickup and
   delivery), manual payments, order settings, order automations and dashboard widgets.
+- **Phase 8 — Messaging:** per-business WhatsApp (Meta Cloud API) and Instagram, signed webhooks, a shared
+  inbox with assignment and unread counts, unknown senders as leads, delivery receipts, synced templates,
+  opt-out and quiet hours (ADR-018; AW-025 resolved).
 
 ## Next
 
-**Phase 8 — Messaging**: real WhatsApp provider, consent and quiet hours (AW-025), inbox, Instagram. The
-provider abstraction and outbound pipeline exist since Phase 5. Starts only after Phase 7 is approved.
+**Phase 9 — AI**: lead extraction, reply generation, summaries, assistant (ADR-008). Natural first uses
+are the inbox (suggested replies, conversation summaries) and the "message received" trigger (AW-053).
+Starts only after Phase 8 is approved.
 
 ## Future
 
-- **Phase 9 — AI**: lead extraction, reply generation, summaries, assistant.
 - **Phase 10 — Additional verticals**: Turf, Coaching, Cafe, Local Commerce, then Clinic, Fitness, Car Service, Home Services.
 - Billing (plans, subscriptions, usage), custom domains with verification/SSL, Horizon, PWA.

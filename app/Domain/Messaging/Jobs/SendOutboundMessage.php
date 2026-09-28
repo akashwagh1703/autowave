@@ -2,6 +2,7 @@
 
 namespace App\Domain\Messaging\Jobs;
 
+use App\Domain\Messaging\Exceptions\PermanentDeliveryFailure;
 use App\Domain\Messaging\Models\OutboundMessage;
 use App\Domain\Messaging\Services\MessagingService;
 use App\Domain\Tenant\Models\Tenant;
@@ -31,7 +32,12 @@ class SendOutboundMessage implements ShouldQueue
 
     public function handle(MessagingService $messaging, TenantContext $context): void
     {
-        $this->inTenant($context, fn (OutboundMessage $message) => $messaging->deliver($message));
+        try {
+            $this->inTenant($context, fn (OutboundMessage $message) => $messaging->deliver($message));
+        } catch (PermanentDeliveryFailure $exception) {
+            // Retrying cannot help (invalid number, closed window, bad template): fail now.
+            $this->fail($exception);
+        }
     }
 
     public function failed(?Throwable $exception): void

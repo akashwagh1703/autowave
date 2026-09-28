@@ -193,8 +193,9 @@ with the date and commit/PR reference; do not delete it.
   (PostgreSQL 11 cannot null only one column of a composite FK). Deleting a `tenant_users` row that still has
   leads raises an FK error.
 - **Impact:** None today (no member removal UI). Member management must unassign or reassign leads first.
+  Phase 8 adds the same constraint on `conversations.assigned_tenant_user_id`.
 - **Status:** Open — handle in the member-management feature.
-- **Affected:** `leads` table, future member removal action
+- **Affected:** `leads` and `conversations` tables, future member removal action
 - **Created:** 2026-09-28
 
 ### AW-019 — Timelines show the latest 100 entries
@@ -275,8 +276,10 @@ with the date and commit/PR reference; do not delete it.
   no quiet hours, and no WhatsApp Business template approval flow.
 - **Impact:** Customers receive nothing on WhatsApp yet. Email (`mail` provider) is delivered through the
   app mailer (`log` in local development).
-- **Status:** Open. Phase 7 adds the WhatsApp provider (set `MESSAGING_WHATSAPP_PROVIDER`), consent and
-  template handling.
+- **Status:** Resolved 2026-10-02 (Phase 8, ADR-018). A business that connects its WhatsApp number in
+  Settings → Messaging sends through the Meta Cloud API. STOP/START opt-out, quiet hours and synced,
+  approved templates (for automations and outside the 24-hour window) are enforced by
+  `MessagingCompliance`. Without a connected number WhatsApp is still simulated, by design.
 - **Affected:** `config/messaging.php`, `app/Domain/Messaging`
 - **Created:** 2026-09-29
 
@@ -317,7 +320,10 @@ with the date and commit/PR reference; do not delete it.
 - **Description:** `send_email` and team notifications go through the default Laravel mailer with the
   platform `MAIL_FROM_*` address. There is no per-business sender, reply-to or unsubscribe link.
 - **Impact:** Customers see the AutoWave sender address.
-- **Status:** Open. Add per-tenant sender settings and unsubscribe handling with the messaging module (Phase 7).
+- **Status:** Partly resolved 2026-10-02 (Phase 8). Emails now show the business name as the sender name
+  (or a name set in Settings → Messaging) and can have a reply-to address. The from address is still the
+  platform's `MAIL_FROM_ADDRESS` (a per-business domain needs SPF/DKIM setup), and there is no
+  unsubscribe link or inbound email (AW-054).
 - **Affected:** `app/Domain/Messaging/Providers/MailProvider.php`
 - **Created:** 2026-09-29
 
@@ -328,6 +334,8 @@ with the date and commit/PR reference; do not delete it.
   forever.
 - **Impact:** Table growth on busy tenants over months.
 - **Status:** Open. Add a scheduled prune (e.g. 180 days for completed runs) before production scale.
+  Phase 8 prunes `messaging_webhook_calls` after 14 days (`messaging:prune-webhooks`); conversations and
+  `conversation_messages` are kept as the business's message history.
 - **Affected:** Automation and messaging tables
 - **Created:** 2026-09-29
 
@@ -338,8 +346,9 @@ with the date and commit/PR reference; do not delete it.
   dies after the provider accepted a message, and before it was marked `sent`, leaves the message `sending`.
   `messaging:dispatch-pending` then sends it again after 15 minutes.
 - **Impact:** With the simulated provider, none. With a real provider, a rare duplicate after a crash.
-- **Status:** Open. The Phase 7 provider should pass the message id as the provider's idempotency or
-  reference key.
+- **Status:** Open. The Meta Cloud API has no idempotency key. Phase 8 sends our message id as
+  `biz_opaque_callback_data`, so a receipt for a message whose worker crashed still finds and updates it,
+  but it cannot stop Meta from delivering a resend.
 - **Affected:** `MessagingService::deliver()`, `DispatchPendingMessages`
 - **Created:** 2026-09-29
 
@@ -539,3 +548,58 @@ with the date and commit/PR reference; do not delete it.
 - **Status:** Open
 - **Affected:** `CommerceSettings`, website checkout
 - **Created:** 2026-10-01
+
+### AW-050 — WhatsApp and Instagram are connected by hand (no Embedded Signup)
+
+- **Category:** Product / Onboarding
+- **Description:** Each business creates its own Meta app and pastes the phone number id, WhatsApp Business
+  Account id, access token and app secret (or the Instagram token and secret) into Settings → Messaging,
+  then pastes our callback URL and verify token into Meta.
+- **Impact:** Connecting needs a technically confident owner or our help. A token that expires (for example
+  the temporary 24-hour token) stops delivery until it is replaced; failures show on each message.
+- **Status:** Open — decided for Phase 8 (ADR-018). Embedded Signup needs a platform Meta app, app review
+  and Tech Provider onboarding.
+- **Affected:** Settings → Messaging, `ConnectChannel`
+- **Created:** 2026-10-02
+
+### AW-051 — Media messages are placeholders
+
+- **Category:** Product
+- **Description:** Incoming images, videos, voice notes, documents, stickers, locations and contact cards are
+  stored as text such as `[Image] caption`. The media is not downloaded, and the inbox cannot send files.
+- **Impact:** Staff must open WhatsApp on the business phone to see a photo or document.
+- **Status:** Open — download media on the `media` queue into tenant storage, with size and type checks.
+- **Affected:** `MetaWebhookNormalizer`, inbox
+- **Created:** 2026-10-02
+
+### AW-052 — Everyone with inbox access sees every conversation
+
+- **Category:** Product / Security
+- **Description:** `conversations.view` shows all conversations. Assignment and the "Mine" tab only filter;
+  there is no `conversations.view_own`.
+- **Impact:** Receptionists and sales executives can read every customer conversation.
+- **Status:** Open — same approach as AW-016 and AW-022 when requested.
+- **Affected:** `InboxController`, `config/rbac.php`
+- **Created:** 2026-10-02
+
+### AW-053 — No "message received" automation trigger; no Instagram automation action
+
+- **Category:** Product
+- **Description:** `ConversationMessageReceived` is dispatched after each inbound message but no automation
+  trigger uses it yet (auto-replies, keyword routing, away messages). Automations can send WhatsApp and
+  email, not Instagram.
+- **Impact:** New WhatsApp contacts still trigger "lead created" automations, but there are no replies to
+  existing contacts' messages.
+- **Status:** Open — candidates for Phase 9 (AI replies) or a later automation update.
+- **Affected:** `config/automation.php`, `ReceiveInboundMessage`
+- **Created:** 2026-10-02
+
+### AW-054 — No inbound email
+
+- **Category:** Product
+- **Description:** Email is outbound only. Replies go to the reply-to address (Settings → Messaging), not to
+  the inbox.
+- **Impact:** Email conversations happen outside AutoWave.
+- **Status:** Open — needs an inbound mail provider (webhook) and email threading.
+- **Affected:** Messaging
+- **Created:** 2026-10-02

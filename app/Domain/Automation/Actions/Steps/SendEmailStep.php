@@ -5,6 +5,7 @@ namespace App\Domain\Automation\Actions\Steps;
 use App\Domain\Automation\Support\ActionContext;
 use App\Domain\Automation\Support\ActionResult;
 use App\Domain\Automation\Support\TemplateRenderer;
+use App\Domain\Messaging\Enums\MessagePurpose;
 use App\Domain\Messaging\Services\MessagingService;
 
 /** Emails the lead (or its customer) or the appointment's customer. */
@@ -44,6 +45,7 @@ class SendEmailStep implements StepAction
             'subject' => $this->renderer->render($config['subject'], $subject),
             'body' => $this->renderer->render($config['message'], $subject),
             'idempotency_key' => $context->idempotencyKey,
+            'purpose' => MessagePurpose::Automation,
             'lead_id' => $subject->lead?->id,
             'customer_id' => $subject->customer?->id,
             'automation_run_id' => $context->run->id,

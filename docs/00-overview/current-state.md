@@ -1,6 +1,6 @@
 # Current State
 
-_Last updated: 2026-10-01 — end of Phase 7 (Commerce)._
+_Last updated: 2026-10-02 — end of Phase 8 (Messaging)._
 
 This document describes what **actually exists** in the repository today. Planned work is in
 [roadmap.md](roadmap.md).
@@ -219,9 +219,41 @@ This document describes what **actually exists** in the repository today. Planne
   products and stock, orders and payments, settings, dashboard and automations, isolation, and website
   ordering.
 
+### Phase 8 — Messaging (ADR-018)
+
+- **Settings → Messaging** (`settings.view` to see, `settings.update` to change):
+  - connect WhatsApp (phone number id, WhatsApp Business Account id, access token, app secret) and
+    Instagram (token, app secret); checked against Meta before saving;
+  - tokens and secrets stored encrypted and write-only (the page only says whether one is saved);
+  - the webhook callback URL and verify token to paste into Meta; disconnect;
+  - sync WhatsApp templates; quiet hours; email sender name and reply-to.
+- **Webhooks** (`/webhooks/meta/{key}` on the app host): subscription check, `X-Hub-Signature-256`
+  verification, size limit and rate limit; verified bodies are stored and processed on the `messaging`
+  queue, recovered by `messaging:dispatch-pending` and pruned after 14 days.
+- **Inbound:** text and button replies, media as placeholders; one conversation per contact and channel;
+  linked to a customer or open lead with the same phone, or a new lead (source WhatsApp or Instagram);
+  timeline entries; STOP/START opt-out; idempotent on Meta's message id.
+- **Inbox** (`/inbox`, `conversations.*`): open, mine, unassigned, closed and all tabs, channel filter,
+  search, unread badge in the nav, 10-second polling; thread with day separators and delivery ticks;
+  replies, template dialog, assignment, close/reopen, opt-out; **Chat** buttons on customer and lead pages.
+- **Outbound:** every WhatsApp and Instagram message (automation, reply, system) is threaded in its
+  conversation; per-tenant provider resolution (Meta when connected, simulated otherwise); delivery and read
+  receipts that only move forward; permanent Meta errors fail at once.
+- **Compliance:** the 24-hour window (free text blocked outside it with a real provider), approved templates,
+  opt-out and quiet hours, all in `MessagingCompliance`. The automation WhatsApp action has a template mode
+  with one field per variable.
+- **Timeline:** inbound messages show the contact as the author; outbound show the sender, automation or
+  template.
+- **Tools:** `messaging:simulate-inbound` (not in production), `messaging:prune-webhooks`.
+- **Backfill:** `TenantBackfillSeeder` grants the new `conversations` permission group once.
+- **Demo data:** the local-only `DemoMessagingSeeder` adds ABC Salon conversations (WhatsApp and Instagram,
+  a reply, an opted-out contact, a closed conversation) and two sample templates.
+- **Tests:** 423 tests (3,472 assertions). Phase 8 adds 51 in `tests/Feature/Messaging`: webhooks, delivery and
+  compliance, settings, inbox and permissions, isolation.
+
 ## In progress
 
-- Nothing. Phase 7 is complete and awaiting approval before Phase 8 (Messaging).
+- Nothing. Phase 8 is complete and awaiting approval before Phase 9 (AI).
 
 ## Not implemented
 
@@ -238,10 +270,11 @@ This document describes what **actually exists** in the repository today. Planne
 - **Automation gaps:**
   - branches;
   - webhook, AI and payment actions and triggers (AW-026, AW-027);
-  - real WhatsApp delivery, consent and quiet hours (AW-025);
-  - retention (AW-030);
-  - an inbox and inbound messages (Phase 8).
+  - a "message received" trigger and Instagram action (AW-053);
+  - retention (AW-030).
+- **Messaging gaps:** Embedded Signup (AW-050), media download and sending (AW-051), own-conversations
+  visibility (AW-052), inbound email (AW-054).
 
 ## Known technical debt
 
-See [known-issues.md](known-issues.md) (AW-001 → AW-049).
+See [known-issues.md](known-issues.md) (AW-001 → AW-054).

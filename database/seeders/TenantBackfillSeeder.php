@@ -19,7 +19,7 @@ use Illuminate\Database\Seeder;
 class TenantBackfillSeeder extends Seeder
 {
     /** Permission groups added after tenants already existed (config/rbac.php). */
-    public const NEW_PERMISSION_GROUPS = ['services', 'resources', 'website'];
+    public const NEW_PERMISSION_GROUPS = ['services', 'resources', 'website', 'conversations'];
 
     public function run(
         BackfillTenantSettings $backfillSettings,

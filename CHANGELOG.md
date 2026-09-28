@@ -8,6 +8,25 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- Phase 8 Messaging:
+  - Settings → Messaging: connect the business's own WhatsApp number (Meta Cloud API) and Instagram account.
+    The details are checked with Meta before saving; tokens and app secrets are stored encrypted and never
+    shown again. The page shows the webhook address and verify token to paste into Meta, and when the last
+    webhook arrived.
+  - Inbox: WhatsApp and Instagram conversations in one place, with open, mine, unassigned, closed and all
+    tabs, channel filter and search. Reply, assign to a team member, close and reopen. Unread counts show in
+    the menu, and the inbox refreshes by itself.
+  - New WhatsApp or Instagram contacts become leads automatically (or are matched to an existing customer
+    or lead by phone), and their messages appear on the timeline.
+  - Delivery and read ticks on sent messages, and Meta's reason when a message fails.
+  - WhatsApp templates: sync approved templates from Meta, send them from the inbox, and use them in the
+    automation WhatsApp action with a field per variable.
+  - Opt-out: customers who reply STOP get no more automation messages or templates; START opts them back
+    in. Staff can also mark a contact opted out.
+  - Quiet hours: automation messages that would go out at night wait until the morning (off by default).
+  - Email sender name and reply-to address.
+  - "Chat" buttons on customer and lead pages open their WhatsApp conversation.
+  - `php artisan messaging:simulate-inbound` to try the inbox locally without Meta.
 - Phase 7 Commerce:
   - Products: a catalogue with categories, SKU, price and original price, description, a photo and an
     active flag. Search, category, status and stock filters, sorting, and bulk activate, deactivate and

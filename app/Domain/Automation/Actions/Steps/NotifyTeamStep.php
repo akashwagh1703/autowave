@@ -5,6 +5,7 @@ namespace App\Domain\Automation\Actions\Steps;
 use App\Domain\Automation\Support\ActionContext;
 use App\Domain\Automation\Support\ActionResult;
 use App\Domain\Automation\Support\TemplateRenderer;
+use App\Domain\Messaging\Enums\MessagePurpose;
 use App\Domain\Messaging\Services\MessagingService;
 use App\Domain\Tenant\Enums\MembershipStatus;
 use App\Domain\Tenant\Models\TenantUser;
@@ -61,6 +62,7 @@ class NotifyTeamStep implements StepAction
                 'subject' => $subject,
                 'body' => $body,
                 'idempotency_key' => $context->idempotencyKey.':member:'.$member->id,
+                'purpose' => MessagePurpose::Notification,
                 'tenant_user_id' => $member->id,
                 'automation_run_id' => $context->run->id,
             ]);

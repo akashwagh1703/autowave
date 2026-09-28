@@ -13,6 +13,7 @@ import FlashMessages from '@/components/FlashMessages';
 
 const navigation = [
     { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Inbox', href: '/inbox', permission: 'conversations.view', module: 'messaging', badge: (props) => props.inbox?.unread },
     { label: 'Appointments', href: '/appointments', permission: 'appointments.view', engine: 'booking' },
     { label: 'Orders', href: '/orders', permission: 'orders.view', engine: 'commerce' },
     { label: 'Leads', href: '/leads', permission: 'leads.view', module: 'leads' },
@@ -26,7 +27,8 @@ const navigation = [
 ];
 
 export default function AppLayout({ title, children }) {
-    const { app, auth, tenant, permissions } = usePage().props;
+    const props = usePage().props;
+    const { app, auth, tenant, permissions } = props;
     const [anchor, setAnchor] = useState(null);
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
 
@@ -55,17 +57,27 @@ export default function AppLayout({ title, children }) {
                     ) : null}
 
                     <nav className="order-last flex w-full gap-1 overflow-x-auto md:order-none md:w-auto">
-                        {items.map((item) => (
-                            <Button
-                                key={item.href}
-                                component={Link}
-                                href={item.href}
-                                size="small"
-                                color={isCurrent(item.href) ? 'primary' : 'inherit'}
-                            >
-                                {typeof item.label === 'function' ? item.label(tenant) : item.label}
-                            </Button>
-                        ))}
+                        {items.map((item) => {
+                            const badge = item.badge?.(props) ?? 0;
+
+                            return (
+                                <Button
+                                    key={item.href}
+                                    component={Link}
+                                    href={item.href}
+                                    size="small"
+                                    color={isCurrent(item.href) ? 'primary' : 'inherit'}
+                                    aria-label={badge ? `${item.label}, ${badge} unread` : undefined}
+                                >
+                                    {typeof item.label === 'function' ? item.label(tenant) : item.label}
+                                    {badge ? (
+                                        <span className="ml-1.5 rounded-full bg-brand-600 px-1.5 py-px text-[11px] leading-4 font-semibold text-white">
+                                            {badge > 99 ? '99+' : badge}
+                                        </span>
+                                    ) : null}
+                                </Button>
+                            );
+                        })}
                     </nav>
 
                     <div className="ml-auto">

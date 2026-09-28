@@ -118,6 +118,26 @@ Phase 7 (commerce):
 | `activities (tenant_id, order_id, occurred_at)` | Order history |
 | Checks `products_valid`, `orders_valid`, `order_items_valid`, `order_payments_valid`, `stock_movements_valid` | Stock never below zero, totals add up, payments never exceed the total (last line of defence behind the application rules) |
 
+Phase 8 (messaging):
+
+| Index / constraint | Serves |
+|---|---|
+| `messaging_channels.webhook_key` unique | Webhook routing: one lookup per Meta call, across tenants |
+| `messaging_channels (tenant_id, channel)` unique | One WhatsApp and one Instagram row per tenant; `ChannelResolver` |
+| `messaging_channels (channel, external_id)` unique | A number or Instagram account can feed only one tenant |
+| `(id, tenant_id)` unique on `messaging_channels`, `conversations`, `outbound_messages` | Targets of the messaging composite FKs |
+| `conversations (tenant_id, channel, contact_handle)` unique | Find-or-create per contact (webhooks, automation messages, chat buttons); race-safe |
+| `conversations (tenant_id, status, last_message_at)` | Inbox tabs sorted by latest message; open counts |
+| `conversations (tenant_id, assigned_tenant_user_id)` | "Mine" tab and count |
+| `conversations_unread_index` partial `(tenant_id) WHERE unread_count > 0` | Nav unread badge on every page load |
+| `conversation_messages (conversation_id, sent_at, id)` | Thread, newest `thread_limit` messages |
+| `conversation_messages_provider_unique` partial unique `(tenant_id, channel, provider_message_id)` | Webhook retries never store a message twice |
+| `outbound_messages (tenant_id, provider_message_id)` | Delivery receipts find the message by Meta's id |
+| `message_templates (tenant_id, channel, name, language)` unique, `(tenant_id, status)` | Sync upsert; approved templates for the inbox and automation builder |
+| `messaging_webhook_calls (status, updated_at)` | `messaging:dispatch-pending` finds stuck pending calls |
+| `messaging_webhook_calls (tenant_id, created_at)` | Pruning and per-tenant diagnosis |
+| FK-side indexes on `conversations.customer_id`, `.lead_id`, `.assigned_tenant_user_id`, `conversation_messages.outbound_message_id`, `outbound_messages.conversation_id`, `.sent_by_user_id`, `messaging_webhook_calls.messaging_channel_id`, `messaging_channels.connected_by_user_id` | Cascades and joins |
+
 Text search uses `ILIKE '%…%'` on name/email and `LIKE '%digits%'` on `phone_normalized`; these scans
 are filtered by `tenant_id` first and are fine at current volumes. Add `pg_trgm` GIN indexes
 when a tenant's lead count makes the list slow.

@@ -10,6 +10,8 @@ use App\Domain\Commerce\Enums\PaymentStatus;
 use App\Domain\Lead\Actions\AssignLead;
 use App\Domain\Lead\Models\LeadSource;
 use App\Domain\Lead\Models\LeadStage;
+use App\Domain\Messaging\Models\MessageTemplate;
+use App\Domain\Messaging\Support\ChannelResolver;
 use App\Domain\Service\Models\Service;
 use App\Domain\Tenant\Models\TenantUser;
 use App\Domain\Tenant\Support\TenantContext;
@@ -186,10 +188,21 @@ class AutomationCatalog
             ])->values()->all(),
             'stages' => in_array('update_lead', array_keys($actions), true) ? $this->options('lead_stages') : [],
             'members' => in_array('assign_lead', array_keys($actions), true) ? $this->options('members') : [],
-            'channels' => collect(config('messaging.channels'))->map(fn (array $channel) => [
-                'label' => $channel['label'],
-                'simulated' => (bool) config('messaging.providers.'.$channel['provider'].'.simulated', false),
-            ])->all(),
+            'channels' => collect(config('messaging.channels'))->map(function (array $channel, string $key) {
+                $resolved = app(ChannelResolver::class)->resolve($key);
+
+                return ['label' => $channel['label'], 'simulated' => $resolved['simulated'], 'window' => $resolved['window_hours'] !== null];
+            })->all(),
+            'templates' => in_array('send_whatsapp', array_keys($actions), true)
+                ? MessageTemplate::query()->approved()->where('channel', 'whatsapp')->orderBy('name')->orderBy('language')->get()
+                    ->map(fn (MessageTemplate $template) => [
+                        'name' => $template->name,
+                        'language' => $template->language,
+                        'category' => $template->category,
+                        'body' => $template->body,
+                        'variables' => $template->variables,
+                    ])->all()
+                : [],
             'limits' => config('automation.limits'),
         ];
     }

@@ -1,7 +1,6 @@
 import { Link } from '@inertiajs/react';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutlineOutlined';
 import CallIcon from '@mui/icons-material/Call';
-import ChatIcon from '@mui/icons-material/Chat';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import EmailIcon from '@mui/icons-material/Email';
 import EventIcon from '@mui/icons-material/Event';
@@ -11,6 +10,8 @@ import EventRepeatIcon from '@mui/icons-material/EventRepeat';
 import AssignmentIcon from '@mui/icons-material/AssignmentOutlined';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import RedoIcon from '@mui/icons-material/Redo';
 import StickyNote2Icon from '@mui/icons-material/StickyNote2';
@@ -29,7 +30,8 @@ const icons = {
     created: AddCircleOutlineIcon,
     note: StickyNote2Icon,
     call: CallIcon,
-    whatsapp: ChatIcon,
+    whatsapp: WhatsAppIcon,
+    instagram: InstagramIcon,
     email: EmailIcon,
     meeting: EventIcon,
     stage_changed: SwapHorizIcon,
@@ -67,11 +69,16 @@ function orderLabel(meta) {
     return meta.number ? `order #${meta.number}` : 'the order';
 }
 
-const sent = { whatsapp: 'sent a WhatsApp message', email: 'sent an email' };
+const sent = { whatsapp: 'sent a WhatsApp message', instagram: 'sent an Instagram message', email: 'sent an email' };
+const received = { whatsapp: 'sent a WhatsApp message', instagram: 'sent an Instagram message' };
 
 function actorName(activity) {
     if (activity.user) {
         return activity.user.name;
+    }
+
+    if (activity.metadata?.direction === 'inbound') {
+        return activity.metadata.from_name ?? 'The contact';
     }
 
     return activity.metadata?.via === 'automation' ? 'Automation' : 'System';
@@ -163,12 +170,19 @@ function describe(activity, timezone, currency) {
         case 'task':
             return `added a follow-up task${meta.due_at ? ` due ${formatDateTime(meta.due_at, timezone, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : ''}${meta.automation_name ? ` (${meta.automation_name})` : ''}`;
         case 'whatsapp':
+        case 'instagram':
         case 'email':
-            if (meta.message_id) {
-                return `${sent[activity.type]}${meta.automation_name ? ` (${meta.automation_name})` : ''}${meta.simulated ? ' — simulated, not delivered' : ''}`;
+            if (meta.direction === 'inbound') {
+                return `${received[activity.type] ?? 'sent a message'}${meta.opt_out === 'out' ? ' — opted out' : meta.opt_out === 'in' ? ' — opted back in' : ''}`;
             }
 
-            return logged[activity.type];
+            if (meta.message_id) {
+                const detail = meta.automation_name ?? (meta.template ? `template ${meta.template}` : null);
+
+                return `${sent[activity.type]}${detail ? ` (${detail})` : ''}${meta.simulated ? ' — simulated, not delivered' : ''}`;
+            }
+
+            return logged[activity.type] ?? humanize(activity.type);
         default:
             return logged[activity.type] ?? humanize(activity.type);
     }

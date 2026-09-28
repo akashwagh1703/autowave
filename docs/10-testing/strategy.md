@@ -33,6 +33,7 @@ tests/
 | Booking | Create, cancel, reschedule, unavailable slot, duplicate, concurrent attempt, timezone, resource availability | Booking engine (`tests/Feature/Booking`; concurrency is simulated, AW-021) |
 | Public website | Render, publish/preview, SEO meta, forms (validation, honeypot, throttle), online booking, cross-tenant hosts | Website engine (`tests/Feature/Website`; requests go to `$this->siteUrl('abc-salon.autowave.test', '/path')`) |
 | Commerce | Server pricing (tampered prices ignored), stock never below zero, cancel restocks once, lifecycle, payments up to the balance, numbering, website checkout, cross-tenant products and customers | Commerce engine (`tests/Feature/Commerce`, `tests/Feature/Website/OnlineShopTest`; helpers in `tests/Concerns/CreatesCommerceRecords.php`) |
+| Messaging | Webhook verification and signatures, normalisation, idempotent inbound, forward-only receipts, provider payloads (`Http::fake`), window, templates, opt-out, quiet hours, write-only secrets, inbox permissions, cross-tenant webhooks and conversations | Messaging (`tests/Feature/Messaging`; helpers in `tests/Concerns/CreatesMessaging.php`) |
 | E2E | Full customer workflows | Milestones (tooling TBD) |
 
 ## Testing queued work
@@ -72,6 +73,17 @@ Other helpers:
   `$stock` is given), `placeOrder($tenant, [[$product, $qty]], [...])`, `setOnlineOrdering($tenant, [...])`
   and `stockOf($tenant, $product)`.
 - Audit rows are in `audit_logs` with the column `action`.
+- Messaging helpers (`CreatesMessaging`):
+  - `connectWhatsApp($tenant)` / `connectInstagram($tenant)` save a connected channel without calling Meta
+    (token `wa-token` / `ig-token`, app secret `CreatesMessaging::APP_SECRET`);
+  - `receive($tenant, $from, $text, [...])` runs the inbound pipeline and returns the conversation (options
+    `channel`, `name`, `at`, `id`);
+  - `postWebhook($channel, $payload, $secret)` signs and posts a body; `whatsappText()`,
+    `whatsappStatus()` and `whatsappPayload()` build Meta payloads;
+  - `makeTemplate($tenant, [...])` creates an approved two-variable template.
+- Meta calls are faked with `Http::fake(['graph.facebook.com/*' => ...])`; assert the request body with
+  `Http::assertSent`. With the sync queue a queued message is delivered at once, so assert its final status.
+- Quiet-hours tests set the tenant timezone and use `travelTo()`.
 
 ## Current coverage (Phase 0)
 

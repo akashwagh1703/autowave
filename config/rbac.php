@@ -57,6 +57,11 @@ return [
             'create' => 'Create orders',
             'update' => 'Update orders',
         ],
+        'conversations' => [
+            'view' => 'View the inbox and conversations',
+            'reply' => 'Reply, send templates, close and reopen conversations',
+            'assign' => 'Assign conversations to team members',
+        ],
         'automation' => [
             'view' => 'View automations',
             'create' => 'Create automations',
@@ -100,7 +105,7 @@ return [
             'description' => 'Runs day-to-day operations.',
             'permissions' => [
                 'customers.*', 'leads.*', 'services.*', 'resources.*', 'appointments.*', 'products.*', 'orders.*',
-                'automation.*', 'website.*', 'reports.view', 'users.view', 'settings.view',
+                'conversations.*', 'automation.*', 'website.*', 'reports.view', 'users.view', 'settings.view',
             ],
         ],
         'receptionist' => [
@@ -111,6 +116,7 @@ return [
                 'leads.view', 'leads.create', 'leads.update',
                 'services.view', 'resources.view',
                 'appointments.*', 'orders.view', 'orders.create',
+                'conversations.view', 'conversations.reply',
             ],
         ],
         'sales_executive' => [
@@ -121,6 +127,7 @@ return [
                 'leads.view', 'leads.create', 'leads.update', 'leads.assign',
                 'services.view', 'resources.view',
                 'appointments.view', 'appointments.create',
+                'conversations.view', 'conversations.reply',
             ],
         ],
         'staff' => [

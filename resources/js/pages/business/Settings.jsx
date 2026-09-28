@@ -48,6 +48,11 @@ export default function Settings({ business, branding, profile, website, domains
                                 CRM settings
                             </Button>
                         ) : null}
+                        {hasModule('messaging') ? (
+                            <Button component={Link} href="/settings/messaging" variant="outlined">
+                                Messaging
+                            </Button>
+                        ) : null}
                     </>
                 }
             />

@@ -57,6 +57,101 @@ function MessageField({ label, value, onChange, error, helperText, variables, ma
     );
 }
 
+const templateValue = (template) => (template ? `${template.name}|${template.language}` : '');
+
+/** Free text, or an approved WhatsApp template with one field per {{n}} variable. */
+function WhatsAppFields({ step, onChange, catalog, error, variables, limits }) {
+    const config = step.config ?? {};
+    const templates = catalog.templates ?? [];
+    const isTemplate = config.mode === 'template';
+    const selected = isTemplate ? templates.find((template) => templateValue(template) === templateValue(config.template)) : null;
+    const params = config.params ?? [];
+
+    const switchMode = (mode) => {
+        if (mode === 'template') {
+            const first = templates[0];
+            onChange({ ...step, config: { mode: 'template', template: first ? { name: first.name, language: first.language } : { name: '', language: '' }, params: Array(first?.variables ?? 0).fill('') } });
+
+            return;
+        }
+
+        onChange({ ...step, config: { message: '' } });
+    };
+
+    const chooseTemplate = (value) => {
+        const template = templates.find((item) => templateValue(item) === value);
+
+        if (template) {
+            onChange({ ...step, config: { mode: 'template', template: { name: template.name, language: template.language }, params: Array(template.variables).fill('') } });
+        }
+    };
+
+    const setParam = (index, value) => {
+        const next = [...params];
+        next[index] = value;
+        onChange({ ...step, config: { ...config, params: next } });
+    };
+
+    return (
+        <>
+            <TextField select size="small" label="Send" value={isTemplate ? 'template' : 'text'} onChange={(event) => switchMode(event.target.value)} className="w-full sm:w-72">
+                <MenuItem value="text">A free-text message</MenuItem>
+                <MenuItem value="template" disabled={!templates.length}>
+                    An approved template{templates.length ? '' : ' (none synced)'}
+                </MenuItem>
+            </TextField>
+
+            {!isTemplate ? (
+                <>
+                    {catalog.channels.whatsapp?.window ? (
+                        <Alert severity="warning" variant="outlined">
+                            WhatsApp only allows free text within 24 hours of the contact’s last message. Outside that window this step is skipped — use an approved template for first contact and reminders.
+                        </Alert>
+                    ) : null}
+                    <MessageField label="Message" value={config.message} onChange={(message) => onChange({ ...step, config: { message } })} error={error('message')} variables={variables} maxLength={limits.message} />
+                </>
+            ) : (
+                <>
+                    <TextField
+                        select
+                        size="small"
+                        label="Template"
+                        value={selected ? templateValue(selected) : ''}
+                        onChange={(event) => chooseTemplate(event.target.value)}
+                        error={Boolean(error('template') ?? error('template.name'))}
+                        helperText={error('template') ?? error('template.name') ?? 'Templates are synced from WhatsApp in Settings → Messaging.'}
+                        className="w-full sm:w-96"
+                    >
+                        {templates.map((template) => (
+                            <MenuItem key={templateValue(template)} value={templateValue(template)}>
+                                {template.name} ({template.language})
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                    {selected ? (
+                        <>
+                            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm whitespace-pre-line text-slate-700">{selected.body}</p>
+                            {Array.from({ length: selected.variables }, (_, index) => (
+                                <MessageField
+                                    key={index}
+                                    label={`Variable {{${index + 1}}}`}
+                                    multiline={false}
+                                    value={params[index] ?? ''}
+                                    onChange={(value) => setParam(index, value)}
+                                    error={error(`params.${index}`)}
+                                    variables={variables}
+                                    maxLength={500}
+                                />
+                            ))}
+                        </>
+                    ) : null}
+                    {error('params') ? <p className="text-sm text-red-600">{error('params')}</p> : null}
+                </>
+            )}
+        </>
+    );
+}
+
 export default function ActionEditor({ step, onChange, catalog, trigger, errors, prefix }) {
     const actions = actionsFor(catalog, trigger);
     const variables = variablesFor(catalog, trigger);
@@ -91,9 +186,7 @@ export default function ActionEditor({ step, onChange, catalog, trigger, errors,
                 </Alert>
             ) : null}
 
-            {step.action === 'send_whatsapp' ? (
-                <MessageField label="Message" value={config.message} onChange={(message) => set({ message })} error={error('message')} variables={variables} maxLength={limits.message} />
-            ) : null}
+            {step.action === 'send_whatsapp' ? <WhatsAppFields step={step} onChange={onChange} catalog={catalog} error={error} variables={variables} limits={limits} /> : null}
 
             {step.action === 'send_email' || step.action === 'send_notification' ? (
                 <>

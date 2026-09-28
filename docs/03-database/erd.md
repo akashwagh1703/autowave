@@ -135,3 +135,25 @@ erDiagram
 All arrows are composite FKs except `products.image_media_id`, which references `media.id` alone so it can
 be set to null when the image is deleted (PG11). An order's activities also carry its `customer_id`, so they
 show on the customer timeline. Website orders are ordinary `orders` rows with `source = website`.
+
+## Messaging (Phase 8 — implemented, ADR-018)
+
+```mermaid
+erDiagram
+    TENANTS ||--o{ MESSAGING_CHANNELS : "one per channel"
+    MESSAGING_CHANNELS ||--o{ MESSAGING_WEBHOOK_CALLS : "received (pruned)"
+    TENANTS ||--o{ CONVERSATIONS : owns
+    CUSTOMERS ||--o{ CONVERSATIONS : "linked (nullable)"
+    LEADS ||--o{ CONVERSATIONS : "linked (nullable)"
+    TENANT_USERS ||--o{ CONVERSATIONS : "assigned (nullable)"
+    CONVERSATIONS ||--o{ CONVERSATION_MESSAGES : thread
+    CONVERSATIONS ||--o{ OUTBOUND_MESSAGES : "replies and automation messages"
+    OUTBOUND_MESSAGES ||--o| CONVERSATION_MESSAGES : "outbound row"
+    USERS ||--o{ OUTBOUND_MESSAGES : "sent by (nullable)"
+    TENANTS ||--o{ MESSAGE_TEMPLATES : "synced from Meta"
+```
+
+All arrows between tenant-owned tables are composite FKs. A conversation is keyed by
+(`tenant`, `channel`, `contact_handle`), so the same person messaging two businesses has two unrelated
+conversations. Templates are referenced by name and language (in `outbound_messages.template` and
+automation configs), not by FK, because a sync may replace them.
