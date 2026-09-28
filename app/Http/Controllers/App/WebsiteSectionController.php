@@ -87,7 +87,7 @@ class WebsiteSectionController extends Controller
      */
     private static function publicField(array $field): array
     {
-        $public = array_intersect_key($field, array_flip(['type', 'label', 'help', 'max', 'rows', 'required', 'default', 'item_label']));
+        $public = array_intersect_key($field, array_flip(['type', 'label', 'help', 'max', 'rows', 'required', 'default', 'item_label', 'ai']));
 
         if (isset($field['options'])) {
             $public['options'] = collect($field['options'])->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])->values()->all();

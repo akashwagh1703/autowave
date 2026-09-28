@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Domain\AI\Services\AIService;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Lead\Models\Lead;
 use App\Domain\Messaging\Actions\ManageConversation;
@@ -15,6 +16,7 @@ use App\Domain\Messaging\Support\MessagingCompliance;
 use App\Domain\Tenant\Models\TenantUser;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\AiPresenter;
 use App\Http\Presenters\CrmPresenter;
 use App\Http\Presenters\MessagingPresenter;
 use Illuminate\Database\Eloquent\Builder;
@@ -200,6 +202,9 @@ class InboxController extends Controller
                 ? MessageTemplate::query()->approved()->where('channel', $conversation->channel)->orderBy('name')->get()
                     ->map(fn (MessageTemplate $template) => MessagingPresenter::template($template))->all()
                 : [],
+            'ai_draft' => $canReply && $this->context->hasModule('ai') && $request->user()->can('ai.use')
+                ? AiPresenter::draft(AIService::pendingDraft($conversation))
+                : null,
         ];
     }
 

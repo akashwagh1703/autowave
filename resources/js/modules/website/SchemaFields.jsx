@@ -10,6 +10,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
+import WriteWithAi from '@/modules/ai/WriteWithAi';
 
 /**
  * Renders a website section's fields from their definitions (config/website.php, sent by the
@@ -26,7 +27,7 @@ function helper(field, error, value) {
     return [field.help, count].filter(Boolean).join(' · ') || undefined;
 }
 
-function ScalarField({ field, value, onChange, error, disabled }) {
+function ScalarField({ field, value, onChange, error, disabled, section }) {
     switch (field.type) {
         case 'boolean':
             return (
@@ -48,24 +49,36 @@ function ScalarField({ field, value, onChange, error, disabled }) {
             );
         default:
             return (
-                <TextField
-                    label={field.label}
-                    fullWidth
-                    required={field.required}
-                    disabled={disabled}
-                    multiline={field.type === 'textarea'}
-                    minRows={field.type === 'textarea' ? (field.rows ?? 3) : undefined}
-                    value={value ?? ''}
-                    onChange={(event) => onChange(event.target.value)}
-                    error={Boolean(error)}
-                    helperText={helper(field, error, value)}
-                    slotProps={{ htmlInput: { maxLength: field.max } }}
-                />
+                <div>
+                    <TextField
+                        label={field.label}
+                        fullWidth
+                        required={field.required}
+                        disabled={disabled}
+                        multiline={field.type === 'textarea'}
+                        minRows={field.type === 'textarea' ? (field.rows ?? 3) : undefined}
+                        value={value ?? ''}
+                        onChange={(event) => onChange(event.target.value)}
+                        error={Boolean(error)}
+                        helperText={helper(field, error, value)}
+                        slotProps={{ htmlInput: { maxLength: field.max } }}
+                    />
+                    {field.ai && !disabled && section ? (
+                        <div className="mt-1 flex justify-end">
+                            <WriteWithAi
+                                kind="website_field"
+                                title={`Write "${field.label}" with AI`}
+                                context={() => ({ section, field: field.label, current: value || null })}
+                                onUse={(text) => onChange(field.max ? text.slice(0, field.max) : text)}
+                            />
+                        </div>
+                    ) : null}
+                </div>
             );
     }
 }
 
-function ListField({ field, value, onChange, errors, path, disabled }) {
+function ListField({ field, value, onChange, errors, path, disabled, section }) {
     const items = Array.isArray(value) ? value : [];
     const blank = () => Object.fromEntries(field.fields.map((sub) => [sub.key, sub.type === 'boolean' ? false : '']));
     const update = (index, key, next) => onChange(items.map((item, i) => (i === index ? { ...item, [key]: next } : item)));
@@ -112,6 +125,7 @@ function ListField({ field, value, onChange, errors, path, disabled }) {
                                 field={sub}
                                 value={item[sub.key]}
                                 disabled={disabled}
+                                section={section}
                                 onChange={(next) => update(index, sub.key, next)}
                                 error={errors[`${path}.${index}.${sub.key}`]}
                             />
@@ -128,7 +142,7 @@ function ListField({ field, value, onChange, errors, path, disabled }) {
     );
 }
 
-export default function SchemaFields({ fields, values, onChange, errors, disabled }) {
+export default function SchemaFields({ fields, values, onChange, errors, disabled, section = null }) {
     return (
         <div className="space-y-5">
             {fields.map((field) =>
@@ -141,6 +155,7 @@ export default function SchemaFields({ fields, values, onChange, errors, disable
                         errors={errors}
                         path={`config.${field.key}`}
                         disabled={disabled}
+                        section={section}
                     />
                 ) : (
                     <ScalarField
@@ -150,6 +165,7 @@ export default function SchemaFields({ fields, values, onChange, errors, disable
                         onChange={(next) => onChange(field.key, next)}
                         error={errors[`config.${field.key}`]}
                         disabled={disabled}
+                        section={section}
                     />
                 ),
             )}

@@ -25,14 +25,16 @@ What exists is described in [current-state.md](current-state.md).
 - **Phase 8 — Messaging:** per-business WhatsApp (Meta Cloud API) and Instagram, signed webhooks, a shared
   inbox with assignment and unread counts, unknown senders as leads, delivery receipts, synced templates,
   opt-out and quiet hours (ADR-018; AW-025 resolved).
+- **Phase 9 — AI:** OpenRouter behind one service with per-business metering and a monthly cap; reply
+  suggestions and drafts (a person always sends), summaries, lead details from messages, the business
+  assistant, writing help, the "message received" trigger and AI automation actions (ADR-019; AW-053
+  partly resolved).
 
 ## Next
 
-**Phase 9 — AI**: lead extraction, reply generation, summaries, assistant (ADR-008). Natural first uses
-are the inbox (suggested replies, conversation summaries) and the "message received" trigger (AW-053).
-Starts only after Phase 8 is approved.
+**Phase 10 — Additional verticals**: Turf, Coaching, Cafe, Local Commerce, then Clinic, Fitness, Car
+Service, Home Services. Starts only after Phase 9 is approved.
 
 ## Future
 
-- **Phase 10 — Additional verticals**: Turf, Coaching, Cafe, Local Commerce, then Clinic, Fitness, Car Service, Home Services.
 - Billing (plans, subscriptions, usage), custom domains with verification/SSL, Horizon, PWA.

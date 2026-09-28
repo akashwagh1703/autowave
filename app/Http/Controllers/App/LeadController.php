@@ -11,6 +11,7 @@ use App\Domain\Lead\Models\LeadSource;
 use App\Domain\Tenant\Models\TenantUser;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\AiPresenter;
 use App\Http\Presenters\CrmOptions;
 use App\Http\Presenters\CrmPresenter;
 use App\Http\Requests\Crm\LeadRequest;
@@ -73,12 +74,13 @@ class LeadController extends Controller
         return to_route('leads.show', $lead)->with('success', __('Lead added.'));
     }
 
-    public function show(Lead $lead): Response
+    public function show(Request $request, Lead $lead): Response
     {
         $lead->load(['stage', 'source', 'assignee.user:id,name', 'customer']);
 
         return Inertia::render('business/leads/Show', [
             'lead' => CrmPresenter::lead($lead),
+            'ai' => AiPresenter::record($lead, $request->user()),
             'activities' => $lead->activities()
                 ->with('user:id,name')
                 ->orderByDesc('occurred_at')->orderByDesc('id')

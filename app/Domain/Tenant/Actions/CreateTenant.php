@@ -7,6 +7,7 @@ use App\Domain\Business\Models\BusinessType;
 use App\Domain\Domain\Actions\AssignDefaultDomain;
 use App\Domain\Engine\Services\EngineManager;
 use App\Domain\Lead\Actions\ProvisionCrm;
+use App\Domain\Module\Actions\BackfillTenantModules;
 use App\Domain\Module\Exceptions\CatalogItemUnavailable;
 use App\Domain\Module\Services\ModuleManager;
 use App\Domain\RBAC\Actions\AssignRole;
@@ -138,6 +139,12 @@ class CreateTenant
         $engineModuleCodes = $type->engines->flatMap->requiredModuleCodes();
 
         $this->modules->enableWithDependencies($tenant, $moduleCodes->merge($engineModuleCodes)->unique()->values()->all());
+
+        // The owner chose from today's catalogue, so no module existing now should be switched on later by the backfill.
+        TenantSetting::withoutTenantScope()->updateOrCreate(
+            ['tenant_id' => $tenant->getKey(), 'key' => BackfillTenantModules::KEY],
+            ['value' => array_keys(config('catalog.modules'))],
+        );
 
         foreach ($type->engines as $engine) {
             if (! $engine->isActive()) {

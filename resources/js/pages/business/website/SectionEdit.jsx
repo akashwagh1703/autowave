@@ -34,6 +34,7 @@ export default function SectionEdit({ section, fields, media, canManage }) {
                                     onChange={(key, value) => form.setData('config', { ...form.data.config, [key]: value })}
                                     errors={form.errors}
                                     disabled={!canManage}
+                                    section={section.label}
                                 />
                                 {canManage ? (
                                     <div className="flex justify-end">

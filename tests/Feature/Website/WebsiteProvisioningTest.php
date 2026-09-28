@@ -57,7 +57,7 @@ class WebsiteProvisioningTest extends TestCase
 
         $keys = $this->context()->run($tenant, fn () => TenantSetting::query()->pluck('key')->all());
 
-        $this->assertEqualsCanonicalizing(['branding', 'business_profile', 'dashboard_widgets', 'booking_resource_label'], $keys);
+        $this->assertEqualsCanonicalizing(['branding', 'business_profile', 'dashboard_widgets', 'booking_resource_label', 'modules_backfilled'], $keys);
     }
 
     public function test_an_unknown_template_aborts_tenant_creation(): void

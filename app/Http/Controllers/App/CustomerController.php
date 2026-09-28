@@ -12,6 +12,7 @@ use App\Domain\Customer\Actions\UpdateCustomer;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\AiPresenter;
 use App\Http\Presenters\BookingPresenter;
 use App\Http\Presenters\CommercePresenter;
 use App\Http\Presenters\CrmOptions;
@@ -118,6 +119,7 @@ class CustomerController extends Controller
                     ->map(fn (Appointment $appointment) => BookingPresenter::appointment($appointment))
                 : null,
             'customer' => CrmPresenter::customer($customer),
+            'ai' => AiPresenter::record($customer, $request->user()),
             'leads' => $customer->leads()
                 ->with(['stage', 'assignee.user:id,name'])
                 ->orderByDesc('created_at')

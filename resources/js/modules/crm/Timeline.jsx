@@ -81,8 +81,14 @@ function actorName(activity) {
         return activity.metadata.from_name ?? 'The contact';
     }
 
+    if (activity.metadata?.via === 'ai') {
+        return 'AI';
+    }
+
     return activity.metadata?.via === 'automation' ? 'Automation' : 'System';
 }
+
+const aiSuffix = { ai: ' (filled in by AI)', ai_suggestion: ' (AI suggestion)' };
 
 const logged = { note: 'added a note', call: 'logged a call', whatsapp: 'logged a WhatsApp message', email: 'logged an email', meeting: 'logged a meeting' };
 
@@ -166,7 +172,9 @@ function describe(activity, timezone, currency) {
 
             return `${meta.automatic ? 'auto-assigned' : 'assigned'} the lead to ${meta.to.name}`;
         case 'updated':
-            return `updated ${(meta.changed ?? []).map((field) => humanize(field).toLowerCase()).join(', ') || 'details'}`;
+            return `updated ${(meta.changed ?? []).map((field) => humanize(field).toLowerCase()).join(', ') || 'details'}${aiSuffix[meta.via] ?? ''}`;
+        case 'note':
+            return meta.via === 'ai' ? `added a summary note${meta.automation_name ? ` (${meta.automation_name})` : ''}` : logged.note;
         case 'task':
             return `added a follow-up task${meta.due_at ? ` due ${formatDateTime(meta.due_at, timezone, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : ''}${meta.automation_name ? ` (${meta.automation_name})` : ''}`;
         case 'whatsapp':

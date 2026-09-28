@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AiUsageController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\TenantController;
@@ -21,5 +22,7 @@ Route::name('admin.')->group(function () {
         Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
         Route::post('/tenants/{tenant}/suspend', [TenantController::class, 'suspend'])->name('tenants.suspend');
         Route::post('/tenants/{tenant}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
+        Route::get('/ai-usage', [AiUsageController::class, 'index'])->name('ai.usage');
+        Route::put('/tenants/{tenant}/ai-limit', [AiUsageController::class, 'updateLimit'])->name('tenants.ai-limit');
     });
 });

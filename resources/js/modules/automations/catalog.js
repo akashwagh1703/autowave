@@ -42,6 +42,8 @@ export function defaultConfig(action, catalog) {
             return { stage: catalog.stages[0]?.value ?? '' };
         case 'update_customer':
             return { tag: '' };
+        case 'ai_draft_reply':
+            return { instructions: '' };
         default:
             return {};
     }

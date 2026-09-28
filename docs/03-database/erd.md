@@ -157,3 +157,20 @@ All arrows between tenant-owned tables are composite FKs. A conversation is keye
 (`tenant`, `channel`, `contact_handle`), so the same person messaging two businesses has two unrelated
 conversations. Templates are referenced by name and language (in `outbound_messages.template` and
 automation configs), not by FK, because a sync may replace them.
+
+## AI (Phase 9 — implemented, ADR-019)
+
+```mermaid
+erDiagram
+    TENANTS ||--o{ AI_USAGE : "one row per provider call"
+    USERS ||--o{ AI_USAGE : "caller (nullable)"
+    TENANTS ||--o{ AI_RESULTS : owns
+    USERS ||--o{ AI_RESULTS : "created by (nullable)"
+    CONVERSATIONS ||--o{ AI_RESULTS : "summary, reply draft (polymorphic)"
+    LEADS ||--o{ AI_RESULTS : "summary, extraction (polymorphic)"
+    CUSTOMERS ||--o{ AI_RESULTS : "summary (polymorphic)"
+```
+
+`ai_results` points at its record by `subject_type` + `subject_id` (no FK), like automation runs; a result
+for a deleted record is simply never shown. `(tenant_id, feature, key)` is unique, so the same input or
+automation step never produces a second result.

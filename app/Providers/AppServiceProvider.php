@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Domain\AI\Listeners\QueueLeadExtraction;
 use App\Domain\Automation\Listeners\RetimeAppointmentWaits;
 use App\Domain\Automation\Listeners\StartAutomations;
 use App\Domain\Booking\Events\AppointmentRescheduled;
+use App\Domain\Messaging\Events\ConversationMessageReceived;
 use App\Domain\RBAC\Support\PermissionCatalog;
 use App\Domain\RBAC\Support\PermissionResolver;
 use App\Domain\Tenant\Support\TenantContext;
@@ -42,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
             Event::listen($event, StartAutomations::class);
         }
         Event::listen(AppointmentRescheduled::class, RetimeAppointmentWaits::class);
+        Event::listen(ConversationMessageReceived::class, QueueLeadExtraction::class);
 
         // Numeric ids only, so a malformed URL is a 404 rather than a database error.
         Route::patterns([
@@ -61,6 +64,8 @@ class AppServiceProvider extends ServiceProvider
             'productCategory' => '[0-9]+',
             'order' => '[0-9]+',
             'payment' => '[0-9]+',
+            'conversation' => '[0-9]+',
+            'draft' => '[0-9]+',
         ]);
 
         // Business creation attempts (including validation failures) per user.
@@ -81,5 +86,8 @@ class AppServiceProvider extends ServiceProvider
         // Meta webhooks: per sending IP and webhook key (Meta sends from a pool of addresses).
         RateLimiter::for('meta-webhooks', fn (Request $request) => Limit::perMinute((int) config('messaging.webhooks.rate_limit'))
             ->by('meta-webhook|'.$request->ip().'|'.$request->route('webhookKey')));
+
+        // AI requests per signed-in user (each one can cost money); the monthly cap is enforced separately.
+        RateLimiter::for('ai', fn (Request $request) => Limit::perMinute((int) config('ai.limits.per_minute'))->by('ai|'.($request->user()?->getKey() ?? $request->ip())));
     }
 }

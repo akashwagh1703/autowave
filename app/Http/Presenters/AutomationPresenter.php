@@ -13,6 +13,7 @@ use App\Domain\Commerce\Models\Order;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Lead\Models\Lead;
 use App\Domain\Messaging\Enums\MessageStatus;
+use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Messaging\Models\OutboundMessage;
 use App\Support\TenantTime;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -227,6 +228,7 @@ class AutomationPresenter
             'assign_lead' => ($config['mode'] ?? 'auto') === 'auto' ? 'using the assignment rules' : 'to a team member',
             'update_lead' => collect($this->catalog->options('lead_stages'))->firstWhere('value', $config['stage'] ?? null)['label'] ?? ($config['stage'] ?? ''),
             'update_customer' => $config['tag'] ?? '',
+            'ai_draft_reply' => Str::limit($config['instructions'] ?? '', 60),
             default => '',
         };
 
@@ -260,6 +262,10 @@ class AutomationPresenter
                 $query->with('customer');
             }
 
+            if ($class === Conversation::class) {
+                $query->with(['customer', 'lead']);
+            }
+
             foreach ($query->whereKey($group->pluck('subject_id')->unique()->all())->get() as $model) {
                 $deleted = method_exists($model, 'trashed') && $model->trashed();
 
@@ -270,6 +276,7 @@ class AutomationPresenter
                         $model instanceof Lead, $model instanceof Customer => $model->name,
                         $model instanceof Appointment => trim(($model->customer?->name ?? 'Appointment').' · '.$model->starts_at->setTimezone(TenantTime::timezone())->format('D j M, g:i A')),
                         $model instanceof Order => 'Order '.$model->reference().($model->customer ? ' · '.$model->customer->name : ''),
+                        $model instanceof Conversation => 'Chat with '.$model->displayName(),
                         default => Str::headline($type).' #'.$model->getKey(),
                     },
                     'url' => $deleted ? null : match ($type) {
@@ -277,6 +284,7 @@ class AutomationPresenter
                         'customer' => route('customers.show', $model->getKey(), false),
                         'appointment' => route('appointments.show', $model->getKey(), false),
                         'order' => route('orders.show', $model->getKey(), false),
+                        'conversation' => route('inbox.show', $model->getKey(), false),
                         default => null,
                     },
                     'deleted' => $deleted,

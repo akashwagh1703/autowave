@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Domain\Automation\Actions\ProvisionAutomations;
 use App\Domain\Lead\Actions\ProvisionCrm;
+use App\Domain\Module\Actions\BackfillTenantModules;
 use App\Domain\RBAC\Actions\ProvisionTenantRoles;
 use App\Domain\Service\Actions\ProvisionServiceCatalog;
 use App\Domain\Tenant\Actions\BackfillTenantSettings;
@@ -13,13 +14,16 @@ use Illuminate\Database\Seeder;
 
 /**
  * Gives tenants created before a feature existed that feature's defaults (settings, website, CRM
- * pipeline, service categories, default automations, new permission groups). Idempotent; safe to
- * run on every deploy.
+ * pipeline, service categories, default automations, new permission groups, new modules). Idempotent;
+ * safe to run on every deploy.
  */
 class TenantBackfillSeeder extends Seeder
 {
     /** Permission groups added after tenants already existed (config/rbac.php). */
-    public const NEW_PERMISSION_GROUPS = ['services', 'resources', 'website', 'conversations'];
+    public const NEW_PERMISSION_GROUPS = ['services', 'resources', 'website', 'conversations', 'ai'];
+
+    /** Modules added to business types after tenants already existed (config/catalog.php); switched on once. */
+    public const NEW_MODULES = ['ai'];
 
     public function run(
         BackfillTenantSettings $backfillSettings,
@@ -28,9 +32,11 @@ class TenantBackfillSeeder extends Seeder
         ProvisionServiceCatalog $provisionServiceCatalog,
         ProvisionAutomations $provisionAutomations,
         ProvisionTenantRoles $provisionRoles,
+        BackfillTenantModules $backfillModules,
     ): void {
-        Tenant::query()->with('businessType')->orderBy('id')->each(function (Tenant $tenant) use ($backfillSettings, $provisionWebsite, $provisionCrm, $provisionServiceCatalog, $provisionAutomations, $provisionRoles) {
+        Tenant::query()->with('businessType')->orderBy('id')->each(function (Tenant $tenant) use ($backfillSettings, $provisionWebsite, $provisionCrm, $provisionServiceCatalog, $provisionAutomations, $provisionRoles, $backfillModules) {
             $backfillSettings->handle($tenant);
+            $backfillModules->handle($tenant, self::NEW_MODULES);
             $provisionWebsite->ensureFor($tenant);
             $provisionCrm->ensureFor($tenant);
             $provisionServiceCatalog->ensureFor($tenant);

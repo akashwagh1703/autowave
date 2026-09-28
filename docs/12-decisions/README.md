@@ -24,3 +24,5 @@ Format: **Title, Status, Date, Context, Decision, Alternatives, Consequences.**
 | [ADR-015](ADR-015-automation-engine.md) | Automation engine: one queued job per step, database-backed waits, idempotent actions | Accepted |
 | [ADR-016](ADR-016-website-builder.md) | Website builder: schema-driven sections, tenant media, public forms through domain actions | Accepted |
 | [ADR-017](ADR-017-commerce-engine.md) | Commerce engine: server-priced orders, a locked stock ledger, manual payments | Accepted |
+| [ADR-018](ADR-018-messaging-channels.md) | Messaging channels: per-business Meta apps, stored webhooks, one compliance gate | Accepted |
+| [ADR-019](ADR-019-ai-features.md) | AI features: OpenRouter behind one gateway, drafts never sent, metered monthly cap | Accepted |

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domain\AI\Models\AIUsage;
+use App\Domain\AI\Support\AIUsageMeter;
 use App\Domain\Business\Models\BusinessType;
 use App\Domain\Tenant\Enums\TenantStatus;
 use App\Domain\Tenant\Models\Tenant;
@@ -21,6 +23,17 @@ class DashboardController extends Controller
                 'suspended_tenants' => Tenant::query()->where('status', TenantStatus::Suspended)->count(),
                 'users' => User::query()->count(),
             ],
+            'ai' => (function () {
+                $month = AIUsage::withoutTenantScope()->where('created_at', '>=', AIUsageMeter::monthStart())
+                    ->selectRaw('count(*) as requests, coalesce(sum(total_tokens), 0) as tokens, coalesce(sum(cost), 0) as cost')
+                    ->first();
+
+                return [
+                    'requests' => (int) $month?->getAttribute('requests'),
+                    'tokens' => (int) $month?->getAttribute('tokens'),
+                    'cost' => round((float) $month?->getAttribute('cost'), 4),
+                ];
+            })(),
             'businessTypes' => BusinessType::query()
                 ->withCount('tenants')
                 ->orderBy('sort_order')

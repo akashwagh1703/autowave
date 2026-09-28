@@ -1,5 +1,8 @@
 <?php
 
+use App\Domain\Automation\Actions\Steps\AiDraftReplyStep;
+use App\Domain\Automation\Actions\Steps\AiExtractLeadStep;
+use App\Domain\Automation\Actions\Steps\AiSummaryStep;
 use App\Domain\Automation\Actions\Steps\AssignLeadStep;
 use App\Domain\Automation\Actions\Steps\CreateTaskStep;
 use App\Domain\Automation\Actions\Steps\MoveLeadStageStep;
@@ -17,8 +20,9 @@ use App\Domain\Automation\Actions\Steps\TagCustomerStep;
 | the catalogues below; nothing about a specific business is hard-coded.
 |
 | Subjects: the record an automation runs for (lead, customer, appointment,
-| order). Entities: the records a step can read or change for that subject — an
-| appointment or order also exposes its customer, a lead its linked customer (if any).
+| order, conversation). Entities: the records a step can read or change for that
+| subject — an appointment or order also exposes its customer, a lead its linked
+| customer (if any), a conversation its lead and customer.
 |
 */
 
@@ -30,6 +34,7 @@ return [
         'customer' => ['label' => 'customer', 'entities' => ['customer']],
         'appointment' => ['label' => 'appointment', 'entities' => ['appointment', 'customer']],
         'order' => ['label' => 'order', 'entities' => ['order', 'customer']],
+        'conversation' => ['label' => 'conversation', 'entities' => ['conversation', 'lead', 'customer']],
     ],
 
     /*
@@ -56,12 +61,14 @@ return [
         'order.completed' => ['label' => 'Order completed', 'group' => 'Orders', 'subject' => 'order', 'engine' => 'commerce', 'description' => 'An order is handed over or delivered.'],
         'order.cancelled' => ['label' => 'Order cancelled', 'group' => 'Orders', 'subject' => 'order', 'engine' => 'commerce', 'description' => 'An order is cancelled.'],
         'order.paid' => ['label' => 'Order paid', 'group' => 'Orders', 'subject' => 'order', 'engine' => 'commerce', 'description' => 'The payments recorded for an order cover its total.'],
+        'message.received' => ['label' => 'Message received', 'group' => 'Messages', 'subject' => 'conversation', 'module' => 'messaging', 'description' => 'A contact sends you a WhatsApp or Instagram message (opt-out keywords are ignored).'],
     ],
 
     /*
     | Condition fields. `options` names a tenant list resolved at runtime:
     | lead_stages, lead_sources, appointment_statuses, services, booking_resources,
-    | order_statuses, order_sources, order_fulfilment, payment_statuses.
+    | order_statuses, order_sources, order_fulfilment, payment_statuses,
+    | conversation_channels.
     */
     'fields' => [
         'lead.stage' => ['label' => 'Lead stage', 'entity' => 'lead', 'type' => 'enum', 'options' => 'lead_stages'],
@@ -86,6 +93,9 @@ return [
         'order.fulfilment' => ['label' => 'Order type', 'entity' => 'order', 'type' => 'enum', 'options' => 'order_fulfilment'],
         'order.payment_status' => ['label' => 'Order payment', 'entity' => 'order', 'type' => 'enum', 'options' => 'payment_statuses'],
         'order.total' => ['label' => 'Order total', 'entity' => 'order', 'type' => 'number'],
+        'conversation.channel' => ['label' => 'Conversation channel', 'entity' => 'conversation', 'type' => 'enum', 'options' => 'conversation_channels'],
+        'conversation.assigned' => ['label' => 'Conversation is assigned', 'entity' => 'conversation', 'type' => 'boolean'],
+        'message.text' => ['label' => 'Message text', 'entity' => 'conversation', 'type' => 'text'],
     ],
 
     'operators' => [
@@ -121,11 +131,15 @@ return [
     'actions' => [
         'send_whatsapp' => ['label' => 'Send WhatsApp message', 'group' => 'Messages', 'class' => SendWhatsAppStep::class, 'entities' => ['lead', 'customer'], 'module' => 'messaging'],
         'send_email' => ['label' => 'Send email', 'group' => 'Messages', 'class' => SendEmailStep::class, 'entities' => ['lead', 'customer'], 'module' => 'messaging'],
-        'send_notification' => ['label' => 'Notify the team', 'group' => 'Messages', 'class' => NotifyTeamStep::class, 'entities' => ['lead', 'customer', 'appointment', 'order']],
+        'send_notification' => ['label' => 'Notify the team', 'group' => 'Messages', 'class' => NotifyTeamStep::class, 'entities' => ['lead', 'customer', 'appointment', 'order', 'conversation']],
         'create_task' => ['label' => 'Create follow-up task', 'group' => 'Records', 'class' => CreateTaskStep::class, 'entities' => ['lead', 'customer']],
         'assign_lead' => ['label' => 'Assign lead', 'group' => 'Records', 'class' => AssignLeadStep::class, 'entities' => ['lead'], 'module' => 'leads'],
         'update_lead' => ['label' => 'Move lead to stage', 'group' => 'Records', 'class' => MoveLeadStageStep::class, 'entities' => ['lead'], 'module' => 'leads'],
         'update_customer' => ['label' => 'Tag customer', 'group' => 'Records', 'class' => TagCustomerStep::class, 'entities' => ['customer']],
+        // AI actions never message anyone: drafts wait in the inbox for a person to send (ADR-019).
+        'ai_extract_lead' => ['label' => 'Fill lead details with AI', 'group' => 'AI', 'class' => AiExtractLeadStep::class, 'entities' => ['lead'], 'module' => 'ai'],
+        'ai_draft_reply' => ['label' => 'Draft a reply with AI', 'group' => 'AI', 'class' => AiDraftReplyStep::class, 'entities' => ['conversation'], 'module' => 'ai'],
+        'ai_summarize' => ['label' => 'Add an AI summary note', 'group' => 'AI', 'class' => AiSummaryStep::class, 'entities' => ['lead', 'customer'], 'module' => 'ai'],
     ],
 
     // Placeholders for message text, e.g. "Hi {{customer.first_name}}".
@@ -148,6 +162,8 @@ return [
         'order.total' => ['label' => 'Order total', 'entity' => 'order'],
         'order.items' => ['label' => 'Order items', 'entity' => 'order'],
         'order.fulfilment' => ['label' => 'Order type (pickup, delivery…)', 'entity' => 'order'],
+        'conversation.channel' => ['label' => 'Conversation channel', 'entity' => 'conversation'],
+        'message.text' => ['label' => 'Message text', 'entity' => 'conversation'],
     ],
 
     /*

@@ -3,10 +3,14 @@ import Chip from '@mui/material/Chip';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import { useRef } from 'react';
+import WriteWithAi from '@/modules/ai/WriteWithAi';
 import { actionsFor, defaultConfig, variablesFor } from '@/modules/automations/catalog';
 
-/** A message box with clickable {{variable}} chips that insert at the cursor. */
-function MessageField({ label, value, onChange, error, helperText, variables, maxLength, multiline = true }) {
+/**
+ * A message box with clickable {{variable}} chips that insert at the cursor. With `ai` ({ trigger, channel }),
+ * a "Write with AI" button drafts the text.
+ */
+function MessageField({ label, value, onChange, error, helperText, variables, maxLength, multiline = true, ai = null }) {
     const input = useRef(null);
 
     const insert = (key) => {
@@ -45,12 +49,20 @@ function MessageField({ label, value, onChange, error, helperText, variables, ma
                 inputRef={input}
                 slotProps={{ htmlInput: { maxLength } }}
             />
-            {variables.length ? (
+            {variables.length || ai ? (
                 <div className="mt-1.5 flex flex-wrap items-center gap-1" aria-label={`Insert into ${label.toLowerCase()}`}>
-                    <span className="text-xs text-slate-500">Insert:</span>
+                    {variables.length ? <span className="text-xs text-slate-500">Insert:</span> : null}
                     {variables.map((variable) => (
                         <Chip key={variable.key} size="small" variant="outlined" label={variable.label} onClick={() => insert(variable.key)} />
                     ))}
+                    {ai ? (
+                        <WriteWithAi
+                            kind="automation_message"
+                            title={`Write the ${label.toLowerCase()} with AI`}
+                            context={() => ({ trigger: ai.trigger, channel: ai.channel, current: value || null, placeholders: variables.map((variable) => variable.key) })}
+                            onUse={onChange}
+                        />
+                    ) : null}
                 </div>
             ) : null}
         </div>
@@ -60,7 +72,7 @@ function MessageField({ label, value, onChange, error, helperText, variables, ma
 const templateValue = (template) => (template ? `${template.name}|${template.language}` : '');
 
 /** Free text, or an approved WhatsApp template with one field per {{n}} variable. */
-function WhatsAppFields({ step, onChange, catalog, error, variables, limits }) {
+function WhatsAppFields({ step, onChange, catalog, error, variables, limits, ai }) {
     const config = step.config ?? {};
     const templates = catalog.templates ?? [];
     const isTemplate = config.mode === 'template';
@@ -108,7 +120,7 @@ function WhatsAppFields({ step, onChange, catalog, error, variables, limits }) {
                             WhatsApp only allows free text within 24 hours of the contact’s last message. Outside that window this step is skipped — use an approved template for first contact and reminders.
                         </Alert>
                     ) : null}
-                    <MessageField label="Message" value={config.message} onChange={(message) => onChange({ ...step, config: { message } })} error={error('message')} variables={variables} maxLength={limits.message} />
+                    <MessageField label="Message" value={config.message} onChange={(message) => onChange({ ...step, config: { message } })} error={error('message')} variables={variables} maxLength={limits.message} ai={ai} />
                 </>
             ) : (
                 <>
@@ -160,6 +172,7 @@ export default function ActionEditor({ step, onChange, catalog, trigger, errors,
     const error = (key) => errors[`${prefix}.config.${key}`];
     const limits = catalog.limits;
     const channel = step.action === 'send_whatsapp' ? catalog.channels.whatsapp : step.action === 'send_email' ? catalog.channels.email : null;
+    const ai = { trigger: trigger?.label ?? null, channel: step.action === 'send_notification' ? 'email to the team' : (channel?.label ?? null) };
 
     return (
         <div className="space-y-3">
@@ -186,7 +199,7 @@ export default function ActionEditor({ step, onChange, catalog, trigger, errors,
                 </Alert>
             ) : null}
 
-            {step.action === 'send_whatsapp' ? <WhatsAppFields step={step} onChange={onChange} catalog={catalog} error={error} variables={variables} limits={limits} /> : null}
+            {step.action === 'send_whatsapp' ? <WhatsAppFields step={step} onChange={onChange} catalog={catalog} error={error} variables={variables} limits={limits} ai={ai} /> : null}
 
             {step.action === 'send_email' || step.action === 'send_notification' ? (
                 <>
@@ -197,8 +210,41 @@ export default function ActionEditor({ step, onChange, catalog, trigger, errors,
                         </TextField>
                     ) : null}
                     <MessageField label="Subject" multiline={false} value={config.subject} onChange={(subject) => set({ subject })} error={error('subject')} variables={variables} maxLength={limits.subject} />
-                    <MessageField label="Message" value={config.message} onChange={(message) => set({ message })} error={error('message')} variables={variables} maxLength={limits.message} />
+                    <MessageField label="Message" value={config.message} onChange={(message) => set({ message })} error={error('message')} variables={variables} maxLength={limits.message} ai={ai} />
                 </>
+            ) : null}
+
+            {step.action === 'ai_extract_lead' ? (
+                <Alert severity="info" variant="outlined">
+                    AI reads what the lead wrote (WhatsApp, Instagram, website enquiries) and fills in empty details: name, email, interest and budget. Details that are
+                    already filled are never overwritten; differences wait on the lead for someone to accept.
+                </Alert>
+            ) : null}
+
+            {step.action === 'ai_draft_reply' ? (
+                <>
+                    <Alert severity="info" variant="outlined">
+                        AI prepares a reply in the inbox. Nothing is sent: someone on the team checks the draft and presses Send.
+                    </Alert>
+                    <TextField
+                        size="small"
+                        label="Instructions for AI (optional)"
+                        fullWidth
+                        multiline
+                        minRows={2}
+                        value={config.instructions ?? ''}
+                        onChange={(event) => set({ instructions: event.target.value })}
+                        error={Boolean(error('instructions'))}
+                        helperText={error('instructions') ?? 'e.g. "Offer a free consultation and ask for a convenient time."'}
+                        slotProps={{ htmlInput: { maxLength: 500 } }}
+                    />
+                </>
+            ) : null}
+
+            {step.action === 'ai_summarize' ? (
+                <Alert severity="info" variant="outlined">
+                    Adds a note to the timeline with an AI summary of the {trigger?.entities.includes('lead') ? 'lead' : 'customer'} and their recent history.
+                </Alert>
             ) : null}
 
             {step.action === 'create_task' ? (

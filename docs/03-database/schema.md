@@ -265,10 +265,33 @@ Other changes:
   `messaging.templates_synced`, `messaging.settings_updated`, `conversation.opted_out`,
   `conversation.opted_in`.
 
+## AI (Phase 9, `2026_10_03_100000`) — ADR-019
+
+Both tables are tenant-owned (`BelongsToTenant`, `tenant_id` cascade on tenant delete).
+
+| Table | Key columns |
+|---|---|
+| `ai_usage` | One row per provider call: `user_id` (null on delete), `feature` (`reply\|summary\|extraction\|assistant\|copy`), `provider`, `model` (100), `status` (`succeeded\|failed`), `prompt_tokens`, `completion_tokens`, `total_tokens`, `cost` decimal(12,6) USD (null when not reported), `duration_ms`, `error` (500), `created_at` only. No prompts or answers are stored |
+| `ai_results` | `feature` (`summary\|reply_draft\|extraction`), `subject_type` (`conversation\|lead\|customer`), `subject_id`, `key` (191; the input state, e.g. `conversation:12:m345`, or an automation idempotency key), `status` (`ready\|used\|dismissed`), `output` jsonb (`text` for summaries and drafts; `filled`, `suggestions` {attribute: {value, current, status}}, `preferred_time`, `summary`, `via` (`manual\|auto\|automation`), `used_ai` for extraction), `created_by_user_id` (null on delete), timestamps. Unique (`id`, `tenant_id`), unique (`tenant_id`, `feature`, `key`) |
+
+Other changes:
+
+- Catalogue module `ai` (no dependencies), offered to every business type.
+- Permission group `ai` (`use`, `assistant`).
+- Tenant settings `ai` (`enabled`, `auto_extract`, `tone`, `notes`), `ai_quota` (`monthly_tokens`; written
+  only by platform admins) and `modules_backfilled` (module codes already switched on for the tenant by
+  `TenantBackfillSeeder`, so a module the owner turns off stays off).
+- Automation run subject `conversation`; trigger `message.received`; actions `ai_extract_lead`,
+  `ai_draft_reply`, `ai_summarize`.
+- Activity metadata: `updated` entries may carry `via` `ai` (filled by extraction) or `ai_suggestion`
+  (applied by staff); `note` entries from `ai_summarize` carry `via = ai`, `automation_id`,
+  `automation_name` and `idempotency_key`.
+- New audit actions: `ai.settings_updated`, `ai.limit_updated`.
+
 ## Deferred platform tables
 
 `feature_flags`, `custom_fields` — added with the first feature that needs them (AW-009).
 
-## Planned domain tables (Phase 9 onwards)
+## Planned domain tables (Phase 10 onwards)
 
 See `docs/01-product/master-prompt.md` §57. Implement only what the current phase needs.

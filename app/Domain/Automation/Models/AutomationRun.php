@@ -7,6 +7,7 @@ use App\Domain\Booking\Models\Appointment;
 use App\Domain\Commerce\Models\Order;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Lead\Models\Lead;
+use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Messaging\Models\OutboundMessage;
 use App\Domain\Tenant\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * One execution of an automation for one subject (lead, customer, appointment or order). `steps` is a
+ * One execution of an automation for one subject (lead, customer, appointment, order or conversation). `steps` is a
  * snapshot taken when the run started, so editing the automation never changes a run in flight.
  */
 #[Fillable([
@@ -32,6 +33,7 @@ class AutomationRun extends Model
         'customer' => Customer::class,
         'appointment' => Appointment::class,
         'order' => Order::class,
+        'conversation' => Conversation::class,
     ];
 
     protected function casts(): array

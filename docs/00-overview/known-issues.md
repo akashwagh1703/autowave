@@ -291,7 +291,9 @@ with the date and commit/PR reference; do not delete it.
   do their triggers or actions.
 - **Impact:** Automations cover leads, customers and appointments only.
 - **Status:** Open. Each feature adds its trigger or action to `config/automation.php` (and a `StepAction`
-  class) when it is built.
+  class) when it is built. Order triggers were added in Phase 7; AI actions (fill lead details, draft a
+  reply, add a summary) and the message received trigger in Phase 9. Still missing: create booking, send
+  offer, call webhook, and form, payment-gateway and review triggers.
 - **Affected:** `config/automation.php`
 - **Created:** 2026-09-29
 
@@ -590,7 +592,9 @@ with the date and commit/PR reference; do not delete it.
   email, not Instagram.
 - **Impact:** New WhatsApp contacts still trigger "lead created" automations, but there are no replies to
   existing contacts' messages.
-- **Status:** Open — candidates for Phase 9 (AI replies) or a later automation update.
+- **Status:** Partly resolved (Phase 9, 2026-10-03) — trigger `message.received` (subject `conversation`,
+  fields channel, assigned and message text) with the AI actions draft reply, fill lead details and
+  summarise (ADR-019). Still open: an Instagram "send message" automation action.
 - **Affected:** `config/automation.php`, `ReceiveInboundMessage`
 - **Created:** 2026-10-02
 
@@ -603,3 +607,52 @@ with the date and commit/PR reference; do not delete it.
 - **Status:** Open — needs an inbound mail provider (webhook) and email threading.
 - **Affected:** Messaging
 - **Created:** 2026-10-02
+
+### AW-055 — Customer messages are sent to OpenRouter without redaction
+
+- **Category:** Security / Privacy
+- **Description:** Reply drafts, summaries and lead extraction send conversation text (which may contain
+  phone numbers, addresses or other personal details the customer typed) to OpenRouter and the chosen
+  model provider. Assistant tool results exclude phone numbers and e-mail addresses, but message text is
+  not redacted. There is no data processing agreement flow or per-business consent screen beyond the
+  Settings → AI switch.
+- **Impact:** Businesses with strict privacy needs must switch AI off. See `docs/04-security/ai-data.md`.
+- **Status:** Open — options: pattern-based redaction before sending, a zero-retention OpenRouter
+  provider setting, and a consent step when AI is first used.
+- **Affected:** `AIService`, `Transcript`
+- **Created:** 2026-10-03
+
+### AW-056 — The AI cap is approximate and cost is in USD
+
+- **Category:** Product / Billing
+- **Description:** The monthly token cap is checked before each call, so the call that crosses it (and
+  calls running at the same moment) still complete; the meter total is cached for 60 seconds. Cost is
+  recorded only when OpenRouter reports it, in USD. There are no plan-based allowances, top-ups or
+  alerts before the cap is reached.
+- **Impact:** A business can go slightly over its allowance; platform cost reporting is in USD.
+- **Status:** Open — tie allowances to plans when billing is built.
+- **Affected:** `AIUsageMeter`, `AIGateway`, Super Admin → AI usage
+- **Created:** 2026-10-03
+
+### AW-057 — Assistant chats are not saved and answers are not streamed
+
+- **Category:** Product
+- **Description:** The assistant is stateless: the browser keeps the chat and sends the last
+  `ai.context.assistant_turns` turns. Refreshing the page loses the chat. Answers arrive in one piece
+  after the model (and up to three tool rounds) finish.
+- **Impact:** Long answers can take several seconds with only a spinner.
+- **Status:** Open — streaming (server-sent events) and saved chats when requested.
+- **Affected:** `AssistantController`, `business/assistant/Index.jsx`
+- **Created:** 2026-10-03
+
+### AW-058 — Automatic lead extraction waits from the first message of a burst
+
+- **Category:** Product
+- **Description:** The extraction job is unique per conversation and delayed `ai.extraction.delay_seconds`
+  from the first message of a burst, not the last. Messages that arrive after the job runs are read by
+  the next burst. Automatic runs stop after `ai.extraction.max_auto_runs` per lead; staff can still use
+  "Fill details from messages".
+- **Impact:** A detail typed several minutes into a conversation may be picked up one burst later.
+- **Status:** Open — acceptable for V1.
+- **Affected:** `QueueLeadExtraction`, `ExtractLeadFromConversation`
+- **Created:** 2026-10-03

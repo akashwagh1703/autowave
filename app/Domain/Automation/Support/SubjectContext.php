@@ -7,6 +7,8 @@ use App\Domain\Booking\Models\Appointment;
 use App\Domain\Commerce\Models\Order;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Lead\Models\Lead;
+use App\Domain\Messaging\Models\Conversation;
+use App\Domain\Messaging\Models\ConversationMessage;
 use App\Domain\Tenant\Models\Tenant;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,6 +18,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 final class SubjectContext
 {
+    private string|null|false $latestInbound = false;
+
     public function __construct(
         public readonly Tenant $tenant,
         public readonly string $subjectType,
@@ -24,6 +28,7 @@ final class SubjectContext
         public readonly ?Customer $customer = null,
         public readonly ?Appointment $appointment = null,
         public readonly ?Order $order = null,
+        public readonly ?Conversation $conversation = null,
     ) {}
 
     public static function for(Tenant $tenant, Model $subject): self
@@ -35,6 +40,7 @@ final class SubjectContext
             'customer' => new self($tenant, $type, $subject, customer: $subject),
             'appointment' => self::forAppointment($tenant, $subject),
             'order' => self::forOrder($tenant, $subject),
+            'conversation' => self::forConversation($tenant, $subject),
         };
     }
 
@@ -45,8 +51,22 @@ final class SubjectContext
             'customer' => $this->customer,
             'appointment' => $this->appointment,
             'order' => $this->order,
+            'conversation' => $this->conversation,
             default => null,
         };
+    }
+
+    /** The text of the contact's latest message in the conversation (the one that triggered the run, normally). */
+    public function latestInboundText(): ?string
+    {
+        if ($this->latestInbound === false) {
+            $this->latestInbound = $this->conversation?->messages()
+                ->where('direction', ConversationMessage::INBOUND)
+                ->orderByDesc('sent_at')->orderByDesc('id')
+                ->value('body');
+        }
+
+        return $this->latestInbound;
     }
 
     /** The lead's contact details win over its linked customer's. */
@@ -87,5 +107,15 @@ final class SubjectContext
         $customer = $order->customer && ! $order->customer->trashed() ? $order->customer : null;
 
         return new self($tenant, 'order', $order, customer: $customer, order: $order);
+    }
+
+    /** A conversation's linked lead (open or not) and customer; deleted ones are left out. */
+    private static function forConversation(Tenant $tenant, Conversation $conversation): self
+    {
+        $conversation->loadMissing(['lead.stage', 'lead.source', 'lead.customer', 'customer']);
+        $lead = $conversation->lead && ! $conversation->lead->trashed() ? $conversation->lead : null;
+        $customer = $conversation->customer && ! $conversation->customer->trashed() ? $conversation->customer : ($lead?->customer && ! $lead->customer->trashed() ? $lead->customer : null);
+
+        return new self($tenant, 'conversation', $conversation, lead: $lead, customer: $customer, conversation: $conversation);
     }
 }

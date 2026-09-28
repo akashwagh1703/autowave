@@ -64,44 +64,4 @@ export const STATUS_STYLES = {
     no_show: { chip: 'error', block: 'border-red-300 bg-red-50 text-red-800 line-through' },
 };
 
-export async function getJson(url, params = {}) {
-    const query = new URLSearchParams(
-        Object.entries(params).filter(([, value]) => value !== null && value !== undefined && value !== ''),
-    ).toString();
-    const response = await fetch(query ? `${url}?${query}` : url, {
-        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-        credentials: 'same-origin',
-    });
-
-    if (!response.ok) {
-        throw new Error(`Request failed (${response.status})`);
-    }
-
-    return response.json();
-}
-
-/** POST JSON with Laravel's XSRF cookie; rejects with { status, errors } on failure. */
-export async function postJson(url, body) {
-    const token = document.cookie
-        .split('; ')
-        .find((cookie) => cookie.startsWith('XSRF-TOKEN='))
-        ?.slice('XSRF-TOKEN='.length);
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            ...(token ? { 'X-XSRF-TOKEN': decodeURIComponent(token) } : {}),
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify(body),
-    });
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-        throw { status: response.status, errors: data.errors ?? {} };
-    }
-
-    return data;
-}
+export { getJson, postJson } from './http';

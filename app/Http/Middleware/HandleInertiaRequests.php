@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\AI\Services\AIGateway;
 use App\Domain\Booking\Support\BookingSettings;
 use App\Domain\Messaging\Enums\ConversationStatus;
 use App\Domain\Messaging\Models\Conversation;
@@ -86,6 +87,17 @@ class HandleInertiaRequests extends Middleware
                 }
 
                 return ['unread' => Conversation::query()->where('status', ConversationStatus::Open)->where('unread_count', '>', 0)->count()];
+            },
+            // Whether AI helpers can be used right now (and why not). Never includes provider details or keys.
+            'ai' => function () use ($request) {
+                $context = app(TenantContext::class);
+                $user = $request->user();
+
+                if (! $user || ! $context->check() || ! $context->hasModule('ai') || ! $user->can('ai.use')) {
+                    return null;
+                }
+
+                return app(AIGateway::class)->status();
             },
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

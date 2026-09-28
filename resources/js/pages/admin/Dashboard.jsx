@@ -1,3 +1,5 @@
+import { Link } from '@inertiajs/react';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Table from '@mui/material/Table';
@@ -16,7 +18,9 @@ const statCards = [
     { key: 'users', label: 'Users' },
 ];
 
-export default function Dashboard({ stats, businessTypes }) {
+const number = (value) => new Intl.NumberFormat().format(value ?? 0);
+
+export default function Dashboard({ stats, ai, businessTypes }) {
     return (
         <AdminLayout title="Admin dashboard">
             <PageHeader title="Platform overview" />
@@ -31,6 +35,22 @@ export default function Dashboard({ stats, businessTypes }) {
                     </Card>
                 ))}
             </section>
+
+            {ai ? (
+                <Card variant="outlined" className="mt-4">
+                    <CardContent className="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <p className="text-sm text-slate-500">AI this month</p>
+                            <p className="mt-1 text-lg font-semibold text-slate-900">
+                                {number(ai.tokens)} tokens · {number(ai.requests)} requests · ${ai.cost.toFixed(2)}
+                            </p>
+                        </div>
+                        <Button component={Link} href="/ai-usage" size="small">
+                            View AI usage
+                        </Button>
+                    </CardContent>
+                </Card>
+            ) : null}
 
             <Card variant="outlined" className="mt-8">
                 <CardContent>

@@ -8,6 +8,22 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- Phase 9 AI:
+  - Inbox: "Suggest reply" writes a reply (or improves what you typed) from the conversation and your
+    business details. It goes into the message box; AI never sends anything by itself.
+  - Summaries of conversations, leads and customers, kept until something new happens.
+  - "Fill details from messages" on a lead reads what the lead wrote and fills in the empty name, email,
+    interest and estimated value. Different values are shown as suggestions to apply or dismiss. It can
+    also run automatically after a lead writes.
+  - Assistant: owners and managers ask questions such as "How many appointments tomorrow?" and get answers
+    from their own data. A Write tab drafts offers, WhatsApp promotions, Instagram captions, greetings and
+    review replies.
+  - "Write with AI" on website section text and automation messages.
+  - Automations: new trigger "Message received" and actions "Fill lead details with AI", "Draft a reply
+    with AI" (waits in the inbox for someone to send) and "Add an AI summary".
+  - Settings → AI: switch AI on or off, automatic lead details, tone, notes for AI, and this month's usage.
+  - Super Admin → AI usage: requests, tokens and cost per business by month, and a monthly allowance per
+    business. AI totals on the admin dashboard.
 - Phase 8 Messaging:
   - Settings → Messaging: connect the business's own WhatsApp number (Meta Cloud API) and Instagram account.
     The details are checked with Meta before saving; tokens and app secrets are stored encrypted and never

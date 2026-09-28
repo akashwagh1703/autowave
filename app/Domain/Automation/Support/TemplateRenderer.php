@@ -50,6 +50,8 @@ class TemplateRenderer
             'order.total' => $order ? number_format((float) $order->total, 2) : null,
             'order.items' => $order?->itemSummary(),
             'order.fulfilment' => $order ? config("commerce.fulfilment.{$order->fulfilment}.label", $order->fulfilment) : null,
+            'conversation.channel' => $context->conversation ? config("messaging.channels.{$context->conversation->channel}.label", $context->conversation->channel) : null,
+            'message.text' => $context->latestInboundText(),
             default => null,
         };
     }

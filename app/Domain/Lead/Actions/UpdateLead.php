@@ -23,8 +23,9 @@ class UpdateLead
 
     /**
      * @param  array<string, mixed>  $data  keys from self::EDITABLE
+     * @param  array<string, mixed>  $metadata  extra timeline metadata, e.g. ['via' => 'ai']
      */
-    public function handle(Lead $lead, array $data, ?User $actor = null): Lead
+    public function handle(Lead $lead, array $data, ?User $actor = null, array $metadata = []): Lead
     {
         $data = array_intersect_key($data, array_flip(self::EDITABLE));
 
@@ -39,7 +40,7 @@ class UpdateLead
             throw ValidationException::withMessages(['phone' => 'Another open lead already has this phone number.']);
         }
 
-        return DB::transaction(function () use ($lead, $data, $actor, $phone) {
+        return DB::transaction(function () use ($lead, $data, $actor, $phone, $metadata) {
             $lead->fill($data);
             $changed = array_keys($lead->getDirty());
 
@@ -53,7 +54,7 @@ class UpdateLead
 
             $lead->save();
 
-            $this->recordActivity->handle('updated', lead: $lead, actor: $actor, metadata: ['changed' => $changed]);
+            $this->recordActivity->handle('updated', lead: $lead, actor: $actor, metadata: ['changed' => $changed, ...$metadata]);
 
             LeadUpdated::dispatch($lead, $changed);
 

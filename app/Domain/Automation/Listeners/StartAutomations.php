@@ -21,6 +21,8 @@ use App\Domain\Lead\Events\LeadConverted;
 use App\Domain\Lead\Events\LeadCreated;
 use App\Domain\Lead\Events\LeadStatusChanged;
 use App\Domain\Lead\Events\LeadUpdated;
+use App\Domain\Messaging\Events\ConversationMessageReceived;
+use App\Domain\Messaging\Support\MessagingCompliance;
 use App\Domain\Website\Events\WebsiteEnquiryReceived;
 use Illuminate\Database\Eloquent\Model;
 use Throwable;
@@ -56,6 +58,7 @@ class StartAutomations
         OrderCompleted::class,
         OrderCancelled::class,
         OrderPaid::class,
+        ConversationMessageReceived::class,
     ];
 
     public function __construct(private readonly AutomationResolver $resolver) {}
@@ -106,6 +109,10 @@ class StartAutomations
             $event instanceof OrderCancelled => ['order.cancelled', $event->order, "order:{$event->order->id}", []],
             // A removed payment can make an order unpaid again, so "paid" can happen more than once.
             $event instanceof OrderPaid => ['order.paid', $event->order, "order:{$event->order->id}:paid:".$event->order->payments()->max('id'), []],
+            // Opt-out and opt-in keywords are handled by messaging compliance, not by automations.
+            $event instanceof ConversationMessageReceived => MessagingCompliance::keyword($event->message->body) === null
+                ? ['message.received', $event->conversation, "message:{$event->message->id}", ['message_id' => $event->message->id, 'type' => $event->message->type]]
+                : null,
             default => null,
         };
     }

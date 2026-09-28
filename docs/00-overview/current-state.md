@@ -1,6 +1,6 @@
 # Current State
 
-_Last updated: 2026-10-02 — end of Phase 8 (Messaging)._
+_Last updated: 2026-10-03 — end of Phase 9 (AI)._
 
 This document describes what **actually exists** in the repository today. Planned work is in
 [roadmap.md](roadmap.md).
@@ -251,14 +251,49 @@ This document describes what **actually exists** in the repository today. Planne
 - **Tests:** 423 tests (3,472 assertions). Phase 8 adds 51 in `tests/Feature/Messaging`: webhooks, delivery and
   compliance, settings, inbox and permissions, isolation.
 
+### Phase 9 — AI (ADR-019)
+
+- **Provider:** OpenRouter with one platform key (`OPENROUTER_API_KEY`, server only), called only through
+  `AIService` → `AIGateway`. `AI_PROVIDER=fake` gives labelled sample answers without a network (tests,
+  local development). Prompts in `resources/prompts/*.md`, grounded in business facts (profile, hours,
+  services, products, the owner's notes).
+- **Availability:** module `ai` (on for every business type, backfilled once), Settings → AI switch,
+  provider configured, monthly allowance left. Otherwise AI buttons are disabled with the reason and AI
+  automation steps are skipped. The platform works fully without AI.
+- **Inbox:** "Suggest reply" (or improve the typed text) fills the composer — AI never sends; conversation
+  summary in the header; drafts left by automations wait above the composer until used, dismissed or
+  replied to.
+- **Leads and customers:** summary cards (cached until the timeline changes); "Fill details from
+  messages" fills empty name, email, interest and estimated value, and turns other differences into
+  suggestions to apply or dismiss; automatic extraction after a lead writes (debounced, on the `ai` queue).
+- **Assistant** (`/assistant`): owners and managers ask about appointments, leads, customers, orders,
+  products and services through read-only tools that follow their permissions and never return phone
+  numbers or e-mails; a Write tab for marketing text.
+- **Writing help:** website section fields, automation messages (with the trigger's placeholders) and
+  marketing kinds.
+- **Automations:** trigger "Message received" (conversation subject; channel, assigned and message text
+  conditions); actions "Fill lead details with AI", "Draft a reply with AI", "Add an AI summary".
+- **Settings → AI:** on/off, automatic extraction, tone, notes for AI, this month's usage by feature.
+- **Super Admin → AI usage:** per-business requests, tokens, cost (USD), failures and allowance by
+  month; set or reset a business's allowance; AI totals on the admin dashboard.
+- **Permissions:** `ai.use` (Manager, Receptionist, Sales Executive) and `ai.assistant` (Manager);
+  owner has all. 20 AI requests per user per minute.
+- **Backfill:** `TenantBackfillSeeder` grants the `ai` group and switches the `ai` module on once per
+  tenant (`modules_backfilled`).
+- **Tests:** Phase 9 adds 46 in `tests/Feature/AI`: OpenRouter (faked HTTP), availability, metering and
+  cap, endpoints and permissions, extraction, assistant tools, automations, settings, Super Admin,
+  backfill and isolation.
+
 ## In progress
 
-- Nothing. Phase 8 is complete and awaiting approval before Phase 9 (AI).
+- Nothing. Phase 9 is complete and awaiting approval before Phase 10 (additional verticals).
 
 ## Not implemented
 
 - **Platform:** invitations and member management, role editor, logo upload during onboarding, custom
-  domain UI, feature flags, custom fields, AI, analytics, billing.
+  domain UI, feature flags, custom fields, analytics, billing.
+- **AI gaps:** redaction of customer text (AW-055), plan-based allowances and INR cost (AW-056), streaming
+  and saved assistant chats (AW-057).
 - **Commerce gaps:** online payments (AW-041), variants (AW-042), returns and refunds (AW-043), coupons and
   taxes (AW-044), stock reservation for carts (AW-045), receptionist order updates (AW-046), editing orders
   (AW-047), customer order messages and tracking (AW-048), delivery zones (AW-049).
@@ -269,12 +304,12 @@ This document describes what **actually exists** in the repository today. Planne
   rendering of section content (AW-036), captcha (AW-038), custom domains (AW-039).
 - **Automation gaps:**
   - branches;
-  - webhook, AI and payment actions and triggers (AW-026, AW-027);
-  - a "message received" trigger and Instagram action (AW-053);
+  - webhook and payment actions and triggers (AW-026);
+  - an Instagram action (AW-053);
   - retention (AW-030).
 - **Messaging gaps:** Embedded Signup (AW-050), media download and sending (AW-051), own-conversations
   visibility (AW-052), inbound email (AW-054).
 
 ## Known technical debt
 
-See [known-issues.md](known-issues.md) (AW-001 → AW-054).
+See [known-issues.md](known-issues.md) (AW-001 → AW-058).

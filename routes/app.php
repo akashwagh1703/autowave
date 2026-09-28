@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\App\AiController;
+use App\Http\Controllers\App\AiSettingsController;
 use App\Http\Controllers\App\AppointmentActionController;
 use App\Http\Controllers\App\AppointmentController;
+use App\Http\Controllers\App\AssistantController;
 use App\Http\Controllers\App\AutomationController;
 use App\Http\Controllers\App\AutomationRunController;
 use App\Http\Controllers\App\BookingResourceController;
@@ -231,6 +234,37 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             Route::put('/automations/{automation}', [AutomationController::class, 'update'])->middleware('can:automation.update')->name('automations.update');
             Route::patch('/automations/{automation}/toggle', [AutomationController::class, 'toggle'])->middleware('can:automation.update')->name('automations.toggle');
             Route::delete('/automations/{automation}', [AutomationController::class, 'destroy'])->middleware('can:automation.delete')->name('automations.destroy');
+        });
+
+        // AI (ADR-019): drafts and suggestions only; people send and save.
+        Route::middleware('module:ai')->group(function () {
+            Route::get('/settings/ai', [AiSettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.ai');
+            Route::put('/settings/ai', [AiSettingsController::class, 'update'])->middleware('can:settings.update')->name('settings.ai.update');
+
+            Route::middleware(['can:ai.use', 'throttle:ai'])->group(function () {
+                Route::get('/assistant', [AssistantController::class, 'index'])->withoutMiddleware('throttle:ai')->name('assistant');
+                Route::post('/assistant/ask', [AssistantController::class, 'ask'])->middleware('can:ai.assistant')->name('assistant.ask');
+                Route::post('/ai/write', [AiController::class, 'write'])->name('ai.write');
+
+                Route::middleware('module:messaging')->group(function () {
+                    Route::post('/ai/conversations/{conversation}/summary', [AiController::class, 'conversationSummary'])->middleware('can:conversations.view')->name('ai.conversations.summary');
+                    Route::middleware('can:conversations.reply')->group(function () {
+                        Route::post('/ai/conversations/{conversation}/reply', [AiController::class, 'reply'])->name('ai.conversations.reply');
+                        Route::post('/ai/conversations/{conversation}/drafts/{draft}/dismiss', [AiController::class, 'dismissDraft'])->withoutMiddleware('throttle:ai')->name('ai.conversations.drafts.dismiss');
+                    });
+                });
+
+                Route::middleware('module:leads')->group(function () {
+                    Route::post('/ai/leads/{lead}/summary', [AiController::class, 'leadSummary'])->middleware('can:leads.view')->name('ai.leads.summary');
+                    Route::middleware('can:leads.update')->group(function () {
+                        Route::post('/ai/leads/{lead}/extract', [AiController::class, 'extract'])->name('ai.leads.extract');
+                        Route::post('/ai/leads/{lead}/suggestions/apply', [AiController::class, 'applySuggestions'])->withoutMiddleware('throttle:ai')->name('ai.leads.suggestions.apply');
+                        Route::post('/ai/leads/{lead}/suggestions/dismiss', [AiController::class, 'dismissSuggestions'])->withoutMiddleware('throttle:ai')->name('ai.leads.suggestions.dismiss');
+                    });
+                });
+
+                Route::post('/ai/customers/{customer}/summary', [AiController::class, 'customerSummary'])->middleware(['module:customers', 'can:customers.view'])->name('ai.customers.summary');
+            });
         });
     });
 });

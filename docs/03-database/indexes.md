@@ -138,6 +138,16 @@ Phase 8 (messaging):
 | `messaging_webhook_calls (tenant_id, created_at)` | Pruning and per-tenant diagnosis |
 | FK-side indexes on `conversations.customer_id`, `.lead_id`, `.assigned_tenant_user_id`, `conversation_messages.outbound_message_id`, `outbound_messages.conversation_id`, `.sent_by_user_id`, `messaging_webhook_calls.messaging_channel_id`, `messaging_channels.connected_by_user_id` | Cascades and joins |
 
+Phase 9 (AI):
+
+| Index / constraint | Serves |
+|---|---|
+| `ai_usage (tenant_id, created_at)` | Monthly cap: a tenant's tokens since the 1st (before every AI call, cached 60 s); Settings → AI usage |
+| `ai_usage (created_at)` | Super Admin → AI usage per month and the admin dashboard |
+| `ai_results (tenant_id, feature, key)` unique | Reuse of an unchanged summary/extraction; idempotent automation drafts; race-safe inserts |
+| `ai_results (tenant_id, subject_type, subject_id, feature)` | Latest summary, pending draft or suggestions for a record page |
+| `ai_usage.user_id`, `ai_results.created_by_user_id` | FK side |
+
 Text search uses `ILIKE '%…%'` on name/email and `LIKE '%digits%'` on `phone_normalized`; these scans
 are filtered by `tenant_id` first and are fine at current volumes. Add `pg_trgm` GIN indexes
 when a tenant's lead count makes the list slow.

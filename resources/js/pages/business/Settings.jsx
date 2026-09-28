@@ -53,6 +53,11 @@ export default function Settings({ business, branding, profile, website, domains
                                 Messaging
                             </Button>
                         ) : null}
+                        {hasModule('ai') ? (
+                            <Button component={Link} href="/settings/ai" variant="outlined">
+                                AI
+                            </Button>
+                        ) : null}
                     </>
                 }
             />

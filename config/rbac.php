@@ -62,6 +62,10 @@ return [
             'reply' => 'Reply, send templates, close and reopen conversations',
             'assign' => 'Assign conversations to team members',
         ],
+        'ai' => [
+            'use' => 'Use AI suggestions, summaries and writing help',
+            'assistant' => 'Ask the business assistant about business data',
+        ],
         'automation' => [
             'view' => 'View automations',
             'create' => 'Create automations',
@@ -105,7 +109,7 @@ return [
             'description' => 'Runs day-to-day operations.',
             'permissions' => [
                 'customers.*', 'leads.*', 'services.*', 'resources.*', 'appointments.*', 'products.*', 'orders.*',
-                'conversations.*', 'automation.*', 'website.*', 'reports.view', 'users.view', 'settings.view',
+                'conversations.*', 'automation.*', 'website.*', 'ai.*', 'reports.view', 'users.view', 'settings.view',
             ],
         ],
         'receptionist' => [
@@ -117,6 +121,7 @@ return [
                 'services.view', 'resources.view',
                 'appointments.*', 'orders.view', 'orders.create',
                 'conversations.view', 'conversations.reply',
+                'ai.use',
             ],
         ],
         'sales_executive' => [
@@ -128,6 +133,7 @@ return [
                 'services.view', 'resources.view',
                 'appointments.view', 'appointments.create',
                 'conversations.view', 'conversations.reply',
+                'ai.use',
             ],
         ],
         'staff' => [

@@ -28,6 +28,7 @@ orders.view  orders.create  orders.update
 automation.view  automation.create  automation.update  automation.delete
 website.view  website.manage
 conversations.view  conversations.reply  conversations.assign
+ai.use  ai.assistant
 reports.view
 users.view  users.manage
 roles.manage
@@ -154,9 +155,22 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
     404 (routes) or a validation error (template, assignee).
   - The Meta webhook routes have no user: they are authenticated by the URL key and the payload signature
     (see [webhook-security.md](webhook-security.md)).
+- **AI specifics (Phase 9):**
+  - Every AI route is behind `module:ai` (404 without it) and, except Settings → AI, `can:ai.use`.
+    AI requests are limited to `ai.limits.per_minute` per user (`throttle:ai`).
+  - Each helper also needs the permission of what it touches: reply drafts and dismissing drafts
+    `conversations.reply`; conversation summary `conversations.view`; lead summary `leads.view`; filling
+    and applying lead details `leads.update`; customer summary `customers.view`; website text
+    `website.manage`; automation messages `automation.create` or `automation.update`.
+  - The assistant's Ask tab needs `ai.assistant`. Its tools are offered per permission and module/engine,
+    and never return phone numbers or e-mail addresses (see [ai-data.md](ai-data.md)).
+  - Default roles: Manager has both; Receptionist and Sales Executive have `ai.use`; Staff and
+    Accountant have none.
+  - Settings → AI: view with `settings.view`, save with `settings.update`. The monthly allowance
+    (`ai_quota`) is set only in Super Admin.
 - **New permission groups for existing tenants:** `RbacSeeder` updates the templates, but tenant roles are
   copies. `TenantBackfillSeeder` calls `ProvisionTenantRoles::grantNewPermissionGroups()` for `services`,
-  `resources`, `website` and `conversations`:
+  `resources`, `website`, `conversations` and `ai`:
   - it gives each tenant role its template's permissions in those groups;
   - it runs once per tenant and group (recorded in the `rbac_backfilled_groups` setting);
   - it skips roles that already hold any permission of the group.
@@ -167,4 +181,5 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
 ## Super Admin
 
 `is_platform_admin` + `platform.admin` middleware on the admin host. Platform-level roles/permissions for
-admin staff are deferred until more admin features exist.
+admin staff are deferred until more admin features exist. Super Admin → AI usage (`/ai-usage`) and the
+per-business AI allowance (`PUT /tenants/{tenant}/ai-limit`) are admin-only and audit-logged.

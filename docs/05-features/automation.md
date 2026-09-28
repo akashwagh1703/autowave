@@ -2,7 +2,7 @@
 
 - **Status:** ✅ Phase 5
 - **Issue(s):** AW-025 – AW-032 (limitations)
-- **Last updated:** 2026-10-01
+- **Last updated:** 2026-10-03 (Phase 9: message received trigger, AI actions)
 - **Decision:** [ADR-015](../12-decisions/ADR-015-automation-engine.md)
 
 ## Purpose
@@ -59,10 +59,18 @@ different workflows, and they must be configurable without code.
   - Customers: `customer.created`.
   - Appointments: `appointment.created`, `confirmed`, `rescheduled`, `completed`, `cancelled`, `no_show`.
   - Orders (Phase 7): `order.created`, `confirmed`, `ready`, `completed`, `cancelled`, `paid`.
+  - Messages (Phase 9): `message.received` — every inbound WhatsApp/Instagram message except opt-out and
+    opt-in keywords; one run per message.
   - Lead triggers need the `leads` module, customer triggers the `customers` module, appointment triggers
-    the `booking` engine, order triggers the `commerce` engine.
-- **Subjects:** a run is for a lead, a customer, an appointment or an order. A step can read the subject and
-  its related records: a lead's customer (once converted), an appointment's or order's customer.
+    the `booking` engine, order triggers the `commerce` engine, message triggers the `messaging` module.
+- **Subjects:** a run is for a lead, a customer, an appointment, an order or a conversation. A step can read
+  the subject and its related records: a lead's customer (once converted), an appointment's or order's
+  customer, a conversation's lead and customer.
+- **Conversation fields and variables:** conditions on channel, assigned and message text; variables
+  `{{conversation.channel}}` and `{{message.text}}` (the latest message from the contact).
+- **AI actions** (Phase 9, need the `ai` module; see [ai.md](ai.md)): fill lead details with AI, draft a
+  reply with AI (a draft in the inbox, never sent), add an AI summary. They are skipped when AI is
+  unavailable.
 - **Order fields and variables:** conditions on order status, source, type (fulfilment), payment status and
   total; variables `{{order.number}}`, `{{order.total}}`, `{{order.items}}`, `{{order.fulfilment}}`.
 - **Limits** (`config/automation.php` `limits`): 100 automations per business, 20 steps, 10 rules per

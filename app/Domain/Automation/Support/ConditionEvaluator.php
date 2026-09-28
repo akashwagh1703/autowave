@@ -67,6 +67,9 @@ class ConditionEvaluator
             'order.fulfilment' => $order?->fulfilment,
             'order.payment_status' => $order?->payment_status->value,
             'order.total' => $order ? (float) $order->total : null,
+            'conversation.channel' => $context->conversation?->channel,
+            'conversation.assigned' => $context->conversation ? $context->conversation->assigned_tenant_user_id !== null : null,
+            'message.text' => $context->latestInboundText(),
             default => null,
         };
     }

@@ -34,6 +34,7 @@ tests/
 | Public website | Render, publish/preview, SEO meta, forms (validation, honeypot, throttle), online booking, cross-tenant hosts | Website engine (`tests/Feature/Website`; requests go to `$this->siteUrl('abc-salon.autowave.test', '/path')`) |
 | Commerce | Server pricing (tampered prices ignored), stock never below zero, cancel restocks once, lifecycle, payments up to the balance, numbering, website checkout, cross-tenant products and customers | Commerce engine (`tests/Feature/Commerce`, `tests/Feature/Website/OnlineShopTest`; helpers in `tests/Concerns/CreatesCommerceRecords.php`) |
 | Messaging | Webhook verification and signatures, normalisation, idempotent inbound, forward-only receipts, provider payloads (`Http::fake`), window, templates, opt-out, quiet hours, write-only secrets, inbox permissions, cross-tenant webhooks and conversations | Messaging (`tests/Feature/Messaging`; helpers in `tests/Concerns/CreatesMessaging.php`) |
+| AI | OpenRouter payload, tool calls and error classes (`Http::fake` + `preventStrayRequests`), availability order, metering and cap, feature endpoints, permissions and `module:ai`, rate limit, extraction fill vs suggestions, automatic extraction, assistant tool permissions and no contact details, automation trigger and actions, Super Admin caps, backfill, cross-tenant results | AI (`tests/Feature/AI`; helpers in `tests/Concerns/CreatesAi.php`) |
 | E2E | Full customer workflows | Milestones (tooling TBD) |
 
 ## Testing queued work
@@ -84,6 +85,16 @@ Other helpers:
 - Meta calls are faked with `Http::fake(['graph.facebook.com/*' => ...])`; assert the request body with
   `Http::assertSent`. With the sync queue a queued message is delivered at once, so assert its final status.
 - Quiet-hours tests set the tenant timezone and use `travelTo()`.
+- AI: `phpunit.xml` sets `AI_PROVIDER=fake`, `AI_AUTO_EXTRACT=false` and an empty `OPENROUTER_API_KEY`, so
+  no test reaches a real AI service and existing messaging tests never queue extraction. Helpers
+  (`CreatesAi`):
+  - `useOpenRouter([...])` switches to OpenRouter with a test key, `Http::preventStrayRequests()` and the
+    given fakes; `completion($content, $toolCalls, ...)` builds a chat completion body;
+  - `setAiSettings($tenant, [...])` writes the business's AI settings (e.g. `auto_extract => true`);
+  - `recordUsage($tenant, $tokens, $feature, [...])` writes usage directly and clears the meter's cached
+    total (the meter caches for 60 s; clear the cache after deleting usage rows in a test).
+  - `FakeProvider` answers deterministically: extraction finds "my name is First Last", e-mails and
+    "Rs 5,000"; the assistant calls `business_overview` once, then answers.
 
 ## Current coverage (Phase 0)
 

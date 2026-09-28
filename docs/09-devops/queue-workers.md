@@ -1,6 +1,6 @@
 # Queue workers and scheduler
 
-- **Last updated:** 2026-09-29 (Phase 5)
+- **Last updated:** 2026-10-03 (Phase 9: `ai` queue)
 - **Related:** [ADR-015](../12-decisions/ADR-015-automation-engine.md), [redis.md](redis.md), [supervisor.md](supervisor.md)
 
 Automations and messages only run when **a queue worker and the scheduler are both running**. Without the
@@ -12,7 +12,10 @@ worker nothing executes. Without the scheduler, waits never end and lost work is
 |---|---|---|---|
 | `automation` | `AUTOMATION_QUEUE` | `RunAutomationStep` (one step of a run) | 3 / 30 s, 120 s |
 | `messaging` | `MESSAGING_QUEUE` | `SendOutboundMessage` (one message) | 3 / 60 s, 300 s |
+| `ai` | `AI_QUEUE` | `ExtractLeadFromConversation` (automatic lead details, delayed 120 s, unique per conversation) | 2 / 60 s |
 | `default` | — | Everything else | CLI defaults |
+
+If no worker listens on `ai`, automatic lead extraction never runs; everything else keeps working.
 
 The connection is `QUEUE_CONNECTION=redis`. Jobs carry only a row id; all state is in PostgreSQL. So
 flushing Redis loses no work: the scheduler finds the rows and dispatches them again.
@@ -31,11 +34,11 @@ The thresholds are `stuck_queued_minutes` / `stuck_running_minutes` in `config/a
 
 ## Local
 
-`composer dev` starts the server, a queue listener on `automation,messaging,default`, `schedule:work`,
+`composer dev` starts the server, a queue listener on `automation,messaging,ai,default`, `schedule:work`,
 logs and Vite. To run them separately:
 
 ```bash
-php artisan queue:work redis --queue=automation,messaging,default
+php artisan queue:work redis --queue=automation,messaging,ai,default
 php artisan schedule:work
 ```
 

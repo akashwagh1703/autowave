@@ -10,7 +10,8 @@
 | - fields: the section's own copy, edited in the business app and validated by
 |   SectionSchema. Field types: text, textarea, boolean, select, list (repeatable
 |   items with their own `fields`). `max` is a character limit (or item count for
-|   lists); `default` fills fields the tenant has not set;
+|   lists); `default` fills fields the tenant has not set; `ai: true` offers
+|   "Write with AI" on the field (Phase 9, ADR-019);
 | - data: business records the section displays (services, team, gallery ...).
 |   Sections with a data source are hidden on the site while it has no records;
 | - media: a media collection managed on the section's edit page;
@@ -39,8 +40,8 @@ return [
             'description' => 'The large banner visitors see first.',
             'media' => 'hero',
             'fields' => [
-                'headline' => ['type' => 'text', 'label' => 'Headline', 'max' => 120, 'help' => 'Leave empty to show the business name.'],
-                'subheadline' => ['type' => 'textarea', 'label' => 'Subheadline', 'max' => 300, 'help' => 'Leave empty to show the tagline.'],
+                'headline' => ['type' => 'text', 'label' => 'Headline', 'max' => 120, 'ai' => true, 'help' => 'Leave empty to show the business name.'],
+                'subheadline' => ['type' => 'textarea', 'label' => 'Subheadline', 'max' => 300, 'ai' => true, 'help' => 'Leave empty to show the tagline.'],
                 'cta' => ['type' => 'select', 'label' => 'Main button', 'default' => 'contact', 'options' => [
                     'book' => 'Book now',
                     'contact' => 'Contact us',
@@ -54,7 +55,7 @@ return [
             'description' => 'Your story in a few lines.',
             'fields' => [
                 'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'About us'],
-                'body' => ['type' => 'textarea', 'label' => 'Text', 'max' => 2000, 'rows' => 6, 'help' => 'Leave empty to use the business description.'],
+                'body' => ['type' => 'textarea', 'label' => 'Text', 'max' => 2000, 'rows' => 6, 'ai' => true, 'help' => 'Leave empty to use the business description.'],
             ],
         ],
         'services' => [
@@ -65,7 +66,7 @@ return [
             'empty_hint' => 'Add active services to show this section.',
             'fields' => [
                 'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Our services'],
-                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300],
+                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300, 'ai' => true],
                 'show_prices' => ['type' => 'boolean', 'label' => 'Show prices', 'default' => true],
                 'show_duration' => ['type' => 'boolean', 'label' => 'Show durations', 'default' => true],
             ],
@@ -78,7 +79,7 @@ return [
             'empty_hint' => 'Add active products to show this section.',
             'fields' => [
                 'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Shop our products'],
-                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300],
+                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300, 'ai' => true],
                 'show_prices' => ['type' => 'boolean', 'label' => 'Show prices', 'default' => true, 'help' => 'Prices are always shown in the cart.'],
             ],
         ],
@@ -90,7 +91,7 @@ return [
             'empty_hint' => 'Packages are not available yet; this section stays hidden until they are.',
             'fields' => [
                 'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Packages'],
-                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300],
+                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300, 'ai' => true],
             ],
         ],
         'gallery' => [
@@ -111,7 +112,7 @@ return [
             'empty_hint' => 'Add active staff or resources to show this section.',
             'fields' => [
                 'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Meet the team'],
-                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300],
+                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300, 'ai' => true],
                 'show_services' => ['type' => 'boolean', 'label' => 'Show what each one offers', 'default' => true, 'engine' => 'service'],
             ],
         ],
@@ -148,7 +149,7 @@ return [
                 'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Offers'],
                 'items' => ['type' => 'list', 'label' => 'Offers', 'item_label' => 'Offer', 'max' => 6, 'fields' => [
                     'title' => ['type' => 'text', 'label' => 'Title', 'max' => 80, 'required' => true],
-                    'description' => ['type' => 'textarea', 'label' => 'Description', 'max' => 300],
+                    'description' => ['type' => 'textarea', 'label' => 'Description', 'max' => 300, 'ai' => true],
                     'price' => ['type' => 'text', 'label' => 'Price or discount', 'max' => 40, 'help' => 'For example "₹999" or "20% off".'],
                     'valid_until' => ['type' => 'text', 'label' => 'Valid until', 'max' => 40, 'help' => 'For example "31 October".'],
                 ]],
@@ -163,7 +164,7 @@ return [
                 'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Frequently asked questions'],
                 'items' => ['type' => 'list', 'label' => 'Questions', 'item_label' => 'Question', 'max' => 20, 'fields' => [
                     'question' => ['type' => 'text', 'label' => 'Question', 'max' => 200, 'required' => true],
-                    'answer' => ['type' => 'textarea', 'label' => 'Answer', 'max' => 1000, 'required' => true],
+                    'answer' => ['type' => 'textarea', 'label' => 'Answer', 'max' => 1000, 'required' => true, 'ai' => true],
                 ]],
             ],
         ],
@@ -184,7 +185,7 @@ return [
             'engine' => 'booking',
             'fields' => [
                 'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Book online'],
-                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300],
+                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300, 'ai' => true],
                 'success_message' => ['type' => 'text', 'label' => 'Message after booking', 'max' => 200, 'default' => 'Thank you! Your booking request has been received.'],
             ],
         ],
@@ -194,7 +195,7 @@ return [
             'position' => 'last',
             'removable' => false,
             'fields' => [
-                'text' => ['type' => 'textarea', 'label' => 'Short text', 'max' => 300],
+                'text' => ['type' => 'textarea', 'label' => 'Short text', 'max' => 300, 'ai' => true],
             ],
         ],
     ],

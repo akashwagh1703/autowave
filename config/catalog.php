@@ -62,6 +62,7 @@ return [
         'payments' => ['name' => 'Payments', 'description' => 'Online and offline payment tracking.', 'depends_on' => []],
         'analytics' => ['name' => 'Analytics', 'description' => 'Business dashboards and reports.', 'depends_on' => []],
         'inventory' => ['name' => 'Inventory', 'description' => 'Stock levels and movements.', 'depends_on' => []],
+        'ai' => ['name' => 'AI Assistant', 'description' => 'Suggested replies, summaries, lead details and writing help.', 'depends_on' => []],
     ],
 
     /*
@@ -96,7 +97,7 @@ return [
             'version' => '1.0',
             'website_templates' => ['elegant', 'modern', 'premium'],
             'engines' => ['service', 'booking', 'commerce'],
-            'modules' => ['crm', 'leads', 'customers', 'messaging', 'marketing', 'automation', 'website', 'reviews', 'loyalty'],
+            'modules' => ['crm', 'leads', 'customers', 'messaging', 'marketing', 'automation', 'website', 'reviews', 'loyalty', 'ai'],
             'configuration' => [
                 'dashboard_widgets' => ['revenue_today', 'appointments_today', 'new_leads', 'pending_followups', 'service_sales', 'product_sales', 'repeat_customers', 'potential_revenue'],
                 'website_sections' => ['header', 'hero', 'about', 'services', 'products', 'packages', 'gallery', 'team', 'testimonials', 'offers', 'faq', 'contact', 'booking', 'footer'],
@@ -111,7 +112,7 @@ return [
             'version' => '1.0',
             'website_templates' => ['modern', 'corporate', 'minimal'],
             'engines' => ['booking'],
-            'modules' => ['crm', 'leads', 'messaging', 'payments', 'automation', 'website'],
+            'modules' => ['crm', 'leads', 'messaging', 'payments', 'automation', 'website', 'ai'],
             'configuration' => [
                 'dashboard_widgets' => ['bookings_today', 'available_slots', 'revenue_today', 'cancellations', 'new_leads'],
                 'website_sections' => ['header', 'hero', 'about', 'gallery', 'booking', 'faq', 'contact', 'footer'],
@@ -137,7 +138,7 @@ return [
             'version' => '1.0',
             'website_templates' => ['corporate', 'modern', 'minimal'],
             'engines' => ['education'],
-            'modules' => ['crm', 'leads', 'messaging', 'automation', 'website'],
+            'modules' => ['crm', 'leads', 'messaging', 'automation', 'website', 'ai'],
             'configuration' => [
                 'dashboard_widgets' => ['new_enquiries', 'admissions', 'students', 'fees_due', 'demo_classes'],
                 'website_sections' => ['header', 'hero', 'about', 'services', 'team', 'testimonials', 'faq', 'contact', 'footer'],
@@ -158,7 +159,7 @@ return [
             'version' => '1.0',
             'website_templates' => ['premium', 'elegant', 'modern'],
             'engines' => ['food', 'commerce'],
-            'modules' => ['crm', 'messaging', 'offers', 'automation', 'website'],
+            'modules' => ['crm', 'messaging', 'offers', 'automation', 'website', 'ai'],
             'configuration' => [
                 'dashboard_widgets' => ['orders_today', 'revenue_today', 'reservations_today', 'new_customers'],
                 'website_sections' => ['header', 'hero', 'about', 'products', 'gallery', 'offers', 'reviews', 'contact', 'footer'],
@@ -171,7 +172,7 @@ return [
             'version' => '1.0',
             'website_templates' => ['minimal', 'corporate', 'modern'],
             'engines' => ['service', 'booking'],
-            'modules' => ['crm', 'leads', 'customers', 'messaging', 'automation', 'website', 'reviews'],
+            'modules' => ['crm', 'leads', 'customers', 'messaging', 'automation', 'website', 'reviews', 'ai'],
             'configuration' => [
                 'dashboard_widgets' => ['appointments_today', 'new_leads', 'pending_followups', 'no_shows'],
                 'website_sections' => ['header', 'hero', 'about', 'services', 'team', 'faq', 'contact', 'booking', 'footer'],
@@ -186,7 +187,7 @@ return [
             'version' => '1.0',
             'website_templates' => ['modern', 'minimal', 'corporate'],
             'engines' => ['commerce'],
-            'modules' => ['crm', 'customers', 'messaging', 'marketing', 'automation', 'website', 'inventory'],
+            'modules' => ['crm', 'customers', 'messaging', 'marketing', 'automation', 'website', 'inventory', 'ai'],
             'configuration' => [
                 'dashboard_widgets' => ['orders_today', 'revenue_today', 'low_stock', 'repeat_customers'],
                 'website_sections' => ['header', 'hero', 'about', 'products', 'offers', 'contact', 'footer'],
@@ -201,7 +202,7 @@ return [
             'public' => false,
             'website_templates' => ['corporate'],
             'engines' => ['service', 'booking'],
-            'modules' => ['crm', 'leads', 'customers', 'messaging', 'marketing', 'automation', 'website', 'forms', 'analytics'],
+            'modules' => ['crm', 'leads', 'customers', 'messaging', 'marketing', 'automation', 'website', 'forms', 'analytics', 'ai'],
             'configuration' => [
                 'dashboard_widgets' => ['new_leads', 'pending_followups', 'demos_booked', 'trials_started'],
                 'website_sections' => ['header', 'hero', 'services', 'testimonials', 'faq', 'contact', 'booking', 'footer'],

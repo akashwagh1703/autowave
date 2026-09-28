@@ -6,6 +6,7 @@ import FlashMessages from '@/components/FlashMessages';
 const navigation = [
     { label: 'Dashboard', href: '/' },
     { label: 'Tenants', href: '/tenants' },
+    { label: 'AI usage', href: '/ai-usage' },
 ];
 
 export default function AdminLayout({ title, children }) {

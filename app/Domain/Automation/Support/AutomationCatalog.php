@@ -126,6 +126,8 @@ class AutomationCatalog
             'booking_resources' => $this->context->hasEngine('booking')
                 ? BookingResource::query()->orderBy('name')->get()->map(fn (BookingResource $resource) => ['value' => (string) $resource->id, 'label' => $resource->name])->all()
                 : [],
+            'conversation_channels' => collect(config('messaging.channels'))->filter(fn (array $channel) => $channel['conversations'] ?? false)
+                ->map(fn (array $channel, string $key) => ['value' => $key, 'label' => $channel['label']])->values()->all(),
             'members' => app(AssignLead::class)->assignableMembers()
                 ->map(fn (TenantUser $member) => ['value' => (string) $member->id, 'label' => (string) $member->user?->name])->all(),
             default => throw new InvalidArgumentException("Unknown option list [{$list}]."),

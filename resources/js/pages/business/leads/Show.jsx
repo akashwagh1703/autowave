@@ -16,6 +16,8 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import StageChip from '@/modules/leads/StageChip';
 import Timeline from '@/modules/crm/Timeline';
 import ActivityComposer from '@/modules/crm/ActivityComposer';
+import LeadSuggestions from '@/modules/ai/LeadSuggestions';
+import SummaryCard from '@/modules/ai/SummaryCard';
 import useTenant from '@/hooks/useTenant';
 import { formatDateTime, formatMoney, formatRelative, isOverdue } from '@/utils/format';
 
@@ -58,7 +60,7 @@ function StageBar({ lead, stages, canUpdate, onMove }) {
     );
 }
 
-export default function Show({ lead, activities, stages, members, activityTypes }) {
+export default function Show({ lead, activities, stages, members, activityTypes, ai }) {
     const { timezone, currency, can, hasModule } = useTenant();
     const { errors } = usePage().props;
     const actionError = errors.lead_stage_id ?? errors.lost_reason ?? errors.assigned_tenant_user_id;
@@ -175,9 +177,16 @@ export default function Show({ lead, activities, stages, members, activityTypes 
                     {lead.lost_reason ? ` — ${lead.lost_reason}` : ''}
                 </Alert>
             ) : null}
+            {ai ? (
+                <div className="mb-4">
+                    <LeadSuggestions key={ai.suggestions?.id ?? 'none'} leadId={lead.id} ai={ai} />
+                </div>
+            ) : null}
 
             <div className="grid gap-4 lg:grid-cols-3">
                 <div className="space-y-4 lg:col-span-2">
+                    {ai ? <SummaryCard url={`/ai/leads/${lead.id}/summary`} initial={ai.summary} /> : null}
+
                     <Card variant="outlined">
                         <CardContent>
                             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">

@@ -17,8 +17,8 @@ Do not document planned features as if they exist.
 | Commerce | [commerce.md](commerce.md) | ✅ Phase 7 (products, stock, orders, manual payments, website cart) |
 | Website | [website.md](website.md) | ✅ Phase 6; products section and cart in Phase 7 |
 | Automation | [automation.md](automation.md) | ✅ Phase 5 |
-| Messaging | [messaging.md](messaging.md) | 🚧 Phase 5 (outbound pipeline; WhatsApp simulated) |
-| AI | `ai.md` | ⏳ |
+| Messaging | [messaging.md](messaging.md) | ✅ Phase 8 (outbound pipeline in Phase 5) |
+| AI | [ai.md](ai.md) | ✅ Phase 9 |
 
 ## Template
 

@@ -2,6 +2,10 @@ import { Link, router, useForm } from '@inertiajs/react';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
 import IconButton from '@mui/material/IconButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
@@ -9,6 +13,7 @@ import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -16,8 +21,11 @@ import SendIcon from '@mui/icons-material/Send';
 import TextSnippetIcon from '@mui/icons-material/TextSnippetOutlined';
 import UnarchiveIcon from '@mui/icons-material/UnarchiveOutlined';
 import { useEffect, useRef, useState } from 'react';
+import useAi from '@/hooks/useAi';
 import useTenant from '@/hooks/useTenant';
+import SummaryCard from '@/modules/ai/SummaryCard';
 import MessageStatus from '@/modules/inbox/MessageStatus';
+import { errorMessage, postJson } from '@/utils/http';
 import TemplateDialog from '@/modules/inbox/TemplateDialog';
 import { channelColors, channelIcons, uuid } from '@/modules/inbox/channels';
 import { formatDateTime, formatRelative } from '@/utils/format';
@@ -49,9 +57,87 @@ function Bubble({ message, timezone }) {
     );
 }
 
+function AiDraft({ conversation, onUse }) {
+    const [hidden, setHidden] = useState(null);
+    const draft = conversation.ai_draft;
+
+    if (!draft || hidden === draft.id) {
+        return null;
+    }
+
+    const dismiss = () => {
+        setHidden(draft.id);
+        postJson(`/ai/conversations/${conversation.id}/drafts/${draft.id}/dismiss`).catch(() => {});
+    };
+
+    return (
+        <Alert
+            severity="info"
+            icon={<AutoAwesomeIcon fontSize="inherit" />}
+            className="mb-2"
+            action={
+                <div className="flex gap-1">
+                    <Button
+                        size="small"
+                        onClick={() => {
+                            onUse(draft.text);
+                            setHidden(draft.id);
+                        }}
+                    >
+                        Use
+                    </Button>
+                    <Button size="small" color="inherit" onClick={dismiss}>
+                        Dismiss
+                    </Button>
+                </div>
+            }
+        >
+            <p className="text-xs font-medium">AI drafted a reply — check it, then send it yourself.</p>
+            <p className="mt-1 line-clamp-3 text-sm whitespace-pre-line">{draft.text}</p>
+        </Alert>
+    );
+}
+
+function SuggestReply({ conversation, body, onSuggest, onError, disabled }) {
+    const ai = useAi();
+    const [loading, setLoading] = useState(false);
+
+    if (!ai.enabled) {
+        return null;
+    }
+
+    const improving = body.trim() !== '';
+    const label = improving ? 'Improve my draft with AI' : 'Suggest a reply with AI';
+
+    const suggest = async () => {
+        setLoading(true);
+        onError(null);
+
+        try {
+            const data = await postJson(`/ai/conversations/${conversation.id}/reply`, { draft: improving ? body : null });
+            onSuggest(data.text ?? '');
+        } catch (failure) {
+            onError(errorMessage(failure, 'AI could not suggest a reply right now.'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <Tooltip title={ai.available ? label : (ai.message ?? '')}>
+            <span>
+                <IconButton onClick={suggest} disabled={disabled || loading || !ai.available} aria-label={label} color="primary">
+                    {loading ? <CircularProgress size={20} /> : <AutoAwesomeIcon />}
+                </IconButton>
+            </span>
+        </Tooltip>
+    );
+}
+
 function Composer({ conversation, onTemplate }) {
     const form = useForm({ body: '', client_id: uuid() });
     const blocked = conversation.text_blocked;
+    const [aiError, setAiError] = useState(null);
 
     const submit = (event) => {
         event?.preventDefault();
@@ -85,6 +171,12 @@ function Composer({ conversation, onTemplate }) {
                     {conversation.channel === 'whatsapp' && !conversation.templates.length ? ' Sync approved templates in Settings → Messaging.' : ''}
                 </Alert>
             ) : null}
+            {!blocked ? <AiDraft conversation={conversation} onUse={(text) => form.setData('body', text)} /> : null}
+            {aiError ? (
+                <Alert severity="error" className="mb-2" onClose={() => setAiError(null)}>
+                    {aiError}
+                </Alert>
+            ) : null}
             <div className="flex items-end gap-2">
                 <TextField
                     fullWidth
@@ -104,6 +196,13 @@ function Composer({ conversation, onTemplate }) {
                     error={Boolean(form.errors.body)}
                     helperText={form.errors.body}
                     slotProps={{ htmlInput: { maxLength: 4096, 'aria-label': 'Reply' } }}
+                />
+                <SuggestReply
+                    conversation={conversation}
+                    body={form.data.body}
+                    disabled={Boolean(blocked) || form.processing}
+                    onSuggest={(text) => form.setData('body', text)}
+                    onError={setAiError}
                 />
                 {conversation.templates.length ? (
                     <Tooltip title={conversation.template_blocked ?? 'Send an approved template'}>
@@ -127,6 +226,8 @@ export default function Thread({ conversation, members, backHref }) {
     const scroller = useRef(null);
     const [menu, setMenu] = useState(null);
     const [templateOpen, setTemplateOpen] = useState(false);
+    const [summaryOpen, setSummaryOpen] = useState(false);
+    const ai = useAi();
     const Icon = channelIcons[conversation.channel];
     const lastId = conversation.messages.at(-1)?.id;
 
@@ -170,6 +271,13 @@ export default function Thread({ conversation, members, backHref }) {
                         ) : null}
                     </p>
                 </div>
+                {ai.enabled ? (
+                    <Tooltip title="AI summary of this conversation">
+                        <IconButton size="small" onClick={() => setSummaryOpen(true)} aria-label="AI summary of this conversation" color="primary">
+                            <AutoAwesomeIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                ) : null}
                 {conversation.opted_out ? <Chip size="small" color="warning" label="Opted out" /> : null}
                 {conversation.status === 'closed' ? <Chip size="small" label="Closed" /> : null}
                 {can('conversations.assign') ? (
@@ -250,6 +358,19 @@ export default function Thread({ conversation, members, backHref }) {
 
             {conversation.templates.length ? (
                 <TemplateDialog key={`t-${conversation.id}`} open={templateOpen} onClose={() => setTemplateOpen(false)} conversation={conversation} templates={conversation.templates} />
+            ) : null}
+
+            {ai.enabled ? (
+                <Dialog open={summaryOpen} onClose={() => setSummaryOpen(false)} fullWidth maxWidth="sm">
+                    <DialogContent>
+                        <SummaryCard key={conversation.id} url={`/ai/conversations/${conversation.id}/summary`} title={`Conversation with ${conversation.name}`} variant="plain" />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setSummaryOpen(false)} color="inherit">
+                            Close
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             ) : null}
         </div>
     );
