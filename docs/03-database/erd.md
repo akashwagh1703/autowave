@@ -80,3 +80,22 @@ erDiagram
 
 All arrows are composite FKs. An appointment's activities also carry its `customer_id`, so they show on the
 customer timeline.
+
+## Automation and outbound messages (Phase 5 — implemented, ADR-015)
+
+```mermaid
+erDiagram
+    TENANTS ||--o{ AUTOMATIONS : owns
+    AUTOMATIONS ||--o{ AUTOMATION_NODES : "ordered steps"
+    AUTOMATIONS ||--o{ AUTOMATION_RUNS : "runs (steps snapshot)"
+    AUTOMATION_RUNS ||--o{ AUTOMATION_JOBS : "one per step"
+    AUTOMATION_RUNS ||--o{ AUTOMATION_LOGS : log
+    AUTOMATION_RUNS ||--o{ OUTBOUND_MESSAGES : "sent by (nullable)"
+    LEADS ||--o{ OUTBOUND_MESSAGES : "to (nullable)"
+    CUSTOMERS ||--o{ OUTBOUND_MESSAGES : "to (nullable)"
+    TENANT_USERS ||--o{ OUTBOUND_MESSAGES : "team notification (nullable)"
+```
+
+A run's subject (`subject_type`, `subject_id`) is polymorphic: a lead, customer or appointment. It has no
+FK, so deleting the subject does not delete the run's history; the run is cancelled at its next step.
+Other arrows are composite FKs.

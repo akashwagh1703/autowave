@@ -138,6 +138,32 @@ Other changes:
   - `booking_resource.deleted`, `booking_resource.time_off_added`, `booking_resource.time_off_removed`;
   - `booking.settings_updated`, `appointments.bulk_*`.
 
+## Automation and outbound messages (Phase 5, `2026_09_29_100000`) — ADR-015
+
+All tables are tenant-owned. Cross-row references are composite FKs `(x_id, tenant_id)` and cascade on
+delete.
+
+| Table | Key columns |
+|---|---|
+| `automations` | `name` (120), `description` (500), `trigger` (60, a `config/automation.php` key), `is_active` (default false), `once_per_subject`, `template_key` (60, nullable), `created_by_user_id`, timestamps, soft deletes. Unique (`tenant_id`, `template_key`) includes deleted rows, so a deleted default is never re-created |
+| `automation_nodes` | `automation_id`, `position` (unique per automation), `type` (`condition\|wait\|action`), `action` (40, nullable), `config` jsonb |
+| `automation_runs` | `automation_id`, `trigger`, `subject_type` (`lead\|customer\|appointment`), `subject_id`, `dedupe_key` (191), `depth`, `status` (`pending\|running\|waiting\|completed\|skipped\|failed\|cancelled`), `steps` jsonb (snapshot of the nodes at start), `payload` jsonb, `attempts`, `error`, `started_at`, `completed_at`. Unique (`tenant_id`, `automation_id`, `dedupe_key`) |
+| `automation_jobs` | `automation_run_id`, `step_index` (unique per run), `run_at` (UTC), `status` (`pending\|queued\|running\|completed\|skipped\|failed\|cancelled`), `attempts`, `anchor` (`appointment_start` or null), `offset_minutes`, `queued_at`, `started_at`, `finished_at`, `error` |
+| `automation_logs` | `automation_run_id`, `step_index` (nullable), `level` (`info\|warning\|error`), `event` (40, e.g. `run.created`, `condition.failed`, `action.completed`, `message.sent`), `message` (500), `context` jsonb, `created_at` only (append-only) |
+| `outbound_messages` | `channel` (`whatsapp\|email`), `provider`, `simulated`, `recipient` (191), `recipient_name`, `subject`, `body`, `status` (`queued\|sending\|sent\|failed`), `idempotency_key` (unique per tenant), `lead_id`, `customer_id`, `tenant_user_id`, `automation_run_id` (all nullable), `attempts`, `provider_message_id`, `error`, `queued_at`, `sent_at`, `failed_at` |
+
+Other changes:
+
+- New activity type `task` (automation "create follow-up task"; it also sets `leads.next_followup_at`).
+  Activities written by automations carry `metadata.via = automation`, `automation_id` and
+  `automation_run_id`. Message activities also carry `message_id` and `simulated`.
+- New audit actions:
+  - `automation.created`, `automation.updated`, `automation.activated`, `automation.deactivated`,
+    `automation.deleted`;
+  - `automation.run_retried`, `automation.run_cancelled`, `automation.message_retried`.
+- New business type configuration key `automation_templates` (a list of template keys). It is
+  catalogue-only and not copied to the tenant.
+
 ## Deferred platform tables
 
 `feature_flags`, `custom_fields` — added with the first feature that needs them (AW-009).

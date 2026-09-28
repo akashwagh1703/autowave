@@ -118,7 +118,8 @@ with the date and commit/PR reference; do not delete it.
   outputs. The automation engine does not exist yet, and the dashboard is driven by the business type's
   `dashboard_widgets` setting rather than a stored layout.
 - **Impact:** New tenants have no automations until Phase 5.
-- **Status:** Open — add an onboarding step to `CreateTenant` (or a `TenantCreated` listener) in Phase 5.
+- **Status:** Default automations resolved 2026-09-29 (Phase 5): `CreateTenant` calls `ProvisionAutomations`,
+  and `TenantBackfillSeeder` backfills existing tenants. A stored dashboard layout is still open.
 - **Affected:** `app/Domain/Tenant/Actions/CreateTenant.php`
 - **Created:** 2026-09-27
 
@@ -178,7 +179,7 @@ with the date and commit/PR reference; do not delete it.
 - **Description:** `LeadCreated`, `LeadUpdated`, `LeadStatusChanged`, `LeadAssigned`, `LeadConverted` and
   `CustomerCreated` are dispatched (after commit) but nothing consumes them until the automation engine.
 - **Impact:** No automatic follow-up messages or notifications yet.
-- **Status:** Open — Phase 5 (together with AW-011).
+- **Status:** Resolved 2026-09-29 (Phase 5). `StartAutomations` listens to all of them (ADR-015).
 - **Affected:** `app/Domain/Lead/Events`, `app/Domain/Customer/Events`
 - **Created:** 2026-09-28
 
@@ -258,6 +259,108 @@ with the date and commit/PR reference; do not delete it.
   `AppointmentCancelled`, `AppointmentNoShow` and `AppointmentRescheduled` are dispatched after commit, but
   nothing consumes them. Customers receive no confirmations or reminders.
 - **Impact:** Staff must contact customers themselves (the appointment page has call and WhatsApp buttons).
-- **Status:** Open. Phase 5 (automation) and messaging, together with AW-017.
+- **Status:** Resolved 2026-09-29 (Phase 5). Confirmation, reminder, no-show and thank-you templates exist.
+  WhatsApp delivery is still simulated (AW-025).
 - **Affected:** `app/Domain/Booking/Events`
 - **Created:** 2026-09-28
+
+### AW-025 — WhatsApp messages are simulated; no consent, quiet hours or approved templates
+
+- **Category:** Product / Compliance
+- **Description:** The WhatsApp channel uses the `log` provider. Messages are stored, shown on the timeline
+  and run log as "simulated", and written to the log, but not delivered. There is no opt-in/opt-out record,
+  no quiet hours, and no WhatsApp Business template approval flow.
+- **Impact:** Customers receive nothing on WhatsApp yet. Email (`mail` provider) is delivered through the
+  app mailer (`log` in local development).
+- **Status:** Open. Phase 7 adds the WhatsApp provider (set `MESSAGING_WHATSAPP_PROVIDER`), consent and
+  template handling.
+- **Affected:** `config/messaging.php`, `app/Domain/Messaging`
+- **Created:** 2026-09-29
+
+### AW-026 — Some automation actions and triggers from the master prompt are not built
+
+- **Category:** Product
+- **Description:** §29 also lists these actions: create booking, send offer, call webhook, AI actions. It
+  also lists triggers for forms, payments, orders and reviews. Those features do not exist yet, so neither
+  do their triggers or actions.
+- **Impact:** Automations cover leads, customers and appointments only.
+- **Status:** Open. Each feature adds its trigger or action to `config/automation.php` (and a `StepAction`
+  class) when it is built.
+- **Affected:** `config/automation.php`
+- **Created:** 2026-09-29
+
+### AW-027 — Automations are linear (no branches)
+
+- **Category:** Product
+- **Description:** A failed condition stops the run. There is no "otherwise" path or parallel branch.
+- **Impact:** "If VIP do A, else do B" needs two automations with opposite conditions.
+- **Status:** Open. `automation_nodes` and step snapshots allow branch references later (ADR-015).
+- **Affected:** Automation builder, `StepRunner`
+- **Created:** 2026-09-29
+
+### AW-028 — Waits need the scheduler; precision is about one minute
+
+- **Category:** DevOps
+- **Description:** Steps after a wait are dispatched by `automation:dispatch-due` (every minute). Without
+  `schedule:work` (dev) or the `schedule:run` cron (production), waits never finish.
+- **Impact:** A reminder due at 10:00:00 runs between 10:00 and about 10:01.
+- **Status:** Open (by design). See `docs/09-devops/queue-workers.md`.
+- **Affected:** `routes/console.php`
+- **Created:** 2026-09-29
+
+### AW-029 — Emails use the platform mailer and sender
+
+- **Category:** Product
+- **Description:** `send_email` and team notifications go through the default Laravel mailer with the
+  platform `MAIL_FROM_*` address. There is no per-business sender, reply-to or unsubscribe link.
+- **Impact:** Customers see the AutoWave sender address.
+- **Status:** Open. Add per-tenant sender settings and unsubscribe handling with the messaging module (Phase 7).
+- **Affected:** `app/Domain/Messaging/Providers/MailProvider.php`
+- **Created:** 2026-09-29
+
+### AW-030 — No retention for automation runs, logs and messages
+
+- **Category:** Technical Debt
+- **Description:** `automation_runs`, `automation_jobs`, `automation_logs` and `outbound_messages` grow
+  forever.
+- **Impact:** Table growth on busy tenants over months.
+- **Status:** Open. Add a scheduled prune (e.g. 180 days for completed runs) before production scale.
+- **Affected:** Automation and messaging tables
+- **Created:** 2026-09-29
+
+### AW-031 — Messages and steps are delivered at least once
+
+- **Category:** Technical Debt
+- **Description:** Idempotency keys stop a retried step from creating a second message. But a worker that
+  dies after the provider accepted a message, and before it was marked `sent`, leaves the message `sending`.
+  `messaging:dispatch-pending` then sends it again after 15 minutes.
+- **Impact:** With the simulated provider, none. With a real provider, a rare duplicate after a crash.
+- **Status:** Open. The Phase 7 provider should pass the message id as the provider's idempotency or
+  reference key.
+- **Affected:** `MessagingService::deliver()`, `DispatchPendingMessages`
+- **Created:** 2026-09-29
+
+### AW-032 — With the sync queue, a failing automation step can surface in the request
+
+- **Category:** Technical Debt (local/test only)
+- **Description:** With `QUEUE_CONNECTION=sync`, jobs dispatched after commit run inside the request that
+  committed. A step that fails there is marked failed as expected, but its exception can surface in that
+  request.
+- **Impact:** Only when running without a queue worker. Local `.env` and production use Redis.
+- **Status:** Open (by design of the sync driver). Use Redis locally (`QUEUE_CONNECTION=redis` plus a
+  worker).
+- **Affected:** Local development with the sync queue
+- **Created:** 2026-09-29
+
+### AW-033 — Automations act with system rights, not their builder's permissions
+
+- **Category:** Security (design)
+- **Description:** Automation actions run as the system. A user with `automation.create` or
+  `automation.update` but without `leads.assign` or `leads.update` can build an automation that assigns
+  leads or moves their stage, or that messages customers.
+- **Impact:** Low while only Owner and Manager hold `automation.*` (the template default). Relevant if a
+  business grants automation permissions to other roles.
+- **Status:** Open. Documented in `docs/04-security/authorization.md`. Option: check the builder's
+  permissions for each action when saving.
+- **Affected:** Automation builder, custom roles
+- **Created:** 2026-09-29

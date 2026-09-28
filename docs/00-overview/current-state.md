@@ -1,6 +1,6 @@
 # Current State
 
-_Last updated: 2026-09-28 — end of Phase 4 (Services + Booking)._
+_Last updated: 2026-09-29 — end of Phase 5 (Automation)._
 
 This document describes what **actually exists** in the repository today. Planned work is in
 [roadmap.md](roadmap.md).
@@ -107,19 +107,67 @@ This document describes what **actually exists** in the repository today. Planne
   availability and timezone, resources, services, isolation, HTTP and permissions, settings, metrics, and
   provisioning.
 
+### Phase 5 — Automation (ADR-015)
+
+- **Automations** (`/automations`, needs the `automation` module):
+  - a list with steps in plain language, run counts, an on/off switch and 7-day figures;
+  - a builder with trigger, conditions, waits and actions;
+  - an automation page with its recent runs; delete.
+- **Triggers** (from the CRM and booking events):
+  - leads: created, updated, stage changed, assigned, converted;
+  - customers: created;
+  - appointments: created, confirmed, rescheduled, completed, cancelled, no-show.
+
+  Only triggers the tenant's modules and engines support are offered.
+- **Steps:**
+  - conditions: all or any rules on subject fields, with operators by field type;
+  - waits: a fixed delay, or relative to the appointment start;
+  - actions: WhatsApp, email, notify team, follow-up task, assign lead, move lead stage, tag customer.
+
+  Messages support `{{variables}}`. All of it is driven by `config/automation.php`.
+- **Engine:**
+  - One queued job per step (`automation` queue). Waits are rows the every-minute
+    `automation:dispatch-due` command dispatches; it also recovers stuck steps.
+  - Runs keep a snapshot of their steps.
+  - Duplicate protection: a unique dedupe key per run, a unique row per step and message idempotency keys.
+  - Optional once per record; loop guard (depth 3).
+  - Rescheduling an appointment moves its pending reminders.
+  - A run stops if the automation, module, tenant or subject goes away.
+- **Run history and run page:** step statuses, a readable log, messages; retry failed runs, cancel runs in
+  progress, send failed messages again.
+- **Messaging foundation:**
+  - `MessagingService` with a provider per channel; WhatsApp is simulated (log provider) and email uses
+    the Laravel mailer;
+  - the `SendOutboundMessage` job (`messaging` queue) and `messaging:dispatch-pending` recovery;
+  - messages to leads and customers appear on their timeline.
+- **Default automations:** six templates, provisioned at onboarding and backfilled once. Business types can
+  choose their own list; templates a tenant cannot use are skipped. Templates that message customers start
+  paused.
+- **Demo data:** the local-only `DemoAutomationSeeder` turns on the salon's welcome and confirmation
+  automations, and adds "Tag big-ticket customers".
+- **Local run:** `composer dev` now also runs the scheduler and listens on the `automation` and `messaging`
+  queues.
+- **Tests:** 283 feature tests. Phase 5 adds 32 in `tests/Feature/Automation`: engine
+  (including the §114 milestone), HTTP and permissions, isolation, provisioning.
+
 ## In progress
 
-- Nothing. Phase 4 is complete and awaiting approval before Phase 5 (Automation engine).
+- Nothing. Phase 5 is complete and awaiting approval before Phase 6 (Website).
 
 ## Not implemented
 
 - **Platform:** invitations and member management, role editor, editable business settings, website editor,
-  logo upload, custom domain UI, default automations, feature flags, custom fields, commerce, automation,
-  messaging, AI, analytics, billing.
+  logo upload, custom domain UI, feature flags, custom fields, commerce, AI, analytics, billing.
 - **CRM gaps:** kanban board, own-leads visibility, campaigns, import/export.
-- **Booking gaps:** online booking (Phase 6), reminders, "any staff", buffers, recurring or group bookings,
-  week view, packages, scoped staff visibility.
+- **Booking gaps:** online booking (Phase 6), "any staff", buffers, recurring or group bookings, week view,
+  packages, scoped staff visibility.
+- **Automation gaps:**
+  - branches;
+  - webhook, AI, website and payment actions and triggers (AW-026, AW-027);
+  - real WhatsApp delivery, consent and quiet hours (AW-025);
+  - retention (AW-030);
+  - an inbox and inbound messages (Phase 8).
 
 ## Known technical debt
 
-See [known-issues.md](known-issues.md) (AW-001 → AW-024).
+See [known-issues.md](known-issues.md) (AW-001 → AW-033).

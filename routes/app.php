@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\App\AppointmentActionController;
 use App\Http\Controllers\App\AppointmentController;
+use App\Http\Controllers\App\AutomationController;
+use App\Http\Controllers\App\AutomationRunController;
 use App\Http\Controllers\App\BookingResourceController;
 use App\Http\Controllers\App\BookingSettingsController;
 use App\Http\Controllers\App\CrmSettingsController;
@@ -112,6 +114,24 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
 
             Route::get('/settings/booking', [BookingSettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.booking');
             Route::put('/settings/booking', [BookingSettingsController::class, 'update'])->middleware('can:settings.update')->name('settings.booking.update');
+        });
+
+        Route::middleware('module:automation')->group(function () {
+            Route::get('/automations', [AutomationController::class, 'index'])->middleware('can:automation.view')->name('automations.index');
+            Route::get('/automations/create', [AutomationController::class, 'create'])->middleware('can:automation.create')->name('automations.create');
+            Route::post('/automations', [AutomationController::class, 'store'])->middleware('can:automation.create')->name('automations.store');
+
+            Route::get('/automations/runs', [AutomationRunController::class, 'index'])->middleware('can:automation.view')->name('automations.runs.index');
+            Route::get('/automations/runs/{run}', [AutomationRunController::class, 'show'])->middleware('can:automation.view')->name('automations.runs.show');
+            Route::post('/automations/runs/{run}/retry', [AutomationRunController::class, 'retry'])->middleware('can:automation.update')->name('automations.runs.retry');
+            Route::post('/automations/runs/{run}/cancel', [AutomationRunController::class, 'cancel'])->middleware('can:automation.update')->name('automations.runs.cancel');
+            Route::post('/automations/messages/{message}/retry', [AutomationRunController::class, 'retryMessage'])->middleware('can:automation.update')->name('automations.messages.retry');
+
+            Route::get('/automations/{automation}', [AutomationController::class, 'show'])->middleware('can:automation.view')->name('automations.show');
+            Route::get('/automations/{automation}/edit', [AutomationController::class, 'edit'])->middleware('can:automation.update')->name('automations.edit');
+            Route::put('/automations/{automation}', [AutomationController::class, 'update'])->middleware('can:automation.update')->name('automations.update');
+            Route::patch('/automations/{automation}/toggle', [AutomationController::class, 'toggle'])->middleware('can:automation.update')->name('automations.toggle');
+            Route::delete('/automations/{automation}', [AutomationController::class, 'destroy'])->middleware('can:automation.delete')->name('automations.destroy');
         });
     });
 });

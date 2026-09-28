@@ -1,6 +1,9 @@
 # Supervisor
 
 > Draft (AW-004). Until Horizon is added (AW-001), run `queue:work` programs directly.
+> Since Phase 5, automations and messages need the high-priority worker **and** the scheduler cron below.
+> See [queue-workers.md](queue-workers.md). The jobs set their own tries and backoff, which take
+> precedence over the CLI flags.
 
 `/etc/supervisor/conf.d/autowave-worker.conf`:
 

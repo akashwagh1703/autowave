@@ -79,10 +79,12 @@ return [
 
     /*
     | Business types. `website_templates` lists recommended templates; the first is the default.
-    | `configuration` keys other than website_*, lead_* and service_categories are copied into tenant
-    | settings on creation.
+    | `configuration` keys other than website_*, lead_*, service_categories and automation_templates
+    | are copied into tenant settings on creation.
     | `configuration.lead_stages` / `lead_sources` replace the config/crm.php defaults for that type.
     | `configuration.service_categories` are created for tenants with the service engine.
+    | `configuration.automation_templates` picks keys from config/automation.php `templates`
+    | (default: automation.default_templates).
     | `configuration.booking` overrides config/booking.php defaults (slot_interval, auto_confirm, default_hours).
     */
     'business_types' => [

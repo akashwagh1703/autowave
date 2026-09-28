@@ -8,6 +8,27 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- Phase 5 Automation:
+  - Automations page: every automation with its steps in plain language, run counts, an on/off switch,
+    and figures for runs, completed, in progress and failed in the last 7 days.
+  - Automation builder: choose what starts it (a new, updated, moved, assigned or converted lead; a new
+    customer; an appointment booked, confirmed, rescheduled, completed, cancelled or marked no-show). Then
+    add steps in any order:
+    - conditions, e.g. "lead stage is New" or "estimated value at least 5000";
+    - waits, e.g. "wait 4 hours" or "until 24 hours before the appointment";
+    - actions: send WhatsApp, send email, notify the team, create a follow-up task, assign the lead, move
+      the lead's stage, tag the customer.
+    Messages can include the customer's name, the appointment date and time, the business name and more.
+  - Optional "run only once per record".
+  - Run history and run pages: every step's status, a readable log of what happened and why, and the
+    messages sent. Retry failed runs, cancel runs in progress, and send failed messages again.
+  - Rescheduling an appointment moves its pending reminders.
+  - Automation tasks and messages appear on lead and customer timelines as "Automation".
+  - New businesses get default automations for their type: lead welcome, follow-up of untouched leads,
+    appointment confirmation and reminder, no-show rebooking task, thank-you after a visit. Templates that
+    message customers start paused. Existing businesses receive them once.
+  - WhatsApp messages are simulated (logged, not delivered) until a provider is connected. Email is sent
+    with the platform mailer.
 - Phase 4 Services + Booking:
   - Services: a catalogue with categories, duration, price and who offers each service. Search, filters,
     sorting and bulk activate, deactivate and delete. Salons and clinics start with default categories.

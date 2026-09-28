@@ -8,6 +8,7 @@ import EventIcon from '@mui/icons-material/Event';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import EventRepeatIcon from '@mui/icons-material/EventRepeat';
+import AssignmentIcon from '@mui/icons-material/AssignmentOutlined';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
@@ -38,7 +39,18 @@ const icons = {
     appointment_cancelled: EventBusyIcon,
     appointment_no_show: EventBusyIcon,
     appointment_updated: EditNoteIcon,
+    task: AssignmentIcon,
 };
+
+const sent = { whatsapp: 'sent a WhatsApp message', email: 'sent an email' };
+
+function actorName(activity) {
+    if (activity.user) {
+        return activity.user.name;
+    }
+
+    return activity.metadata?.via === 'automation' ? 'Automation' : 'System';
+}
 
 const logged = { note: 'added a note', call: 'logged a call', whatsapp: 'logged a WhatsApp message', email: 'logged an email', meeting: 'logged a meeting' };
 
@@ -99,6 +111,15 @@ function describe(activity, timezone) {
             return `${meta.automatic ? 'auto-assigned' : 'assigned'} the lead to ${meta.to.name}`;
         case 'updated':
             return `updated ${(meta.changed ?? []).map((field) => humanize(field).toLowerCase()).join(', ') || 'details'}`;
+        case 'task':
+            return `added a follow-up task${meta.due_at ? ` due ${formatDateTime(meta.due_at, timezone, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : ''}${meta.automation_name ? ` (${meta.automation_name})` : ''}`;
+        case 'whatsapp':
+        case 'email':
+            if (meta.message_id) {
+                return `${sent[activity.type]}${meta.automation_name ? ` (${meta.automation_name})` : ''}${meta.simulated ? ' — simulated, not delivered' : ''}`;
+            }
+
+            return logged[activity.type];
         default:
             return logged[activity.type] ?? humanize(activity.type);
     }
@@ -120,7 +141,7 @@ export default function Timeline({ activities, timezone, showLead = false, showA
                             <Icon sx={{ fontSize: 16 }} />
                         </span>
                         <p className="text-sm text-slate-900">
-                            <span className="font-medium">{activity.user?.name ?? 'System'}</span> {describe(activity, timezone)}
+                            <span className="font-medium">{actorName(activity)}</span> {describe(activity, timezone)}
                             {showAppointment && activity.appointment_id ? (
                                 <>
                                     {' · '}

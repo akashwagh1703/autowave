@@ -29,9 +29,25 @@ tests/
 | Tenant isolation | Tenant A vs Tenant B | Every tenant-owned resource (release-blocking) |
 | Integration | Provider adapters with `Http::fake()` | AI, messaging, payments |
 | Queue | Jobs dispatched, idempotent, retry/failure | Every job |
-| Automation | Trigger, condition pass/fail, delay, execution, retry, failure log, duplicate prevention | Automation engine |
+| Automation | Trigger, condition pass/fail, delay, execution, retry, failure log, duplicate prevention | Automation engine (`tests/Feature/Automation`; helpers in `tests/Concerns/CreatesAutomations.php`) |
 | Booking | Create, cancel, reschedule, unavailable slot, duplicate, concurrent attempt, timezone, resource availability | Booking engine (`tests/Feature/Booking`; concurrency is simulated, AW-021) |
 | E2E | Full customer workflows | Milestones (tooling TBD) |
+
+## Testing queued work
+
+`phpunit.xml` uses `QUEUE_CONNECTION=sync`:
+
+- Jobs run immediately; `afterCommit` jobs run when the transaction commits.
+- Automation waits stay as `pending` rows. Tests call `$this->travel(...)` and then
+  `artisan('automation:dispatch-due')`.
+- To look at a step before it runs, `Queue::fake()` the dispatch and call `StepRunner::run($jobId)`
+  directly.
+- `tests/Fixtures/FlakyStep.php` is an action that fails a set number of times, for retry and failure
+  tests.
+- A job that exhausts its tries fails immediately on the sync queue (AW-032). Assert on the run, job and
+  log rows, not on exceptions.
+- Default automations fire in every test tenant. Tests that count activities or runs call
+  `pauseDefaultAutomations($tenant)` first.
 
 ## Current coverage (Phase 0)
 

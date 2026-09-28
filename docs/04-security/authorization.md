@@ -71,6 +71,20 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
   - The customer page includes appointments only for users with `appointments.view`.
   - "My schedule" is a calendar filter, not a restriction: anyone with `appointments.view` sees every
     resource (AW-022).
+- **Automation specifics (Phase 5):**
+  - The routes are behind `module:automation`, so a tenant without the module gets 404.
+  - Permissions:
+    - `automation.view`: the list, automation pages, run history and run detail, including message bodies.
+    - `automation.create`: the builder and saving a new automation.
+    - `automation.update`: edit, on/off, retry or cancel a run, send a failed message again.
+    - `automation.delete`: delete.
+  - Owner and Manager have all four; Staff has none by default.
+  - Automations act as the system, not as the user who built them. So a user with `automation.create`
+    but without `leads.assign` can still build an automation that assigns leads. Treat `automation.create`
+    and `automation.update` as manager-level permissions (AW-033).
+  - Condition values and action targets (stages, members, services) are checked against the tenant's own
+    records when saved. A member chosen as a notification target who later leaves is skipped at run time.
+  - Activities written by automations have no user; the timeline shows "Automation".
 - **New permission groups for existing tenants:** `RbacSeeder` updates the templates, but tenant roles are
   copies. `TenantBackfillSeeder` calls `ProvisionTenantRoles::grantNewPermissionGroups()` for `services` and
   `resources`:

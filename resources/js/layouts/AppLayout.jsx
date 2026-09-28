@@ -18,6 +18,7 @@ const navigation = [
     { label: 'Customers', href: '/customers', permission: 'customers.view', module: 'customers' },
     { label: 'Services', href: '/services', permission: 'services.view', engine: 'service' },
     { label: (tenant) => tenant?.resource_label?.plural ?? 'Staff', href: '/resources', permission: 'resources.view', engine: 'booking' },
+    { label: 'Automations', href: '/automations', permission: 'automation.view', module: 'automation' },
     { label: 'Settings', href: '/settings', permission: 'settings.view' },
 ];
 

@@ -28,6 +28,7 @@ php artisan migrate:fresh --seed           # local only — destroys data
 | 2026-09-27 | `2026_09_27_160000` `tenants.created_by_user_id`; `160100` website templates/configs/sections | 2 | Applied to the shared dev DB; re-seeding backfills websites for existing tenants (`ProvisionWebsite::ensureFor`) |
 | 2026-09-28 | `2026_09_28_100000` customers, lead stages/sources, leads, activities | 3 | Composite FKs, partial unique phone index (PG11-safe); applied to the shared dev DB; re-seeding backfills stages/sources (`ProvisionCrm::ensureFor`) and local demo CRM data |
 | 2026-09-28 | `2026_09_28_200000` service categories, services, booking resources, working hours, time off, appointments, `activities.appointment_id` | 4 | Exclusion constraint `appointments_no_overlap` without `btree_gist` (PG11-safe, ADR-014). Re-seeding (`TenantBackfillSeeder`) backfills booking settings, service categories and the `services`/`resources` permission groups, plus local demo booking data |
+| 2026-09-29 | `2026_09_29_100000` automations, automation nodes, runs, jobs, logs, outbound messages | 5 | Partial index `automation_jobs_due_index` (PG11-safe, ADR-015). Re-seeding (`TenantBackfillSeeder`) backfills the default automations once per template (`ProvisionAutomations::ensureFor`); `DemoAutomationSeeder` turns on demo automations locally |
 
 ## Compatibility
 

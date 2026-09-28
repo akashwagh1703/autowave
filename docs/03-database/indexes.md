@@ -73,6 +73,27 @@ Phase 4 (services and booking):
 | `resource_time_off (tenant_id, booking_resource_id, starts_at)` | Time off overlapping a day or booking |
 | `activities (tenant_id, appointment_id, occurred_at)` | Appointment history |
 
+Phase 5 (automation and messaging):
+
+| Index / constraint | Serves |
+|---|---|
+| `automations (tenant_id, trigger, is_active)` | Resolver: active automations for an event |
+| `automations (tenant_id, template_key)` unique, including deleted rows | Default provisioning is idempotent; a deleted default is never re-created |
+| `automation_nodes (automation_id, position)` unique | Ordered steps |
+| `automation_runs (tenant_id, automation_id, dedupe_key)` unique | Duplicate events never start a second run; once-per-record automations |
+| `automation_runs (tenant_id, status, created_at)` | Run history status filter; 7-day stats |
+| `automation_runs (tenant_id, automation_id, created_at)` | Runs of one automation; per-automation counts and last run |
+| `automation_runs (tenant_id, subject_type, subject_id)` | Runs for a record (reschedule re-timing) |
+| `automation_jobs (automation_run_id, step_index)` unique | Each step executes at most once |
+| `automation_jobs_due_index` partial `(run_at) WHERE status = 'pending'` | The every-minute scheduler query across tenants |
+| `automation_jobs (status, queued_at)`, `(status, started_at)` | Stuck queued / running recovery |
+| `automation_logs (automation_run_id, id)` | Run log in order |
+| `automation_logs (tenant_id, level, created_at)` | Error reporting per tenant |
+| `outbound_messages (tenant_id, idempotency_key)` unique | A retried action never sends twice |
+| `outbound_messages (status, queued_at)` | Stuck message recovery |
+| `outbound_messages (tenant_id, status, created_at)` | Message lists and counts |
+| `outbound_messages.lead_id`, `.customer_id`, `.tenant_user_id`, `.automation_run_id` | FK side; messages on the run page |
+
 Text search uses `ILIKE '%…%'` on name/email and `LIKE '%digits%'` on `phone_normalized`; these scans
 are filtered by `tenant_id` first and are fine at current volumes. Add `pg_trgm` GIN indexes
 when a tenant's lead count makes the list slow.

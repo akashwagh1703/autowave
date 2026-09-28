@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Domain\Automation\Actions\ProvisionAutomations;
 use App\Domain\Lead\Actions\ProvisionCrm;
 use App\Domain\RBAC\Actions\ProvisionTenantRoles;
 use App\Domain\Service\Actions\ProvisionServiceCatalog;
@@ -12,7 +13,8 @@ use Illuminate\Database\Seeder;
 
 /**
  * Gives tenants created before a feature existed that feature's defaults (settings, website, CRM
- * pipeline, service categories, new permission groups). Idempotent; safe to run on every deploy.
+ * pipeline, service categories, default automations, new permission groups). Idempotent; safe to
+ * run on every deploy.
  */
 class TenantBackfillSeeder extends Seeder
 {
@@ -24,13 +26,15 @@ class TenantBackfillSeeder extends Seeder
         ProvisionWebsite $provisionWebsite,
         ProvisionCrm $provisionCrm,
         ProvisionServiceCatalog $provisionServiceCatalog,
+        ProvisionAutomations $provisionAutomations,
         ProvisionTenantRoles $provisionRoles,
     ): void {
-        Tenant::query()->with('businessType')->orderBy('id')->each(function (Tenant $tenant) use ($backfillSettings, $provisionWebsite, $provisionCrm, $provisionServiceCatalog, $provisionRoles) {
+        Tenant::query()->with('businessType')->orderBy('id')->each(function (Tenant $tenant) use ($backfillSettings, $provisionWebsite, $provisionCrm, $provisionServiceCatalog, $provisionAutomations, $provisionRoles) {
             $backfillSettings->handle($tenant);
             $provisionWebsite->ensureFor($tenant);
             $provisionCrm->ensureFor($tenant);
             $provisionServiceCatalog->ensureFor($tenant);
+            $provisionAutomations->ensureFor($tenant);
             $provisionRoles->grantNewPermissionGroups($tenant, self::NEW_PERMISSION_GROUPS);
         });
     }

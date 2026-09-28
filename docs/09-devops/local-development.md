@@ -106,11 +106,14 @@ then `docker compose up -d`. (The primary dev machine uses 5433 for this reason.
 
 | What | Command |
 |---|---|
-| Everything (server, queue, logs, Vite) | `composer dev` |
+| Everything (server, queue, scheduler, logs, Vite) | `composer dev` |
 | Web server only | `php artisan serve` → http://app.autowave.localhost:8000 |
 | Vite dev server (HMR) | `npm run dev` |
-| Queue worker | `php artisan queue:work redis --queue=default,automation,messaging,ai,notifications,reports,media` |
-| Scheduler | `php artisan schedule:work` |
+| Queue worker | `php artisan queue:work redis --queue=automation,messaging,default` |
+| Scheduler (automation waits, recovery) | `php artisan schedule:work` |
+
+Automations need both the queue worker and the scheduler; see [queue-workers.md](queue-workers.md).
+`php artisan db:seed` (local) also turns on the demo automations for `abc-salon` (`DemoAutomationSeeder`).
 | Logs | `php artisan pail` or `storage/logs/laravel-YYYY-MM-DD.log` |
 
 ## Tests and checks

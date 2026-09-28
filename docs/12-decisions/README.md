@@ -21,3 +21,4 @@ Format: **Title, Status, Date, Context, Decision, Alternatives, Consequences.**
 | [ADR-012](ADR-012-website-sections-and-templates.md) | Section-based website configuration and templates | Accepted |
 | [ADR-013](ADR-013-crm-data-model.md) | CRM data model: configurable stages with outcomes, one activity timeline | Accepted |
 | [ADR-014](ADR-014-booking-model.md) | Booking model: generic resources, range exclusion constraint, locked bookings | Accepted |
+| [ADR-015](ADR-015-automation-engine.md) | Automation engine: one queued job per step, database-backed waits, idempotent actions | Accepted |

@@ -16,8 +16,8 @@ Do not document planned features as if they exist.
 | Booking | [booking.md](booking.md) | ✅ Phase 4 (staff-side; online booking in Phase 6) |
 | Commerce | `commerce.md` | ⏳ |
 | Website | [website.md](website.md) | 🚧 Phase 2 (provisioning + rendering) |
-| Automation | `automation.md` | ⏳ |
-| Messaging | `messaging.md` | ⏳ |
+| Automation | [automation.md](automation.md) | ✅ Phase 5 |
+| Messaging | [messaging.md](messaging.md) | 🚧 Phase 5 (outbound pipeline; WhatsApp simulated) |
 | AI | `ai.md` | ⏳ |
 
 ## Template
