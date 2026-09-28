@@ -29,11 +29,15 @@ What exists is described in [current-state.md](current-state.md).
   suggestions and drafts (a person always sends), summaries, lead details from messages, the business
   assistant, writing help, the "message received" trigger and AI automation actions (ADR-019; AW-053
   partly resolved).
+- **Phase 10 — Additional verticals:** Coaching (education engine: courses, batches, admissions from
+  enquiries, fees with instalments and reminders, attendance, demo classes), Cafe (food engine on
+  commerce: menu marks, tables, reservations, dine-in, kitchen screen), Turf rates and advances, Local
+  Commerce (coupons, widgets) (ADR-020; AW-044 coupons resolved).
 
 ## Next
 
-**Phase 10 — Additional verticals**: Turf, Coaching, Cafe, Local Commerce, then Clinic, Fitness, Car
-Service, Home Services. Starts only after Phase 9 is approved.
+The master prompt's phases are complete. Candidates, to be chosen with the product owner: Clinic,
+Fitness, Car Service and Home Services presets; the vertical gaps AW-059 → AW-064; billing.
 
 ## Future
 

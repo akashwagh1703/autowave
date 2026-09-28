@@ -33,15 +33,30 @@ class DemoTenantSeeder extends Seeder
             'branding' => ['primary_color' => '#16a34a', 'tagline' => 'Floodlit 5-a-side football, open till midnight'],
             'profile' => ['phone' => '+91 91234 56789', 'city' => 'Pune'],
         ]);
+        $coaching = $this->tenant($createTenant, 'owner@abc-coaching.test', 'Kiran Owner', 'ABC Coaching', 'abc-coaching', 'coaching', [
+            'branding' => ['primary_color' => '#2563eb', 'tagline' => 'Maths and science coaching for classes 8 to 12'],
+            'profile' => ['phone' => '+91 90000 11111', 'city' => 'Pune', 'description' => 'Small batches, weekly tests and personal doubt-solving for school and board exams.'],
+        ]);
+        $this->tenant($createTenant, 'owner@abc-cafe.test', 'Chetan Owner', 'ABC Cafe', 'abc-cafe', 'cafe', [
+            'branding' => ['primary_color' => '#b45309', 'tagline' => 'All-day breakfast, coffee and comfort food'],
+            'profile' => ['phone' => '+91 90000 22222', 'city' => 'Pune', 'description' => 'A cosy neighbourhood cafe with indoor and garden seating.'],
+        ]);
+        $this->tenant($createTenant, 'owner@abc-store.test', 'Sunil Owner', 'ABC Store', 'abc-store', 'local_store', [
+            'branding' => ['primary_color' => '#0d9488', 'tagline' => 'Daily groceries, delivered in your neighbourhood'],
+            'profile' => ['phone' => '+91 90000 33333', 'city' => 'Pune'],
+        ]);
 
         $staff = $this->user('staff@abc-salon.test', 'Sana Staff');
         $this->member($context, $assignRole, $salon, $staff, 'staff');
+
+        $teacher = $this->user('teacher@abc-coaching.test', 'Tanvi Teacher');
+        $this->member($context, $assignRole, $coaching, $teacher, 'staff');
 
         $manager = $this->user('manager@autowave.test', 'Meera Manager');
         $this->member($context, $assignRole, $salon, $manager, 'manager');
         $this->member($context, $assignRole, $turf, $manager, 'manager');
 
-        $this->command?->info('Demo tenants: abc-salon, abc-turf. Users: owner@abc-salon.test, owner@abc-turf.test, staff@abc-salon.test, manager@autowave.test (password: password).');
+        $this->command?->info('Demo tenants: abc-salon, abc-turf, abc-coaching, abc-cafe, abc-store. Owners: owner@<slug>.test; also staff@abc-salon.test, teacher@abc-coaching.test, manager@autowave.test (password: password).');
     }
 
     private function tenant(CreateTenant $createTenant, string $email, string $name, string $business, string $slug, string $type, array $options): Tenant

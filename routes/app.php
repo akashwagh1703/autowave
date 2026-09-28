@@ -7,13 +7,22 @@ use App\Http\Controllers\App\AppointmentController;
 use App\Http\Controllers\App\AssistantController;
 use App\Http\Controllers\App\AutomationController;
 use App\Http\Controllers\App\AutomationRunController;
+use App\Http\Controllers\App\BatchController;
 use App\Http\Controllers\App\BookingResourceController;
 use App\Http\Controllers\App\BookingSettingsController;
 use App\Http\Controllers\App\CommerceSettingsController;
+use App\Http\Controllers\App\CouponController;
+use App\Http\Controllers\App\CourseController;
 use App\Http\Controllers\App\CrmSettingsController;
 use App\Http\Controllers\App\CustomerController;
 use App\Http\Controllers\App\DashboardController;
+use App\Http\Controllers\App\DemoClassController;
+use App\Http\Controllers\App\DiningTableController;
+use App\Http\Controllers\App\EducationSettingsController;
+use App\Http\Controllers\App\FeeController;
+use App\Http\Controllers\App\FoodSettingsController;
 use App\Http\Controllers\App\InboxController;
+use App\Http\Controllers\App\KitchenController;
 use App\Http\Controllers\App\LeadActionController;
 use App\Http\Controllers\App\LeadController;
 use App\Http\Controllers\App\MessagingSettingsController;
@@ -22,9 +31,11 @@ use App\Http\Controllers\App\OrderActionController;
 use App\Http\Controllers\App\OrderController;
 use App\Http\Controllers\App\ProductCategoryController;
 use App\Http\Controllers\App\ProductController;
+use App\Http\Controllers\App\ReservationController;
 use App\Http\Controllers\App\ServiceCategoryController;
 use App\Http\Controllers\App\ServiceController;
 use App\Http\Controllers\App\SettingsController;
+use App\Http\Controllers\App\StudentController;
 use App\Http\Controllers\App\WebsiteController;
 use App\Http\Controllers\App\WebsiteMediaController;
 use App\Http\Controllers\App\WebsiteSectionController;
@@ -124,6 +135,8 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->middleware('can:appointments.update')->name('appointments.update');
             Route::patch('/appointments/{appointment}/status', [AppointmentActionController::class, 'status'])->middleware('can:appointments.view')->name('appointments.status');
             Route::patch('/appointments/{appointment}/reschedule', [AppointmentActionController::class, 'reschedule'])->middleware('can:appointments.update')->name('appointments.reschedule');
+            Route::post('/appointments/{appointment}/payments', [AppointmentActionController::class, 'storePayment'])->middleware('can:appointments.update')->name('appointments.payments.store');
+            Route::delete('/appointments/{appointment}/payments/{payment}', [AppointmentActionController::class, 'destroyPayment'])->middleware('can:appointments.update')->name('appointments.payments.destroy');
 
             Route::get('/settings/booking', [BookingSettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.booking');
             Route::put('/settings/booking', [BookingSettingsController::class, 'update'])->middleware('can:settings.update')->name('settings.booking.update');
@@ -150,6 +163,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
 
             Route::get('/orders', [OrderController::class, 'index'])->middleware('can:orders.view')->name('orders.index');
             Route::get('/orders/customers', [OrderController::class, 'customers'])->middleware(['can:orders.create', 'throttle:120,1'])->name('orders.customers');
+            Route::post('/orders/coupon', [OrderController::class, 'coupon'])->middleware(['module:offers', 'can:orders.create', 'throttle:60,1'])->name('orders.coupon');
             Route::get('/orders/create', [OrderController::class, 'create'])->middleware('can:orders.create')->name('orders.create');
             Route::post('/orders', [OrderController::class, 'store'])->middleware('can:orders.create')->name('orders.store');
             Route::get('/orders/{order}', [OrderController::class, 'show'])->middleware('can:orders.view')->name('orders.show');
@@ -159,10 +173,86 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
                 Route::patch('/orders/{order}/status', [OrderActionController::class, 'status'])->name('orders.status');
                 Route::post('/orders/{order}/payments', [OrderActionController::class, 'storePayment'])->name('orders.payments.store');
                 Route::delete('/orders/{order}/payments/{payment}', [OrderActionController::class, 'destroyPayment'])->name('orders.payments.destroy');
+                Route::post('/orders/{order}/items', [OrderController::class, 'addItems'])->middleware('engine:food')->name('orders.items.store');
+            });
+
+            Route::middleware('module:offers')->group(function () {
+                Route::get('/offers', [CouponController::class, 'index'])->middleware('can:offers.view')->name('offers.index');
+                Route::middleware('can:offers.manage')->group(function () {
+                    Route::post('/offers', [CouponController::class, 'store'])->name('offers.store');
+                    Route::put('/offers/{coupon}', [CouponController::class, 'update'])->name('offers.update');
+                    Route::delete('/offers/{coupon}', [CouponController::class, 'destroy'])->name('offers.destroy');
+                });
             });
 
             Route::get('/settings/commerce', [CommerceSettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.commerce');
             Route::put('/settings/commerce', [CommerceSettingsController::class, 'update'])->middleware('can:settings.update')->name('settings.commerce.update');
+        });
+
+        // Coaching (ADR-020): courses, batches, students (enrolments), fees, attendance and demo classes.
+        Route::middleware('engine:education')->group(function () {
+            Route::get('/courses', [CourseController::class, 'index'])->middleware('can:courses.view')->name('courses.index');
+
+            Route::middleware('can:courses.manage')->group(function () {
+                Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
+                Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
+                Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
+
+                Route::get('/batches/create', [BatchController::class, 'create'])->name('batches.create');
+                Route::post('/batches', [BatchController::class, 'store'])->name('batches.store');
+                Route::get('/batches/{batch}/edit', [BatchController::class, 'edit'])->name('batches.edit');
+                Route::put('/batches/{batch}', [BatchController::class, 'update'])->name('batches.update');
+                Route::delete('/batches/{batch}', [BatchController::class, 'destroy'])->name('batches.destroy');
+            });
+
+            Route::get('/batches/{batch}', [BatchController::class, 'show'])->middleware('can:courses.view')->name('batches.show');
+            Route::post('/batches/{batch}/attendance', [BatchController::class, 'attendance'])->middleware('can:students.attendance')->name('batches.attendance');
+
+            Route::get('/students', [StudentController::class, 'index'])->middleware('can:students.view')->name('students.index');
+            Route::get('/students/lookup', [StudentController::class, 'lookup'])->middleware(['can:students.admit', 'throttle:120,1'])->name('students.lookup');
+            Route::get('/students/admit', [StudentController::class, 'create'])->middleware('can:students.admit')->name('students.create');
+            Route::post('/students', [StudentController::class, 'store'])->middleware('can:students.admit')->name('students.store');
+            Route::get('/students/{enrolment}', [StudentController::class, 'show'])->middleware('can:students.view')->name('students.show');
+            Route::put('/students/{enrolment}', [StudentController::class, 'update'])->middleware('can:students.update')->name('students.update');
+            Route::patch('/students/{enrolment}/status', [StudentController::class, 'status'])->middleware('can:students.update')->name('students.status');
+            Route::put('/students/{enrolment}/fees', [StudentController::class, 'fees'])->middleware('can:fees.manage')->name('students.fees');
+            Route::post('/students/{enrolment}/payments', [StudentController::class, 'storePayment'])->middleware('can:fees.collect')->name('students.payments.store');
+            Route::delete('/students/{enrolment}/payments/{payment}', [StudentController::class, 'destroyPayment'])->middleware('can:fees.collect')->name('students.payments.destroy');
+
+            Route::get('/fees', [FeeController::class, 'index'])->middleware('can:fees.view')->name('fees.index');
+
+            Route::get('/demos', [DemoClassController::class, 'index'])->middleware('can:students.view')->name('demos.index');
+            Route::post('/leads/{lead}/demos', [DemoClassController::class, 'store'])->middleware(['module:leads', 'can:students.admit'])->name('demos.store');
+            Route::patch('/demos/{demo}', [DemoClassController::class, 'status'])->middleware('can:students.admit')->name('demos.status');
+
+            Route::get('/settings/education', [EducationSettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.education');
+            Route::put('/settings/education', [EducationSettingsController::class, 'update'])->middleware('can:settings.update')->name('settings.education.update');
+        });
+
+        // Cafe / restaurant (ADR-020): tables, reservations and the kitchen screen. The menu and
+        // dine-in orders are the commerce products and orders.
+        Route::middleware('engine:food')->group(function () {
+            Route::get('/tables', [DiningTableController::class, 'index'])->middleware('can:reservations.view')->name('tables.index');
+            Route::middleware('can:reservations.manage')->group(function () {
+                Route::post('/tables', [DiningTableController::class, 'store'])->name('tables.store');
+                Route::put('/tables/{table}', [DiningTableController::class, 'update'])->name('tables.update');
+                Route::delete('/tables/{table}', [DiningTableController::class, 'destroy'])->name('tables.destroy');
+            });
+
+            Route::get('/reservations', [ReservationController::class, 'index'])->middleware('can:reservations.view')->name('reservations.index');
+            Route::get('/reservations/customers', [ReservationController::class, 'customers'])->middleware(['can:reservations.manage', 'throttle:120,1'])->name('reservations.customers');
+            Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])->middleware('can:reservations.view')->name('reservations.show');
+            Route::middleware('can:reservations.manage')->group(function () {
+                Route::post('/reservations', [ReservationController::class, 'store'])->name('reservations.store');
+                Route::put('/reservations/{reservation}', [ReservationController::class, 'update'])->name('reservations.update');
+                Route::patch('/reservations/{reservation}/status', [ReservationController::class, 'status'])->name('reservations.status');
+            });
+
+            Route::get('/kitchen', [KitchenController::class, 'index'])->middleware(['engine:commerce', 'can:orders.view'])->name('kitchen.index');
+            Route::post('/kitchen/{order}/ready', [KitchenController::class, 'ready'])->middleware(['engine:commerce', 'can:orders.update'])->name('kitchen.ready');
+
+            Route::get('/settings/food', [FoodSettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.food');
+            Route::put('/settings/food', [FoodSettingsController::class, 'update'])->middleware('can:settings.update')->name('settings.food.update');
         });
 
         Route::middleware('module:website')->group(function () {

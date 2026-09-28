@@ -10,6 +10,7 @@ use App\Domain\Booking\Models\Appointment;
 use App\Domain\Booking\Models\BookingResource;
 use App\Domain\Booking\Services\Availability;
 use App\Domain\Booking\Support\BookingSettings;
+use App\Domain\Booking\Support\ResourceRates;
 use App\Domain\Customer\Actions\CreateCustomer;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Service\Models\Service;
@@ -89,7 +90,7 @@ class BookAppointment
                     'starts_at' => $start,
                     'ends_at' => $end,
                     'status' => $status,
-                    'price' => $data['price'] ?? $service?->price,
+                    'price' => $data['price'] ?? $service?->price ?? ResourceRates::quote($locked, $start, $end),
                     'notes' => $data['notes'] ?? null,
                     'source' => $data['source'] ?? 'manual',
                     'confirmed_at' => $status === AppointmentStatus::Confirmed ? now() : null,

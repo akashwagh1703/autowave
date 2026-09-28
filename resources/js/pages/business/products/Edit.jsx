@@ -63,7 +63,7 @@ function ImageCard({ product }) {
     );
 }
 
-export default function Edit({ product, categories, defaultLowStock, movements, stockReasons, openOrdersCount }) {
+export default function Edit({ product, categories, defaultLowStock, foodTypes, movements, stockReasons, openOrdersCount }) {
     const { can } = useTenant();
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -75,6 +75,8 @@ export default function Edit({ product, categories, defaultLowStock, movements, 
         compare_at_price: product.compare_at_price ?? '',
         description: product.description ?? '',
         is_active: product.is_active,
+        is_available: product.is_available ?? true,
+        food_type: product.food_type ?? null,
         track_stock: product.track_stock,
         low_stock_threshold: product.low_stock_threshold ?? '',
     });
@@ -118,6 +120,7 @@ export default function Edit({ product, categories, defaultLowStock, movements, 
                                 cancelHref="/products"
                                 categories={categories}
                                 defaultLowStock={defaultLowStock}
+                                foodTypes={foodTypes}
                             />
                         </CardContent>
                     </Card>

@@ -1,6 +1,6 @@
 # Current State
 
-_Last updated: 2026-10-03 — end of Phase 9 (AI)._
+_Last updated: 2026-10-04 — end of Phase 10 (additional verticals)._
 
 This document describes what **actually exists** in the repository today. Planned work is in
 [roadmap.md](roadmap.md).
@@ -284,9 +284,40 @@ This document describes what **actually exists** in the repository today. Planne
   cap, endpoints and permissions, extraction, assistant tools, automations, settings, Super Admin,
   backfill and isolation.
 
+### Phase 10 — Additional verticals (ADR-020)
+
+- **Coaching (education engine):** courses, batches (days, times, teacher, room, capacity, dates, fee),
+  students as customers with enrolments; admission from a lead (converted to "Admitted"), a customer or
+  a walk-in, under a batch lock with capacity checks; fee plans (equal monthly or typed instalments),
+  payments allocated oldest first, plan changes; drop / complete / re-activate; attendance per class and
+  date; demo classes for leads (lead moves to "Demo scheduled"); Fees page; Settings → Coaching;
+  website section "Courses"; widgets students, admissions, fees due, demo classes.
+- **Fee reminders:** `education:fee-reminders` hourly fires `fee.due_soon` / `fee.overdue` once per
+  instalment. Templates: fee due reminder (paused), overdue follow-up task (active), admission welcome
+  and demo confirmation (paused).
+- **Cafe (food engine + commerce):** products carry food type and "available now"; dining tables;
+  reservations (team or website; no double booking per table via an exclusion constraint) with confirm,
+  seat, complete, no-show, cancel; dine-in orders by table, walk-ins without a customer, "Add items";
+  kitchen screen (KOT) that marks tickets ready and moves orders to Ready; Settings → Reservation
+  settings; website section "Reserve a table"; widgets reservations today, kitchen queue, top products.
+- **Turf pricing:** base, peak and weekend hourly rates per resource; quotes per minute; the price on the
+  team and website slot pickers and stored on the booking; advances recorded as appointment payments.
+- **Local Commerce:** renamed in place (existing stores keep their business type); coupon codes on the
+  Offers page, in the order form and the website cart, with locked usage counts; widgets repeat
+  customers and top products.
+- **Platform:** new permission groups `courses`, `students`, `fees`, `reservations` (backfilled once);
+  `offers` module switched on once for Cafe and Local Commerce tenants; automation templates provisioned
+  only when the business can use them; assistant tools `students` and `reservations`.
+- **Demo data (local):** ABC Coaching (courses, batches, students with instalments, attendance, demos),
+  ABC Cafe (menu, tables, reservations, dine-in and website orders, coupons), ABC Store (groceries,
+  coupons, repeat customer), turf rates and an advance on ABC Turf.
+- **Tests:** 525 tests (4,644 assertions). Phase 10 adds 56: `tests/Feature/Education` (18), `tests/Feature/Food` (13),
+  `Commerce/CouponTest` (7), `Booking/TurfPricingTest` (9), `Tenancy/VerticalProvisioningTest` (5),
+  `AI/VerticalAssistantToolsTest` (3) and a cafe automation provisioning test.
+
 ## In progress
 
-- Nothing. Phase 9 is complete and awaiting approval before Phase 10 (additional verticals).
+- Nothing. Phase 10 is complete and awaiting approval before Phase 11.
 
 ## Not implemented
 
@@ -294,8 +325,11 @@ This document describes what **actually exists** in the repository today. Planne
   domain UI, feature flags, custom fields, analytics, billing.
 - **AI gaps:** redaction of customer text (AW-055), plan-based allowances and INR cost (AW-056), streaming
   and saved assistant chats (AW-057).
-- **Commerce gaps:** online payments (AW-041), variants (AW-042), returns and refunds (AW-043), coupons and
-  taxes (AW-044), stock reservation for carts (AW-045), receptionist order updates (AW-046), editing orders
+- **Vertical gaps:** website sections not added to existing sites (AW-059), discounts not recomputed when
+  items are added (AW-060), per-item kitchen notes (AW-061), kitchen access for Staff (AW-062), table
+  availability for website reservations (AW-063), fee reminder sending hour (AW-064).
+- **Commerce gaps:** online payments (AW-041), variants (AW-042), returns and refunds (AW-043), taxes
+  (AW-044), stock reservation for carts (AW-045), receptionist order updates (AW-046), editing orders
   (AW-047), customer order messages and tracking (AW-048), delivery zones (AW-049).
 - **CRM gaps:** kanban board, own-leads visibility, campaigns, import/export.
 - **Booking gaps:** buffers, recurring or group bookings, week view, packages, scoped staff visibility,
@@ -312,4 +346,4 @@ This document describes what **actually exists** in the repository today. Planne
 
 ## Known technical debt
 
-See [known-issues.md](known-issues.md) (AW-001 → AW-058).
+See [known-issues.md](known-issues.md) (AW-001 → AW-064).

@@ -16,6 +16,13 @@ use App\Domain\Commerce\Events\OrderCreated;
 use App\Domain\Commerce\Events\OrderPaid;
 use App\Domain\Commerce\Events\OrderReady;
 use App\Domain\Customer\Events\CustomerCreated;
+use App\Domain\Education\Events\DemoScheduled;
+use App\Domain\Education\Events\EnrolmentCreated;
+use App\Domain\Education\Events\FeeDueSoon;
+use App\Domain\Education\Events\FeeOverdue;
+use App\Domain\Food\Events\ReservationCancelled;
+use App\Domain\Food\Events\ReservationConfirmed;
+use App\Domain\Food\Events\ReservationCreated;
 use App\Domain\Lead\Events\LeadAssigned;
 use App\Domain\Lead\Events\LeadConverted;
 use App\Domain\Lead\Events\LeadCreated;
@@ -59,6 +66,13 @@ class StartAutomations
         OrderCancelled::class,
         OrderPaid::class,
         ConversationMessageReceived::class,
+        EnrolmentCreated::class,
+        FeeDueSoon::class,
+        FeeOverdue::class,
+        DemoScheduled::class,
+        ReservationCreated::class,
+        ReservationConfirmed::class,
+        ReservationCancelled::class,
     ];
 
     public function __construct(private readonly AutomationResolver $resolver) {}
@@ -113,6 +127,13 @@ class StartAutomations
             $event instanceof ConversationMessageReceived => MessagingCompliance::keyword($event->message->body) === null
                 ? ['message.received', $event->conversation, "message:{$event->message->id}", ['message_id' => $event->message->id, 'type' => $event->message->type]]
                 : null,
+            $event instanceof EnrolmentCreated => ['enrolment.created', $event->enrolment, "enrolment:{$event->enrolment->id}", []],
+            $event instanceof FeeDueSoon => ['fee.due_soon', $event->instalment, "fee:{$event->instalment->id}:due_soon", []],
+            $event instanceof FeeOverdue => ['fee.overdue', $event->instalment, "fee:{$event->instalment->id}:overdue", []],
+            $event instanceof DemoScheduled => ['demo.scheduled', $event->demo, "demo:{$event->demo->id}", []],
+            $event instanceof ReservationCreated => ['reservation.created', $event->reservation, "reservation:{$event->reservation->id}", []],
+            $event instanceof ReservationConfirmed => ['reservation.confirmed', $event->reservation, "reservation:{$event->reservation->id}", []],
+            $event instanceof ReservationCancelled => ['reservation.cancelled', $event->reservation, "reservation:{$event->reservation->id}", []],
             default => null,
         };
     }

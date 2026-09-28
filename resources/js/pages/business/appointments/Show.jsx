@@ -23,6 +23,8 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import AppointmentStatusChip from '@/modules/booking/AppointmentStatusChip';
 import SlotPicker from '@/modules/booking/SlotPicker';
 import Timeline from '@/modules/crm/Timeline';
+import PaymentDialog from '@/modules/payments/PaymentDialog';
+import PaymentsList from '@/modules/payments/PaymentsList';
 import useTenant from '@/hooks/useTenant';
 import { formatDateTime, formatMoney, humanize } from '@/utils/format';
 import { formatDay, formatDuration, formatTime, localDate } from '@/utils/booking';
@@ -159,13 +161,26 @@ function DetailsForm({ appointment }) {
     );
 }
 
-export default function Show({ appointment, transitions, activities, resources }) {
+export default function Show({ appointment, transitions, activities, resources, paymentMethods = [] }) {
     const { timezone, currency, can, resourceLabel } = useTenant();
     const { errors } = usePage().props;
     const [cancelling, setCancelling] = useState(false);
     const [reason, setReason] = useState('');
     const [rescheduling, setRescheduling] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [paying, setPaying] = useState(false);
+    const [removing, setRemoving] = useState(null);
+    const canPay = can('appointments.update') && appointment.status !== 'cancelled' && appointment.balance !== null && Number(appointment.balance) > 0;
+
+    const removePayment = () =>
+        router.delete(`/appointments/${appointment.id}/payments/${removing.id}`, {
+            preserveScroll: true,
+            onStart: () => setProcessing(true),
+            onFinish: () => {
+                setProcessing(false);
+                setRemoving(null);
+            },
+        });
     const today = localDate(new Date().toISOString(), timezone);
     const date = localDate(appointment.starts_at, timezone);
     const digits = String(appointment.customer?.phone ?? '').replace(/\D/g, '');
@@ -319,6 +334,31 @@ export default function Show({ appointment, transitions, activities, resources }
                             </CardContent>
                         </Card>
                     ) : null}
+
+                    {appointment.price !== null || appointment.payments?.length ? (
+                        <Card variant="outlined">
+                            <CardContent>
+                                <div className="flex items-center justify-between gap-2">
+                                    <h2 className="font-semibold text-slate-900">Payments</h2>
+                                    {canPay ? (
+                                        <Button size="small" variant="outlined" onClick={() => setPaying(true)} disabled={processing}>
+                                            Record payment
+                                        </Button>
+                                    ) : null}
+                                </div>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Paid {formatMoney(appointment.amount_paid, currency)}
+                                    {appointment.balance !== null ? ` of ${formatMoney(appointment.price, currency)} · ${formatMoney(appointment.balance, currency)} due` : ''}
+                                </p>
+                                {errors.amount ? (
+                                    <Alert severity="error" className="mt-2">
+                                        {errors.amount}
+                                    </Alert>
+                                ) : null}
+                                <PaymentsList payments={appointment.payments ?? []} onRemove={can('appointments.update') ? setRemoving : null} />
+                            </CardContent>
+                        </Card>
+                    ) : null}
                 </div>
             </div>
 
@@ -333,6 +373,29 @@ export default function Show({ appointment, transitions, activities, resources }
                     timezone={timezone}
                 />
             ) : null}
+
+            {canPay ? (
+                <PaymentDialog
+                    key={appointment.balance}
+                    action={`/appointments/${appointment.id}/payments`}
+                    balance={appointment.balance}
+                    methods={paymentMethods}
+                    open={paying}
+                    onClose={() => setPaying(false)}
+                    title="Record payment (advance or full)"
+                />
+            ) : null}
+
+            <ConfirmDialog
+                open={removing !== null}
+                title="Remove this payment?"
+                description="Use this for a payment recorded by mistake. It is not a refund. The removal stays in the appointment history."
+                confirmLabel="Remove payment"
+                destructive
+                processing={processing}
+                onConfirm={removePayment}
+                onClose={() => setRemoving(null)}
+            />
 
             <ConfirmDialog
                 open={cancelling}

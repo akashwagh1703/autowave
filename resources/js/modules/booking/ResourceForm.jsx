@@ -5,6 +5,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
+import RatesEditor from '@/modules/booking/RatesEditor';
 import WorkingHoursEditor from '@/modules/booking/WorkingHoursEditor';
 import useTenant from '@/hooks/useTenant';
 import { formatDuration } from '@/utils/booking';
@@ -95,6 +96,22 @@ export default function ResourceForm({ form, onSubmit, submitLabel, cancelHref, 
                     In your business timezone. Changing hours never moves existing appointments.
                 </p>
                 <WorkingHoursEditor value={form.data.working_hours} onChange={(value) => form.setData('working_hours', value)} errors={form.errors} />
+            </section>
+
+            <section>
+                <h2 className="font-semibold text-slate-900">Pricing</h2>
+                <p className="mb-3 text-sm text-slate-600">
+                    {servicesEnabled
+                        ? `Used for bookings without a service. The first matching rate applies; otherwise the hourly rate.`
+                        : `The price of a booking is worked out from these rates and shown on your website. The first matching rate applies; otherwise the hourly rate.`}
+                </p>
+                <RatesEditor
+                    hourlyRate={form.data.hourly_rate}
+                    rates={form.data.rates ?? []}
+                    onHourlyRateChange={(value) => form.setData('hourly_rate', value)}
+                    onRatesChange={(value) => form.setData('rates', value)}
+                    errors={form.errors}
+                />
             </section>
 
             {servicesEnabled ? (

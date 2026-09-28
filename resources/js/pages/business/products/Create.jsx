@@ -7,7 +7,7 @@ import AppLayout from '@/layouts/AppLayout';
 import PageHeader from '@/components/PageHeader';
 import ProductForm from '@/modules/products/ProductForm';
 
-export default function Create({ categories, defaultCategoryId, defaultLowStock }) {
+export default function Create({ categories, defaultCategoryId, defaultLowStock, foodTypes }) {
     const form = useForm({
         name: '',
         product_category_id: defaultCategoryId,
@@ -16,6 +16,8 @@ export default function Create({ categories, defaultCategoryId, defaultLowStock 
         compare_at_price: '',
         description: '',
         is_active: true,
+        is_available: true,
+        food_type: null,
         track_stock: false,
         opening_stock: '',
         low_stock_threshold: '',
@@ -42,6 +44,7 @@ export default function Create({ categories, defaultCategoryId, defaultLowStock 
                         cancelHref="/products"
                         categories={categories}
                         defaultLowStock={defaultLowStock}
+                        foodTypes={foodTypes}
                         creating
                     />
                 </CardContent>

@@ -10,6 +10,7 @@ use App\Domain\Commerce\Events\OrderConfirmed;
 use App\Domain\Commerce\Events\OrderReady;
 use App\Domain\Commerce\Models\Order;
 use App\Domain\Commerce\Models\OrderItem;
+use App\Domain\Commerce\Services\Coupons;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -39,6 +40,12 @@ class ChangeOrderStatus
 
             if ($status === OrderStatus::Cancelled) {
                 $this->restock($order, $actor);
+                Coupons::release($order);
+            }
+
+            // A closed order leaves the kitchen queue.
+            if (! $status->isOpen()) {
+                OrderItem::query()->where('order_id', $order->id)->where('kitchen_status', OrderItem::KITCHEN_QUEUED)->update(['kitchen_status' => null]);
             }
 
             $this->recordActivity->handle(

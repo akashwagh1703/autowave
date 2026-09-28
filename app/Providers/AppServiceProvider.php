@@ -82,6 +82,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('website-slots', fn (Request $request) => Limit::perMinute(60)->by($site('slots', $request)));
         RateLimiter::for('website-cart', fn (Request $request) => Limit::perMinute(60)->by($site('cart', $request)));
         RateLimiter::for('website-order', fn (Request $request) => Limit::perHour((int) config('commerce.online_per_hour'))->by($site('order', $request)));
+        RateLimiter::for('website-reservation', fn (Request $request) => Limit::perHour((int) config('food.online_per_hour'))->by($site('reservation', $request)));
 
         // Meta webhooks: per sending IP and webhook key (Meta sends from a pool of addresses).
         RateLimiter::for('meta-webhooks', fn (Request $request) => Limit::perMinute((int) config('messaging.webhooks.rate_limit'))

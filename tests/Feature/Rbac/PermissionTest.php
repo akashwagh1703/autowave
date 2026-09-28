@@ -95,7 +95,9 @@ class PermissionTest extends TestCase
 
         $this->actingAs($staff)
             ->get($this->appUrl('/dashboard'))
-            ->assertInertia(fn (Assert $page) => $page->where('permissions', ['appointments.update', 'appointments.view', 'customers.view', 'resources.view', 'services.view']));
+            ->assertInertia(fn (Assert $page) => $page->where('permissions', [
+                'appointments.update', 'appointments.view', 'courses.view', 'customers.view', 'reservations.view', 'resources.view', 'services.view', 'students.attendance', 'students.view',
+            ]));
     }
 
     public function test_roles_cannot_be_assigned_across_tenants(): void

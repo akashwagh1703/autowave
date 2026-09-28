@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable([
     'tenant_id', 'product_category_id', 'name', 'description', 'sku', 'price', 'compare_at_price',
     'image_media_id', 'is_active', 'track_stock', 'stock_quantity', 'low_stock_threshold', 'sort_order',
-    'created_by_user_id',
+    'created_by_user_id', 'food_type', 'is_available',
 ])]
 class Product extends Model
 {
@@ -28,6 +28,7 @@ class Product extends Model
 
     protected $attributes = [
         'is_active' => true,
+        'is_available' => true,
         'track_stock' => false,
         'stock_quantity' => 0,
     ];
@@ -38,6 +39,7 @@ class Product extends Model
             'price' => 'decimal:2',
             'compare_at_price' => 'decimal:2',
             'is_active' => 'boolean',
+            'is_available' => 'boolean',
             'track_stock' => 'boolean',
             'stock_quantity' => 'integer',
             'low_stock_threshold' => 'integer',

@@ -13,3 +13,5 @@ Artisan::command('inspire', function () {
 Schedule::command('automation:dispatch-due')->everyMinute()->withoutOverlapping()->onOneServer();
 Schedule::command('messaging:dispatch-pending')->everyMinute()->withoutOverlapping()->onOneServer();
 Schedule::command('messaging:prune-webhooks')->dailyAt('03:15')->withoutOverlapping()->onOneServer();
+// Fee due-soon / overdue automation triggers (ADR-020); hourly so each tenant's day follows its timezone.
+Schedule::command('education:fee-reminders')->hourly()->withoutOverlapping()->onOneServer();

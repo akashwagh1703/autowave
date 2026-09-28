@@ -1,7 +1,7 @@
 # Booking
 
 - **Status:** ✅ Phase 4 (staff-side booking)
-- **Last updated:** 2026-09-28
+- **Last updated:** 2026-10-04 (turf rates and advances, Phase 10)
 
 ## Purpose
 
@@ -100,10 +100,36 @@ See ADR-014. In short, each booking runs in one transaction that:
 
 A constraint violation becomes the message "This time was just booked. Choose another time."
 
+## Rates and advances (turf pricing, Phase 10)
+
+Bookings without a service (turf slots) are priced from the resource ([ADR-020](../12-decisions/ADR-020-additional-verticals.md)):
+
+- **Resource form → Rates:** a base hourly rate and up to `booking.pricing.max_rates` named rates, each
+  with weekdays and a local time range (`to` may be 24:00), e.g. Peak Mon–Fri 18:00–23:00 at 1,400 and
+  Weekend Sat–Sun 06:00–24:00 at 1,600. Errors are keyed `rates.{index}.{field}`.
+- **Quote:** each minute is priced by the first matching rate, otherwise the base rate. 17:30–18:30 with
+  peak from 18:00 costs half an hour at each rate. If any minute has no rate (no base rate and outside
+  every named rate), there is no quote.
+- **Price on the booking:** `BookAppointment` stores the quote unless the team enters a price. The team
+  slot picker and the website show the price per start time; with "any turf" the website shows the
+  lowest price and "from" when turfs differ (`price_varies`).
+- **Advances:** the appointment page records payments (amount, method, reference) into
+  `appointment_payments`; `amount_paid` and the balance are recomputed from the rows under a lock.
+  A payment needs a price, cannot exceed the balance, and cancelled appointments take none. The price
+  cannot be lowered below the amount paid. Removing a payment is allowed.
+
+| Route | Permission |
+|---|---|
+| `POST /appointments/{appointment}/payments` | `appointments.update` |
+| `DELETE /appointments/{appointment}/payments/{payment}` | `appointments.update` |
+
+Timeline: `payment_recorded`, `payment_removed`. Tests: `tests/Feature/Booking/TurfPricingTest.php`.
+
 ## Database
 
-`booking_resources`, `resource_working_hours`, `resource_time_off`, `booking_resource_service`,
-`appointments`, `activities.appointment_id`. See `docs/03-database/schema.md`.
+`booking_resources` (with `hourly_rate`, `rates`), `resource_working_hours`, `resource_time_off`,
+`booking_resource_service`, `appointments` (with `amount_paid`), `appointment_payments`,
+`activities.appointment_id`. See `docs/03-database/schema.md`.
 
 ## Routes and permissions
 
@@ -197,4 +223,5 @@ booking.
 - No reminders or confirmations are sent until automations and messaging (Phase 5/6).
 - Staff see the whole calendar. "My schedule" is a filter, not a permission (AW-022).
 - Calendar is a day view; there is no week or month grid.
-- Revenue counts completed appointments only; there are no payments or invoices yet.
+- Revenue counts completed appointments only. Payments are manual (advances, Phase 10); there are no
+  invoices or online payments.

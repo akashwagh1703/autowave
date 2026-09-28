@@ -11,6 +11,32 @@ import { ActionButton, Card, Field, Honeypot, Section, SectionHeading, inputClas
 
 const FULFILMENT_LABELS = { pickup: 'Pick up', delivery: 'Delivery' };
 
+const FOOD_TYPES = {
+    veg: { label: 'Vegetarian', color: '#16a34a' },
+    non_veg: { label: 'Non-vegetarian', color: '#b91c1c' },
+    egg: { label: 'Contains egg', color: '#ca8a04' },
+};
+
+function FoodMark({ type }) {
+    const food = FOOD_TYPES[type];
+
+    if (!food) {
+        return null;
+    }
+
+    return (
+        <span
+            className="inline-flex h-4 w-4 shrink-0 items-center justify-center border-2"
+            style={{ borderColor: food.color, borderRadius: 3 }}
+            title={food.label}
+            role="img"
+            aria-label={food.label}
+        >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: food.color }} />
+        </span>
+    );
+}
+
 function storageKey() {
     return `aw-cart:${window.location.host}`;
 }
@@ -133,7 +159,10 @@ export function Products({ config, data }) {
                                         ) : null}
                                         <div className="flex flex-1 flex-col p-5">
                                             <div className="flex items-start justify-between gap-3">
-                                                <h4 className="font-semibold text-slate-900">{product.name}</h4>
+                                                <h4 className="flex items-center gap-2 font-semibold text-slate-900">
+                                                    <FoodMark type={product.food_type} />
+                                                    {product.name}
+                                                </h4>
                                                 {config.show_prices ? (
                                                     <span className="shrink-0 text-right">
                                                         <span className="block font-semibold text-slate-900">{formatPrice(product.price, locale.currency)}</span>
@@ -190,6 +219,7 @@ function Confirmation({ confirmation, onClose }) {
                 Thank you! Order {confirmation.number} received.
             </p>
             <p className="mt-2 text-slate-700">{confirmation.items}</p>
+            {Number(confirmation.discount) > 0 ? <p className="mt-1 text-sm text-emerald-700">You saved {formatPrice(confirmation.discount, locale.currency)}</p> : null}
             <p className="mt-1 font-semibold text-slate-900">{formatPrice(confirmation.total, locale.currency)}</p>
             <p className="mt-3 text-sm text-slate-500">
                 {confirmation.status === 'pending' ? 'We will confirm your order shortly.' : 'Your order is confirmed.'}{' '}
@@ -206,6 +236,8 @@ export function CartDrawer({ products }) {
     const { cart, shop, locale, orderConfirmation } = useSite();
     const [view, setView] = useState('cart');
     const [quote, setQuote] = useState({ loading: false, data: null, error: null });
+    const [couponInput, setCouponInput] = useState('');
+    const [couponCode, setCouponCode] = useState('');
     const form = useForm({ name: '', phone: '', email: '', fulfilment: shop.fulfilment.length === 1 ? shop.fulfilment[0] : '', delivery_address: '', notes: '', company_website: '' });
     const itemsKey = JSON.stringify(cart.items);
 
@@ -217,7 +249,7 @@ export function CartDrawer({ products }) {
         let cancelled = false;
         setQuote((current) => ({ ...current, loading: true, error: null }));
         const timer = setTimeout(() => {
-            postJson('/cart/quote', { items: cart.items, fulfilment: form.data.fulfilment || null })
+            postJson('/cart/quote', { items: cart.items, fulfilment: form.data.fulfilment || null, coupon_code: couponCode || null })
                 .then((data) => !cancelled && setQuote({ loading: false, data, error: null }))
                 .catch((failure) =>
                     !cancelled &&
@@ -234,7 +266,7 @@ export function CartDrawer({ products }) {
             clearTimeout(timer);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [cart.open, itemsKey, form.data.fulfilment, view]);
+    }, [cart.open, itemsKey, form.data.fulfilment, couponCode, view]);
 
     useEffect(() => {
         if (!cart.open) {
@@ -257,7 +289,12 @@ export function CartDrawer({ products }) {
 
     const submit = (event) => {
         event.preventDefault();
-        form.transform((data) => ({ ...data, items: cart.items, delivery_address: data.fulfilment === 'delivery' ? data.delivery_address : null }));
+        form.transform((data) => ({
+            ...data,
+            items: cart.items,
+            delivery_address: data.fulfilment === 'delivery' ? data.delivery_address : null,
+            coupon_code: quote.data?.coupon ? couponCode : null,
+        }));
         form.post('/orders', {
             preserveScroll: true,
             preserveState: true,
@@ -265,6 +302,8 @@ export function CartDrawer({ products }) {
                 if (page.props.orderConfirmation) {
                     cart.clear();
                     form.reset();
+                    setCouponInput('');
+                    setCouponCode('');
                     setView('done');
                 }
             },
@@ -281,7 +320,7 @@ export function CartDrawer({ products }) {
         data && form.data.fulfilment === 'delivery' && shop.free_delivery_over && Number(data.subtotal) < Number(shop.free_delivery_over)
             ? (Number(shop.free_delivery_over) - Number(data.subtotal)).toFixed(2)
             : null;
-    const orderErrors = [form.errors.items, form.errors.throttle, ...Object.entries(form.errors).filter(([key]) => key.startsWith('items.')).map(([, message]) => message)].filter(Boolean);
+    const orderErrors = [form.errors.items, form.errors.throttle, form.errors.coupon_code, ...Object.entries(form.errors).filter(([key]) => key.startsWith('items.')).map(([, message]) => message)].filter(Boolean);
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label="Your cart">
@@ -375,6 +414,21 @@ export function CartDrawer({ products }) {
                                 ) : null}
                                 {form.data.fulfilment === 'delivery' && shop.delivery_note ? <p className="mt-2 text-xs text-slate-500">{shop.delivery_note}</p> : null}
                             </fieldset>
+
+                            {shop.coupons ? (
+                                <CouponField
+                                    input={couponInput}
+                                    onInput={setCouponInput}
+                                    applied={couponCode}
+                                    coupon={data?.coupon ?? null}
+                                    error={couponCode ? data?.coupon_error : null}
+                                    onApply={() => setCouponCode(couponInput.trim().toUpperCase())}
+                                    onRemove={() => {
+                                        setCouponCode('');
+                                        setCouponInput('');
+                                    }}
+                                />
+                            ) : null}
                         </div>
 
                         <div className="space-y-3 border-t border-slate-100 px-5 py-4">
@@ -398,6 +452,12 @@ export function CartDrawer({ products }) {
                                     <dt className="text-slate-600">Subtotal</dt>
                                     <dd>{data ? formatPrice(data.subtotal, locale.currency) : '…'}</dd>
                                 </div>
+                                {data?.coupon && Number(data.discount) > 0 ? (
+                                    <div className="flex justify-between text-emerald-700">
+                                        <dt>Discount ({data.coupon.code})</dt>
+                                        <dd>−{formatPrice(data.discount, locale.currency)}</dd>
+                                    </div>
+                                ) : null}
                                 {form.data.fulfilment === 'delivery' ? (
                                     <div className="flex justify-between">
                                         <dt className="text-slate-600">Delivery</dt>
@@ -429,6 +489,53 @@ export function CartDrawer({ products }) {
                     </>
                 )}
             </div>
+        </div>
+    );
+}
+
+function CouponField({ input, onInput, applied, coupon, error, onApply, onRemove }) {
+    if (coupon) {
+        return (
+            <div className="flex items-center justify-between gap-3 rounded-md bg-emerald-50 px-3 py-2 text-sm">
+                <span className="text-emerald-800">
+                    <span className="font-semibold">{coupon.code}</span> applied · {coupon.summary}
+                </span>
+                <button type="button" onClick={onRemove} className="text-emerald-800 underline">
+                    Remove
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            <label htmlFor="coupon-code" className="text-sm font-medium text-slate-700">
+                Coupon code
+            </label>
+            <div className="mt-1 flex gap-2">
+                <input
+                    id="coupon-code"
+                    className={inputClass}
+                    value={input}
+                    onChange={(event) => onInput(event.target.value)}
+                    onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            onApply();
+                        }
+                    }}
+                    maxLength={30}
+                    autoComplete="off"
+                />
+                <ActionButton variant="secondary" onClick={onApply} disabled={!input.trim() || input.trim().toUpperCase() === applied}>
+                    Apply
+                </ActionButton>
+            </div>
+            {error ? (
+                <p className="mt-1 text-sm text-red-600" role="alert">
+                    {error}
+                </p>
+            ) : null}
         </div>
     );
 }

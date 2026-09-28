@@ -20,6 +20,8 @@ class CommerceMetrics
 {
     public const SALES_DAYS = 30;
 
+    public const TOP_PRODUCTS = 5;
+
     public function __construct(private readonly TenantContext $context) {}
 
     /**
@@ -66,9 +68,20 @@ class CommerceMetrics
                     'href' => route('products.index', ['stock' => 'low']),
                 ],
                 // With the booking engine, BookingMetrics counts repeat visits instead.
+                $orders && $widget === 'top_products' => $this->topProducts(),
+                $orders && $widget === 'kitchen_queue' && $this->context->hasEngine('food') => [
+                    'value' => Order::query()
+                        ->whereIn('status', [OrderStatus::Confirmed, OrderStatus::Ready])
+                        ->whereHas('items', fn (Builder $items) => $items->where('kitchen_status', OrderItem::KITCHEN_QUEUED))
+                        ->count(),
+                    'type' => 'number',
+                    'hint' => 'Orders waiting in the kitchen',
+                    'href' => route('kitchen.index'),
+                ],
                 $orders && $widget === 'repeat_customers' && ! $this->context->hasEngine('booking') => [
                     'value' => Order::query()
                         ->where('status', OrderStatus::Completed)
+                        ->whereNotNull('customer_id')
                         ->groupBy('customer_id')
                         ->havingRaw('count(*) >= 2')
                         ->select('customer_id')
@@ -87,6 +100,30 @@ class CommerceMetrics
         }
 
         return $metrics;
+    }
+
+    /**
+     * Best sellers by quantity over the last SALES_DAYS days (completed orders).
+     *
+     * @return array{value: string, type: string, hint: string, href: ?string, items: list<array{label: string, value: int}>}
+     */
+    private function topProducts(): array
+    {
+        $rows = OrderItem::query()
+            ->whereHas('order', fn (Builder $order) => $order->where('status', OrderStatus::Completed)->where('completed_at', '>=', now()->subDays(self::SALES_DAYS)))
+            ->selectRaw('product_name, sum(quantity) as sold')
+            ->groupBy('product_name')
+            ->orderByDesc('sold')->orderBy('product_name')
+            ->limit(self::TOP_PRODUCTS)
+            ->get();
+
+        return [
+            'value' => $rows->first()?->product_name ?? '—',
+            'type' => 'list',
+            'hint' => 'Best sellers, last '.self::SALES_DAYS.' days',
+            'href' => route('products.index'),
+            'items' => $rows->map(fn ($row) => ['label' => $row->product_name, 'value' => (int) $row->sold])->all(),
+        ];
     }
 
     private function money(mixed $sum): string

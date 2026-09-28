@@ -4,6 +4,7 @@ namespace App\Domain\Booking\Actions;
 
 use App\Domain\Booking\Models\BookingResource;
 use App\Domain\Booking\Support\BookingSettings;
+use App\Domain\Booking\Support\ResourceRates;
 use App\Domain\Booking\Support\WeeklyHours;
 use App\Domain\Service\Models\Service;
 use App\Domain\Tenant\Enums\MembershipStatus;
@@ -25,7 +26,7 @@ class SaveBookingResource
     ) {}
 
     /**
-     * @param  array{name: string, description?: ?string, color?: ?string, is_active?: bool, tenant_user_id?: ?int, service_ids?: ?list<int>, working_hours?: ?list<array{weekday: int, starts_at: string, ends_at: string}>}  $data
+     * @param  array{name: string, description?: ?string, color?: ?string, is_active?: bool, tenant_user_id?: ?int, service_ids?: ?list<int>, working_hours?: ?list<array{weekday: int, starts_at: string, ends_at: string}>, hourly_rate?: numeric-string|float|null, rates?: ?list<array<string, mixed>>}  $data
      */
     public function handle(array $data, ?BookingResource $resource = null): BookingResource
     {
@@ -49,13 +50,23 @@ class SaveBookingResource
             ? WeeklyHours::normalize($data['working_hours'])
             : ($resource ? null : WeeklyHours::normalize($this->settings->defaultHours()));
 
-        return DB::transaction(function () use ($data, $resource, $memberId, $serviceIds, $hours) {
+        $rates = array_key_exists('rates', $data) ? ResourceRates::normalize($data['rates'] ?? []) : null;
+
+        return DB::transaction(function () use ($data, $resource, $memberId, $serviceIds, $hours, $rates) {
             $attributes = [
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
                 'color' => $data['color'] ?? $resource?->color ?? '#6366f1',
                 'is_active' => $data['is_active'] ?? true,
             ];
+
+            if (array_key_exists('hourly_rate', $data)) {
+                $attributes['hourly_rate'] = $data['hourly_rate'] === null || $data['hourly_rate'] === '' ? null : number_format((float) $data['hourly_rate'], 2, '.', '');
+            }
+
+            if ($rates !== null) {
+                $attributes['rates'] = $rates ?: null;
+            }
 
             if (array_key_exists('tenant_user_id', $data)) {
                 $attributes['tenant_user_id'] = $memberId ? (int) $memberId : null;

@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Domain\Education\Models\Batch;
+use App\Domain\Education\Models\Course;
+use App\Domain\Education\Models\DemoClass;
+use App\Domain\Education\Models\Enrolment;
 use App\Domain\Lead\Actions\CreateLead;
 use App\Domain\Lead\Actions\DeleteLead;
 use App\Domain\Lead\Actions\UpdateLead;
@@ -14,6 +18,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Presenters\AiPresenter;
 use App\Http\Presenters\CrmOptions;
 use App\Http\Presenters\CrmPresenter;
+use App\Http\Presenters\EducationPresenter;
 use App\Http\Requests\Crm\LeadRequest;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -90,7 +95,41 @@ class LeadController extends Controller
             'stages' => $this->options->stages($lead->lead_stage_id),
             'members' => $this->options->members(),
             'activityTypes' => $this->options->activityTypes(),
+            'education' => $this->education($request, $lead),
         ]);
+    }
+
+    /**
+     * Demo classes and admissions for the lead page (coaching tenants).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function education(Request $request, Lead $lead): ?array
+    {
+        if (! $this->context->hasEngine('education') || ! $request->user()->can('students.view')) {
+            return null;
+        }
+
+        return [
+            'demos' => DemoClass::query()->where('lead_id', $lead->id)->with(['course', 'batch'])
+                ->orderByDesc('scheduled_at')->limit(20)->get()
+                ->map(fn (DemoClass $demo) => EducationPresenter::demo($demo)),
+            'enrolments' => Enrolment::query()->where('lead_id', $lead->id)->with('batch.course')->latest('id')->get()
+                ->map(fn (Enrolment $enrolment) => [
+                    'id' => $enrolment->id,
+                    'status' => $enrolment->status->value,
+                    'status_label' => $enrolment->status->label(),
+                    'batch' => $enrolment->batch ? ($enrolment->batch->course?->name ? $enrolment->batch->course->name.' · ' : '').$enrolment->batch->name : null,
+                ]),
+            'courses' => Course::query()->active()->ordered()
+                ->with(['batches' => fn ($query) => $query->active()->orderBy('name')])
+                ->get()
+                ->map(fn (Course $course) => [
+                    'id' => $course->id,
+                    'name' => $course->name,
+                    'batches' => $course->batches->map(fn (Batch $batch) => ['id' => $batch->id, 'name' => $batch->name])->values(),
+                ]),
+        ];
     }
 
     public function edit(Lead $lead): Response

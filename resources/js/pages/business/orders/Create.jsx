@@ -14,12 +14,14 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AppLayout from '@/layouts/AppLayout';
 import PageHeader from '@/components/PageHeader';
 import CustomerPicker from '@/modules/booking/CustomerPicker';
+import FoodTypeMark from '@/modules/products/FoodTypeMark';
 import useTenant from '@/hooks/useTenant';
 import { formatPrice } from '@/utils/format';
+import { errorMessage, postJson } from '@/utils/http';
 
 // Money in paise/cents, so the running total never drifts. The server re-prices on save.
 const cents = (value) => Math.round((Number(value) || 0) * 100);
@@ -37,18 +39,87 @@ function Section({ step, title, children }) {
     );
 }
 
-export default function Create({ products, customer, fulfilmentOptions, paymentMethods, defaultDeliveryFee, limits }) {
+function CouponField({ items, applied, onApplied }) {
+    const [code, setCode] = useState(applied?.code ?? '');
+    const [error, setError] = useState(null);
+    const [checking, setChecking] = useState(false);
+    const itemsKey = JSON.stringify(items);
+
+    const check = (value) => {
+        if (!value.trim()) {
+            onApplied(null);
+
+            return;
+        }
+
+        setChecking(true);
+        setError(null);
+        postJson('/orders/coupon', { code: value.trim(), items })
+            .then((data) => onApplied(data))
+            .catch((failure) => {
+                onApplied(null);
+                setError(errorMessage(failure, 'This code can’t be used.'));
+            })
+            .finally(() => setChecking(false));
+    };
+
+    useEffect(() => {
+        if (applied?.code && items.length) {
+            check(applied.code);
+        }
+    }, [itemsKey]);
+
+    return (
+        <div>
+            <div className="flex items-start gap-2">
+                <TextField
+                    size="small"
+                    label="Coupon code"
+                    value={code}
+                    onChange={(event) => setCode(event.target.value.toUpperCase().replace(/\s+/g, ''))}
+                    error={Boolean(error)}
+                    helperText={error ?? (applied ? `${applied.summary} applied` : null)}
+                    slotProps={{ htmlInput: { maxLength: 30 } }}
+                    className="flex-1"
+                />
+                {applied ? (
+                    <Button
+                        size="small"
+                        color="inherit"
+                        onClick={() => {
+                            setCode('');
+                            onApplied(null);
+                        }}
+                        className="mt-1"
+                    >
+                        Remove
+                    </Button>
+                ) : (
+                    <Button size="small" variant="outlined" disabled={checking || !code || items.length === 0} onClick={() => check(code)} className="mt-1">
+                        Apply
+                    </Button>
+                )}
+            </div>
+        </div>
+    );
+}
+
+export default function Create({ products, customer, tables = [], defaultTableId = null, couponsEnabled = false, fulfilmentOptions, paymentMethods, defaultDeliveryFee, limits }) {
     const { currency } = useTenant();
-    const [mode, setMode] = useState('existing');
+    const dineIn = fulfilmentOptions.some((option) => option.value === 'dine_in');
+    const startDineIn = dineIn && Boolean(defaultTableId);
+    const [mode, setMode] = useState(startDineIn && !customer ? 'walk_in' : 'existing');
     const [picked, setPicked] = useState(customer);
     const [adding, setAdding] = useState(null);
     const [recordPayment, setRecordPayment] = useState(false);
+    const [coupon, setCoupon] = useState(null);
 
     const form = useForm({
         customer_id: customer?.id ?? null,
         customer: { name: '', phone: '', email: '' },
         items: [],
-        fulfilment: 'in_store',
+        fulfilment: startDineIn ? 'dine_in' : 'in_store',
+        dining_table_id: startDineIn ? defaultTableId : '',
         delivery_address: customer?.address ?? '',
         delivery_fee: defaultDeliveryFee ?? '0.00',
         discount: '',
@@ -60,9 +131,19 @@ export default function Create({ products, customer, fulfilmentOptions, paymentM
     const byId = Object.fromEntries(products.map((product) => [product.id, product]));
     const lines = form.data.items.map((item) => ({ ...item, product: byId[item.product_id] })).filter((line) => line.product);
     const subtotal = lines.reduce((sum, line) => sum + cents(line.product.price) * (Number(line.quantity) || 0), 0);
-    const discount = Math.min(cents(form.data.discount), subtotal);
+    const couponDiscount = coupon ? cents(coupon.discount) : 0;
+    const discount = Math.min(cents(form.data.discount) + couponDiscount, subtotal);
     const deliveryFee = form.data.fulfilment === 'delivery' ? cents(form.data.delivery_fee) : 0;
     const total = subtotal - discount + deliveryFee;
+    const couponItems = form.data.items.map((item) => ({ product_id: item.product_id, quantity: Number(item.quantity) || 1 }));
+
+    const setFulfilment = (next) => {
+        form.setData('fulfilment', next);
+
+        if (next !== 'dine_in' && mode === 'walk_in') {
+            setMode('existing');
+        }
+    };
 
     const addProduct = (product) => {
         setAdding(null);
@@ -99,9 +180,11 @@ export default function Create({ products, customer, fulfilmentOptions, paymentM
 
     const submit = (event) => {
         event.preventDefault();
-        form.transform(({ customer: inline, customer_id, payment, ...data }) => ({
+        form.transform(({ customer: inline, customer_id, payment, dining_table_id, ...data }) => ({
             ...data,
-            ...(mode === 'existing' ? { customer_id } : { customer: inline }),
+            ...(mode === 'existing' ? { customer_id } : mode === 'new' ? { customer: inline } : {}),
+            dining_table_id: data.fulfilment === 'dine_in' ? dining_table_id || null : null,
+            coupon_code: coupon?.code ?? null,
             items: data.items.map((item) => ({ product_id: item.product_id, quantity: Number(item.quantity) || 0 })),
             delivery_fee: data.fulfilment === 'delivery' ? data.delivery_fee || 0 : 0,
             discount: data.discount || 0,
@@ -132,8 +215,11 @@ export default function Create({ products, customer, fulfilmentOptions, paymentM
                                 <ToggleButtonGroup size="small" exclusive value={mode} onChange={(_, next) => next && setMode(next)} aria-label="Customer type">
                                     <ToggleButton value="existing">Existing customer</ToggleButton>
                                     <ToggleButton value="new">New customer</ToggleButton>
+                                    {form.data.fulfilment === 'dine_in' ? <ToggleButton value="walk_in">Walk-in guest</ToggleButton> : null}
                                 </ToggleButtonGroup>
-                                {mode === 'existing' ? (
+                                {mode === 'walk_in' ? (
+                                    <p className="text-sm text-slate-600">No customer details needed — the order is tracked by table.</p>
+                                ) : mode === 'existing' ? (
                                     <CustomerPicker value={picked} autoFocus={!customer} onChange={chooseCustomer} error={form.errors.customer_id} endpoint="/orders/customers" />
                                 ) : (
                                     <div className="grid gap-3 sm:grid-cols-3">
@@ -173,7 +259,7 @@ export default function Create({ products, customer, fulfilmentOptions, paymentM
                                     options={products}
                                     groupBy={(product) => product.category ?? 'Other'}
                                     getOptionLabel={(product) => product.name}
-                                    getOptionDisabled={(product) => product.track_stock && product.available === 0}
+                                    getOptionDisabled={(product) => product.is_available === false || (product.track_stock && product.available === 0)}
                                     disabled={form.data.items.length >= limits.items}
                                     renderOption={(props, product) => {
                                         const { key, ...optionProps } = props;
@@ -181,13 +267,16 @@ export default function Create({ products, customer, fulfilmentOptions, paymentM
                                         return (
                                             <li key={key} {...optionProps}>
                                                 <div className="flex w-full items-center justify-between gap-3">
-                                                    <span>
+                                                    <span className="flex items-center gap-2">
+                                                        <FoodTypeMark type={product.food_type} />
                                                         <span className="text-sm text-slate-900">{product.name}</span>
-                                                        {product.sku ? <span className="ml-2 text-xs text-slate-500">{product.sku}</span> : null}
+                                                        {product.sku ? <span className="text-xs text-slate-500">{product.sku}</span> : null}
                                                     </span>
                                                     <span className="text-right text-sm">
                                                         {formatPrice(product.price, currency)}
-                                                        {product.track_stock ? (
+                                                        {product.is_available === false ? (
+                                                            <span className="block text-xs text-red-600">Not available now</span>
+                                                        ) : product.track_stock ? (
                                                             <span className={`block text-xs ${product.available === 0 ? 'text-red-600' : 'text-slate-500'}`}>
                                                                 {product.available === 0 ? 'Out of stock' : `${product.available} in stock`}
                                                             </span>
@@ -244,7 +333,7 @@ export default function Create({ products, customer, fulfilmentOptions, paymentM
                                     size="small"
                                     exclusive
                                     value={form.data.fulfilment}
-                                    onChange={(_, next) => next && form.setData('fulfilment', next)}
+                                    onChange={(_, next) => next && setFulfilment(next)}
                                     aria-label="How the order reaches the customer"
                                 >
                                     {fulfilmentOptions.map((option) => (
@@ -254,6 +343,32 @@ export default function Create({ products, customer, fulfilmentOptions, paymentM
                                     ))}
                                 </ToggleButtonGroup>
                                 {form.errors.fulfilment ? <p className="text-sm text-red-600">{form.errors.fulfilment}</p> : null}
+                                {form.data.fulfilment === 'dine_in' ? (
+                                    <TextField
+                                        select
+                                        label="Table"
+                                        value={form.data.dining_table_id}
+                                        onChange={(event) => form.setData('dining_table_id', event.target.value)}
+                                        error={Boolean(form.errors.dining_table_id)}
+                                        helperText={form.errors.dining_table_id ?? (tables.length === 0 ? 'No tables set up yet.' : 'Optional for counter orders.')}
+                                        slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+                                        className="max-w-xs"
+                                        fullWidth
+                                    >
+                                        <MenuItem value="">
+                                            <em>No table</em>
+                                        </MenuItem>
+                                        {tables.map((table) => (
+                                            <MenuItem key={table.id} value={table.id}>
+                                                {table.name}
+                                                <span className="ml-2 text-xs text-slate-500">
+                                                    {table.seats} seats{table.area ? ` · ${table.area}` : ''}
+                                                    {table.busy ? ' · has an open order' : ''}
+                                                </span>
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                ) : null}
                                 {form.data.fulfilment === 'delivery' ? (
                                     <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
                                         <TextField
@@ -325,6 +440,12 @@ export default function Create({ products, customer, fulfilmentOptions, paymentM
                                         </dd>
                                     </div>
                                     {form.errors.discount ? <p className="text-xs text-red-600">{form.errors.discount}</p> : null}
+                                    {coupon ? (
+                                        <div className="flex justify-between text-emerald-700">
+                                            <dt>Coupon {coupon.code}</dt>
+                                            <dd>−{formatPrice(coupon.discount, currency)}</dd>
+                                        </div>
+                                    ) : null}
                                     {form.data.fulfilment === 'delivery' ? (
                                         <div className="flex justify-between">
                                             <dt className="text-slate-600">Delivery</dt>
@@ -336,6 +457,9 @@ export default function Create({ products, customer, fulfilmentOptions, paymentM
                                         <dd>{formatPrice(fromCents(total), currency)}</dd>
                                     </div>
                                 </dl>
+
+                                {couponsEnabled ? <CouponField items={couponItems} applied={coupon} onApplied={setCoupon} /> : null}
+                                {form.errors.coupon_code ? <p className="text-xs text-red-600">{form.errors.coupon_code}</p> : null}
 
                                 <FormControlLabel
                                     control={<Checkbox checked={recordPayment} onChange={(event) => setRecordPayment(event.target.checked)} />}

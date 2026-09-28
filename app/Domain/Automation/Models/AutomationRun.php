@@ -6,6 +6,10 @@ use App\Domain\Automation\Enums\RunStatus;
 use App\Domain\Booking\Models\Appointment;
 use App\Domain\Commerce\Models\Order;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Education\Models\DemoClass;
+use App\Domain\Education\Models\Enrolment;
+use App\Domain\Education\Models\FeeInstalment;
+use App\Domain\Food\Models\Reservation;
 use App\Domain\Lead\Models\Lead;
 use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Messaging\Models\OutboundMessage;
@@ -34,6 +38,10 @@ class AutomationRun extends Model
         'appointment' => Appointment::class,
         'order' => Order::class,
         'conversation' => Conversation::class,
+        'enrolment' => Enrolment::class,
+        'fee' => FeeInstalment::class,
+        'demo_class' => DemoClass::class,
+        'reservation' => Reservation::class,
     ];
 
     protected function casts(): array

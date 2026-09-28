@@ -27,7 +27,14 @@ class OrderRequest extends FormRequest
         return [
             'customer_id' => ['nullable', 'integer'],
             'customer' => ['nullable', 'array'],
-            'customer.name' => ['nullable', 'required_without:customer_id', 'string', 'min:2', 'max:120'],
+            // A dine-in order can be a walk-in with no customer.
+            'customer.name' => [
+                'nullable',
+                Rule::requiredIf(fn () => blank($this->input('customer_id')) && $this->input('fulfilment') !== 'dine_in'),
+                'string', 'min:2', 'max:120',
+            ],
+            'dining_table_id' => ['nullable', 'integer'],
+            'coupon_code' => ['nullable', 'string', 'max:30'],
             'customer.phone' => ['nullable', 'string', 'regex:'.StoreBusinessRequest::PHONE_PATTERN],
             'customer.email' => ['nullable', 'string', 'email', 'max:255'],
             'items' => ['required', 'array', 'min:1', 'max:'.$limits['items_per_order']],
@@ -49,7 +56,7 @@ class OrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'customer.name.required_without' => __('Choose a customer or enter their name.'),
+            'customer.name.required' => __('Choose a customer or enter their name.'),
             'customer.phone.regex' => __('Enter a valid phone number.'),
             'items.required' => __('Add at least one product.'),
             'items.min' => __('Add at least one product.'),

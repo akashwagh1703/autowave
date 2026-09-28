@@ -656,3 +656,67 @@ with the date and commit/PR reference; do not delete it.
 - **Status:** Open — acceptable for V1.
 - **Affected:** `QueueLeadExtraction`, `ExtractLeadFromConversation`
 - **Created:** 2026-10-03
+### AW-059 — New website sections are not added to existing websites
+
+- **Category:** Product
+- **Description:** The `courses` (coaching) and `reservation` (cafe) sections are created with a new
+  website. `ProvisionWebsite::ensureFor` does not add sections to a website that already exists, so a
+  coaching centre or cafe created before Phase 10 has neither section until it is added in the builder.
+- **Impact:** Older coaching and cafe sites do not show courses or take reservations online by default.
+- **Status:** Open — add a "missing sections" backfill when a second tenant needs it.
+- **Affected:** `ProvisionWebsite`, website builder
+- **Created:** 2026-10-04
+
+### AW-060 — Order discounts are not recomputed when items are added
+
+- **Category:** Product
+- **Description:** A coupon is priced on the subtotal when the order is placed. Items added later to a
+  dine-in order (`AddOrderItems`) raise the subtotal but keep the discount; a percentage coupon is not
+  re-applied and a minimum subtotal is not checked again.
+- **Impact:** A 10% coupon on a table that orders more covers only the first round.
+- **Status:** Open — acceptable for V1.
+- **Affected:** `AddOrderItems`, `Coupons`
+- **Created:** 2026-10-04
+
+### AW-061 — No per-item kitchen notes
+
+- **Category:** Product
+- **Description:** `order_items.notes` exists, but the order forms and the kitchen screen do not offer
+  per-item notes yet ("less spicy"). The order-level note is shown on the ticket instead.
+- **Impact:** Item instructions go in the order note.
+- **Status:** Open — add to the order form and the KOT.
+- **Affected:** `OrderRequest`, `AddOrderItems`, `business/kitchen/Index.jsx`
+- **Created:** 2026-10-04
+
+### AW-062 — The Staff role cannot open the kitchen screen
+
+- **Category:** Security / RBAC
+- **Description:** The kitchen screen needs `orders.view` and marking tickets ready needs
+  `orders.update`. The template Staff role has neither, so kitchen staff need the Manager role or a
+  custom role with those permissions.
+- **Impact:** One extra step when inviting kitchen staff.
+- **Status:** Open — consider a `kitchen` permission or a Kitchen role template.
+- **Affected:** `config/rbac.php`, `KitchenController`
+- **Created:** 2026-10-04
+
+### AW-063 — Table availability is not checked for website reservations
+
+- **Category:** Product
+- **Description:** Website guests pick a time within opening hours; the system does not check that a
+  table of the right size is free. The team assigns a table when confirming, and the database refuses
+  overlapping reservations on one table.
+- **Impact:** A busy evening can collect more requests than tables; staff decline or move them.
+- **Status:** Open — by design for V1 (ADR-020).
+- **Affected:** `ReservationSlots`, `BookReservation`
+- **Created:** 2026-10-04
+
+### AW-064 — Fee reminders use the tenant's local date, checked hourly
+
+- **Category:** Product
+- **Description:** `education:fee-reminders` runs hourly. `fee.due_soon` fires in the first run after an
+  instalment enters the reminder window (tenant-local date), which may be just after midnight.
+  Automations can add a wait step to send at a friendlier hour.
+- **Impact:** Default reminders may arrive early in the morning.
+- **Status:** Open — add a preferred sending hour to Settings → Education.
+- **Affected:** `FeeReminders`, `SendFeeReminders`
+- **Created:** 2026-10-04

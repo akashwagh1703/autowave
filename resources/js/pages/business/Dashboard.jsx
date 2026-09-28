@@ -10,14 +10,29 @@ import PageHeader from '@/components/PageHeader';
 import useTenant from '@/hooks/useTenant';
 import { formatMoney, humanize } from '@/utils/format';
 
-const widgetLabels = { pending_followups: 'Pending follow-ups', no_shows: 'No-shows' };
+const widgetLabels = { pending_followups: 'Pending follow-ups', no_shows: 'No-shows', fees_due: 'Fees overdue', demo_classes: 'Demo classes' };
 
 function Widget({ code, metric, currency }) {
     const value = metric ? (metric.type === 'currency' ? formatMoney(metric.value, currency) : metric.value) : '—';
     const body = (
         <CardContent>
             <p className="text-sm text-slate-500">{widgetLabels[code] ?? humanize(code)}</p>
-            <p className={`mt-2 text-2xl font-semibold ${metric ? 'text-slate-900' : 'text-slate-300'}`}>{value}</p>
+            {metric?.type === 'list' ? (
+                metric.items?.length ? (
+                    <ol className="mt-2 space-y-1 text-sm">
+                        {metric.items.map((item, index) => (
+                            <li key={`${item.label}-${index}`} className="flex justify-between gap-2">
+                                <span className="truncate text-slate-900">{item.label}</span>
+                                <span className="shrink-0 text-slate-500">{item.value}</span>
+                            </li>
+                        ))}
+                    </ol>
+                ) : (
+                    <p className="mt-2 text-sm text-slate-400">Nothing yet</p>
+                )
+            ) : (
+                <p className={`mt-2 text-2xl font-semibold ${metric ? 'text-slate-900' : 'text-slate-300'}`}>{value}</p>
+            )}
             {metric?.hint ? <p className="mt-1 text-xs text-slate-500">{metric.hint}</p> : null}
         </CardContent>
     );

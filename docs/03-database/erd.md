@@ -174,3 +174,30 @@ erDiagram
 `ai_results` points at its record by `subject_type` + `subject_id` (no FK), like automation runs; a result
 for a deleted record is simply never shown. `(tenant_id, feature, key)` is unique, so the same input or
 automation step never produces a second result.
+
+## Additional verticals (Phase 10 — implemented, ADR-020)
+
+```mermaid
+erDiagram
+    COURSES ||--o{ BATCHES : "taught in"
+    TENANT_USERS ||--o{ BATCHES : "teacher (nullable)"
+    CUSTOMERS ||--o{ ENROLMENTS : "student"
+    BATCHES ||--o{ ENROLMENTS : has
+    LEADS ||--o{ ENROLMENTS : "admitted from (nullable)"
+    ENROLMENTS ||--o{ FEE_INSTALMENTS : "fee plan"
+    ENROLMENTS ||--o{ FEE_PAYMENTS : "paid by"
+    BATCHES ||--o{ CLASS_SESSIONS : "class on a date"
+    CLASS_SESSIONS ||--o{ ATTENDANCE_RECORDS : marks
+    ENROLMENTS ||--o{ ATTENDANCE_RECORDS : "attended by"
+    LEADS ||--o{ DEMO_CLASSES : "trial"
+    COURSES ||--o{ DEMO_CLASSES : "for (nullable)"
+    DINING_TABLES ||--o{ RESERVATIONS : "assigned (nullable)"
+    CUSTOMERS ||--o{ RESERVATIONS : guest
+    DINING_TABLES ||--o{ ORDERS : "dine-in (nullable)"
+    COUPONS ||--o{ ORDERS : "applied (nullable)"
+    APPOINTMENTS ||--o{ APPOINTMENT_PAYMENTS : "advance / payment"
+```
+
+All arrows are composite FKs. Students are customers and menu items are products, so the customer
+timeline, messaging and commerce reports cover the new verticals without new link tables. Orders keep
+`coupon_code` as typed, so history survives a coupon being edited or deleted.

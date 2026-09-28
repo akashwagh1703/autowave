@@ -17,7 +17,11 @@ class ShopController extends Controller
     {
         abort_unless($shop->isOpen(), 404);
 
-        return response()->json($shop->quote($request->input('items'), $request->string('fulfilment')->toString() ?: null));
+        return response()->json($shop->quote(
+            $request->input('items'),
+            $request->string('fulfilment')->toString() ?: null,
+            $request->string('coupon_code')->toString() ?: null,
+        ));
     }
 
     public function store(Request $request, TenantContext $context, OnlineShop $shop): RedirectResponse
@@ -30,13 +34,14 @@ class ShopController extends Controller
             return back();
         }
 
-        $order = $shop->place($request->only(['name', 'phone', 'email', 'fulfilment', 'delivery_address', 'notes', 'items']));
+        $order = $shop->place($request->only(['name', 'phone', 'email', 'fulfilment', 'delivery_address', 'notes', 'coupon_code', 'items']));
 
         return back()->with('order_confirmation', [
             'number' => $order->reference(),
             'status' => $order->status->value,
             'fulfilment' => $order->fulfilment,
             'total' => (string) $order->total,
+            'discount' => (string) $order->discount,
             'items' => $order->itemSummary(),
         ]);
     }

@@ -11,6 +11,10 @@ use App\Domain\Automation\Support\AutomationCatalog;
 use App\Domain\Booking\Models\Appointment;
 use App\Domain\Commerce\Models\Order;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Education\Models\DemoClass;
+use App\Domain\Education\Models\Enrolment;
+use App\Domain\Education\Models\FeeInstalment;
+use App\Domain\Food\Models\Reservation;
 use App\Domain\Lead\Models\Lead;
 use App\Domain\Messaging\Enums\MessageStatus;
 use App\Domain\Messaging\Models\Conversation;
@@ -266,6 +270,14 @@ class AutomationPresenter
                 $query->with(['customer', 'lead']);
             }
 
+            $query->with(match ($class) {
+                Enrolment::class => ['customer', 'batch.course'],
+                FeeInstalment::class => ['enrolment.customer'],
+                DemoClass::class => ['lead', 'course'],
+                Reservation::class => ['customer'],
+                default => [],
+            });
+
             foreach ($query->whereKey($group->pluck('subject_id')->unique()->all())->get() as $model) {
                 $deleted = method_exists($model, 'trashed') && $model->trashed();
 
@@ -277,6 +289,10 @@ class AutomationPresenter
                         $model instanceof Appointment => trim(($model->customer?->name ?? 'Appointment').' · '.$model->starts_at->setTimezone(TenantTime::timezone())->format('D j M, g:i A')),
                         $model instanceof Order => 'Order '.$model->reference().($model->customer ? ' · '.$model->customer->name : ''),
                         $model instanceof Conversation => 'Chat with '.$model->displayName(),
+                        $model instanceof Enrolment => trim(($model->customer?->name ?? 'Student').' · '.($model->batch?->course?->name ?? '')),
+                        $model instanceof FeeInstalment => 'Fee instalment '.$model->sequence.($model->enrolment?->customer ? ' · '.$model->enrolment->customer->name : ''),
+                        $model instanceof DemoClass => 'Demo class · '.($model->lead?->name ?? '').' · '.$model->scheduled_at->setTimezone(TenantTime::timezone())->format('D j M, g:i A'),
+                        $model instanceof Reservation => trim(($model->customer?->name ?? 'Reservation').' · '.$model->reserved_at->setTimezone(TenantTime::timezone())->format('D j M, g:i A')),
                         default => Str::headline($type).' #'.$model->getKey(),
                     },
                     'url' => $deleted ? null : match ($type) {
@@ -285,6 +301,10 @@ class AutomationPresenter
                         'appointment' => route('appointments.show', $model->getKey(), false),
                         'order' => route('orders.show', $model->getKey(), false),
                         'conversation' => route('inbox.show', $model->getKey(), false),
+                        'enrolment' => route('students.show', $model->getKey(), false),
+                        'fee' => route('students.show', $model->enrolment_id, false),
+                        'demo_class' => $model->lead && ! $model->lead->trashed() ? route('leads.show', $model->lead_id, false) : null,
+                        'reservation' => route('reservations.show', $model->getKey(), false),
                         default => null,
                     },
                     'deleted' => $deleted,

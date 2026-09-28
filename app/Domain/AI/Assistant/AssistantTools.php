@@ -10,6 +10,14 @@ use App\Domain\Commerce\Models\Order;
 use App\Domain\Commerce\Models\Product;
 use App\Domain\Commerce\Services\CommerceMetrics;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Education\Models\Batch;
+use App\Domain\Education\Models\Enrolment;
+use App\Domain\Education\Models\FeeInstalment;
+use App\Domain\Education\Services\EducationMetrics;
+use App\Domain\Education\Support\BatchSchedule;
+use App\Domain\Food\Enums\ReservationStatus;
+use App\Domain\Food\Models\Reservation;
+use App\Domain\Food\Services\FoodMetrics;
 use App\Domain\Lead\Models\Lead;
 use App\Domain\Lead\Models\LeadStage;
 use App\Domain\Lead\Services\CrmMetrics;
@@ -77,7 +85,7 @@ class AssistantTools
             [
                 'name' => 'business_overview',
                 'method' => 'overview',
-                'description' => 'Today\'s key figures: appointments, revenue, new leads, follow-ups due, orders, low stock, unread conversations.',
+                'description' => 'Today\'s key figures: appointments, revenue, new leads, follow-ups due, orders, low stock, students, fees due, reservations, unread conversations.',
                 'parameters' => ['type' => 'object', 'properties' => new \stdClass],
             ],
             [
@@ -143,6 +151,84 @@ class AssistantTools
                 'description' => 'The service menu: name, category, price, duration and whether it is active.',
                 'parameters' => ['type' => 'object', 'properties' => new \stdClass],
             ],
+            [
+                'name' => 'students',
+                'method' => 'students',
+                'engine' => 'education',
+                'permission' => 'students.view',
+                'description' => 'Coaching: active students by course and batch (with seats left), and students with overdue fees (first name, course, amount overdue).',
+                'parameters' => ['type' => 'object', 'properties' => new \stdClass],
+            ],
+            [
+                'name' => 'reservations',
+                'method' => 'reservations',
+                'engine' => 'food',
+                'permission' => 'reservations.view',
+                'description' => 'Table reservations in a date range: counts by status, guests expected and a list (time, guest first name, party size, table, status).',
+                'parameters' => ['type' => 'object', 'properties' => $range],
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function students(array $arguments, User $user): array
+    {
+        $batches = Batch::query()->active()->with('course:id,tenant_id,name')->withCount('activeEnrolments')->orderBy('name')->limit($this->rows())->get()
+            ->map(fn (Batch $batch) => [
+                'course' => $batch->course?->name,
+                'batch' => $batch->name,
+                'schedule' => BatchSchedule::describe($batch),
+                'active_students' => $batch->active_enrolments_count,
+                'seats_left' => $batch->capacity !== null ? max(0, $batch->capacity - $batch->active_enrolments_count) : null,
+            ])->all();
+
+        $overdue = [];
+
+        if ($user->can('fees.view')) {
+            $overdue = FeeInstalment::query()->outstanding()->whereDate('due_on', '<', TenantTime::now()->toDateString())
+                ->with(['enrolment.customer:id,tenant_id,name', 'enrolment.batch.course:id,tenant_id,name'])
+                ->orderBy('due_on')->limit($this->rows())->get()
+                ->map(fn (FeeInstalment $instalment) => [
+                    'student' => $this->firstName($instalment->enrolment?->customer?->name),
+                    'course' => $instalment->enrolment?->batch?->course?->name,
+                    'due_on' => $instalment->due_on->format('j M Y'),
+                    'overdue' => (float) $instalment->due(),
+                ])->all();
+        }
+
+        return [
+            'active_students' => Enrolment::query()->active()->distinct()->count('customer_id'),
+            'batches' => $batches,
+            'overdue_fees' => $user->can('fees.view') ? $overdue : 'Not permitted',
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function reservations(array $arguments, User $user): array
+    {
+        [$from, $to] = $this->range($arguments);
+        $query = Reservation::query()->where('reserved_at', '>=', $from->copy()->utc())->where('reserved_at', '<', $to->copy()->addDay()->utc());
+        $counts = (clone $query)->toBase()->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status')->all();
+        $guests = (int) (clone $query)->whereIn('status', ReservationStatus::HOLDING)->sum('party_size');
+        $total = (clone $query)->count();
+
+        $rows = $query->with(['customer:id,tenant_id,name', 'table:id,tenant_id,name'])->orderBy('reserved_at')->limit($this->rows())->get()
+            ->map(fn (Reservation $reservation) => [
+                'when' => $reservation->reserved_at->setTimezone(TenantTime::timezone())->format('D j M, g:i A'),
+                'guest' => $this->firstName($reservation->customer?->name),
+                'party_size' => $reservation->party_size,
+                'table' => $reservation->table?->name,
+                'status' => $reservation->status->label(),
+            ])->all();
+
+        return [
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+            'count_by_status' => $counts,
+            'guests_expected' => $guests,
+            'matching' => $total,
+            'reservations' => $rows,
+            'truncated' => $total > count($rows),
         ];
     }
 
@@ -164,7 +250,7 @@ class AssistantTools
 
         $figures = [];
 
-        foreach ([app(CrmMetrics::class), app(BookingMetrics::class), app(CommerceMetrics::class)] as $metrics) {
+        foreach ([app(CrmMetrics::class), app(BookingMetrics::class), app(CommerceMetrics::class), app(EducationMetrics::class), app(FoodMetrics::class)] as $metrics) {
             foreach ($metrics->for($user, $widgets) as $key => $metric) {
                 $figures[Str::headline($key)] = ['value' => $metric['value'], 'about' => $metric['hint']];
             }

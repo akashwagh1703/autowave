@@ -92,6 +92,7 @@ export default function BookingSection({ config }) {
     const resourceChosen = resourceId === 'any' ? resources.length > 0 : resources.some((resource) => resource.id === resourceId);
     const ready = (!booking.uses_services || serviceId) && resourceChosen;
     const labels = booking.resource_label;
+    const selectedSlot = slots.items.find((slot) => slot.starts_at === form.data.starts_at) ?? null;
 
     useEffect(() => {
         if (selectedService) {
@@ -185,7 +186,10 @@ export default function BookingSection({ config }) {
                                 ) : null}
                                 {resources.map((resource) => (
                                     <Choice key={resource.id} selected={resourceId === resource.id} onClick={() => setResourceId(resource.id)}>
-                                        {resource.name}
+                                        <span className="block">{resource.name}</span>
+                                        {resource.hourly_rate != null ? (
+                                            <span className="block text-xs opacity-80">{formatMoney(resource.hourly_rate, locale.currency)} / hour</span>
+                                        ) : null}
                                     </Choice>
                                 ))}
                             </div>
@@ -221,7 +225,13 @@ export default function BookingSection({ config }) {
                                                 <div className="flex flex-wrap gap-2" role="group" aria-label={`${period.label} times`}>
                                                     {items.map((slot) => (
                                                         <Choice key={slot.starts_at} selected={form.data.starts_at === slot.starts_at} onClick={() => form.setData('starts_at', slot.starts_at)}>
-                                                            {slot.time}
+                                                            <span className="block">{slot.time}</span>
+                                                            {slot.price != null ? (
+                                                                <span className="block text-xs opacity-80">
+                                                                    {slot.price_varies ? 'from ' : ''}
+                                                                    {formatMoney(slot.price, locale.currency)}
+                                                                </span>
+                                                            ) : null}
                                                         </Choice>
                                                     ))}
                                                 </div>
@@ -251,6 +261,7 @@ export default function BookingSection({ config }) {
                             <p className="text-sm text-slate-600">
                                 {service ? `${service.name} · ` : ''}
                                 {formatDay(date)} at {formatTime(form.data.starts_at, locale.timezone)} ({formatDuration(service?.duration_minutes ?? booking.duration_minutes)})
+                                {selectedSlot?.price != null ? ` · ${selectedSlot.price_varies ? 'from ' : ''}${formatMoney(selectedSlot.price, locale.currency)}` : ''}
                             </p>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <Field label="Name" required error={form.errors.name}>

@@ -4,6 +4,7 @@ namespace App\Http\Requests\Commerce;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 /**
  * Create and edit a product. The category is checked against the current tenant and names/SKUs
@@ -45,6 +46,8 @@ class ProductRequest extends FormRequest
             'price' => ['required', 'numeric', 'min:0', 'max:'.$limits['max_price']],
             'compare_at_price' => ['nullable', 'numeric', 'min:0', 'max:'.$limits['max_price']],
             'is_active' => ['required', 'boolean'],
+            'food_type' => ['nullable', Rule::in(array_keys(config('food.food_types')))],
+            'is_available' => ['nullable', 'boolean'],
             'track_stock' => ['required', 'boolean'],
             'low_stock_threshold' => ['nullable', 'integer', 'min:0', 'max:'.$limits['max_stock']],
             'opening_stock' => ['nullable', 'integer', 'min:0', 'max:'.$limits['max_stock']],
@@ -63,6 +66,11 @@ class ProductRequest extends FormRequest
         $data = $this->safe()->except(['image']);
         $data['is_active'] = (bool) $data['is_active'];
         $data['track_stock'] = (bool) $data['track_stock'];
+
+        if (array_key_exists('is_available', $data)) {
+            $data['is_available'] = $data['is_available'] === null ? true : (bool) $data['is_available'];
+        }
+
         $data['product_category_id'] = isset($data['product_category_id']) ? (int) $data['product_category_id'] : null;
 
         return $data;

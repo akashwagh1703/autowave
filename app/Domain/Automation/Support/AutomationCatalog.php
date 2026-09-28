@@ -7,6 +7,10 @@ use App\Domain\Booking\Enums\AppointmentStatus;
 use App\Domain\Booking\Models\BookingResource;
 use App\Domain\Commerce\Enums\OrderStatus;
 use App\Domain\Commerce\Enums\PaymentStatus;
+use App\Domain\Education\Enums\DemoStatus;
+use App\Domain\Education\Enums\EnrolmentStatus;
+use App\Domain\Education\Models\Course;
+use App\Domain\Food\Enums\ReservationStatus;
 use App\Domain\Lead\Actions\AssignLead;
 use App\Domain\Lead\Models\LeadSource;
 use App\Domain\Lead\Models\LeadStage;
@@ -128,6 +132,13 @@ class AutomationCatalog
                 : [],
             'conversation_channels' => collect(config('messaging.channels'))->filter(fn (array $channel) => $channel['conversations'] ?? false)
                 ->map(fn (array $channel, string $key) => ['value' => $key, 'label' => $channel['label']])->values()->all(),
+            'enrolment_statuses' => array_map(fn (EnrolmentStatus $status) => ['value' => $status->value, 'label' => $status->label()], EnrolmentStatus::cases()),
+            'demo_statuses' => array_map(fn (DemoStatus $status) => ['value' => $status->value, 'label' => $status->label()], DemoStatus::cases()),
+            'courses' => $this->context->hasEngine('education')
+                ? Course::query()->orderBy('name')->get()->map(fn (Course $course) => ['value' => (string) $course->id, 'label' => $course->name])->all()
+                : [],
+            'reservation_statuses' => array_map(fn (ReservationStatus $status) => ['value' => $status->value, 'label' => $status->label()], ReservationStatus::cases()),
+            'reservation_sources' => array_map(fn (string $value, string $label) => ['value' => $value, 'label' => $label], array_keys(config('food.sources')), config('food.sources')),
             'members' => app(AssignLead::class)->assignableMembers()
                 ->map(fn (TenantUser $member) => ['value' => (string) $member->id, 'label' => (string) $member->user?->name])->all(),
             default => throw new InvalidArgumentException("Unknown option list [{$list}]."),

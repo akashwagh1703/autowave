@@ -4,6 +4,7 @@ namespace App\Http\Presenters;
 
 use App\Domain\Booking\Enums\AppointmentStatus;
 use App\Domain\Booking\Models\Appointment;
+use App\Domain\Booking\Models\AppointmentPayment;
 use App\Domain\Booking\Models\BookingResource;
 use App\Domain\Booking\Models\TimeOff;
 use App\Domain\Booking\Models\WorkingHour;
@@ -54,6 +55,8 @@ final class BookingPresenter
             'name' => $resource->name,
             'description' => $resource->description,
             'color' => $resource->color,
+            'hourly_rate' => $resource->hourly_rate,
+            'rates' => array_values($resource->rates ?? []),
             'is_active' => $resource->is_active,
             'tenant_user_id' => $resource->tenant_user_id,
             'member' => $resource->relationLoaded('member') && $resource->member
@@ -71,6 +74,20 @@ final class BookingPresenter
     public static function workingHour(WorkingHour $hour): array
     {
         return ['weekday' => $hour->weekday, 'starts_at' => $hour->startTime(), 'ends_at' => $hour->endTime()];
+    }
+
+    /** @return array<string, mixed> */
+    public static function payment(AppointmentPayment $payment): array
+    {
+        return [
+            'id' => $payment->id,
+            'amount' => (string) $payment->amount,
+            'method' => $payment->method,
+            'method_label' => $payment->methodLabel(),
+            'reference' => $payment->reference,
+            'paid_at' => $payment->paid_at?->toIso8601String(),
+            'recorded_by' => $payment->relationLoaded('recorder') && $payment->recorder ? $payment->recorder->name : null,
+        ];
     }
 
     /** @return array<string, mixed> */
@@ -96,6 +113,11 @@ final class BookingPresenter
             'status_label' => $appointment->status->label(),
             'is_active' => $appointment->status->isActive(),
             'price' => $appointment->price,
+            'amount_paid' => $appointment->amount_paid ?? '0.00',
+            'balance' => $appointment->balance(),
+            'payments' => $appointment->relationLoaded('payments')
+                ? $appointment->payments->map(fn (AppointmentPayment $payment) => self::payment($payment))->values()->all()
+                : null,
             'notes' => $appointment->notes,
             'source' => $appointment->source,
             'cancellation_reason' => $appointment->cancellation_reason,

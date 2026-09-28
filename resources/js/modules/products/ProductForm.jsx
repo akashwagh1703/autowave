@@ -11,8 +11,9 @@ import useTenant from '@/hooks/useTenant';
  * Product details, price and stock settings. On create, `form.data.opening_stock` and
  * `form.data.image` are also sent; on edit stock is changed with the stock card instead.
  */
-export default function ProductForm({ form, onSubmit, submitLabel, cancelHref, categories, creating = false, defaultLowStock, children }) {
-    const { currency } = useTenant();
+export default function ProductForm({ form, onSubmit, submitLabel, cancelHref, categories, creating = false, defaultLowStock, foodTypes = [], children }) {
+    const { currency, hasEngine } = useTenant();
+    const menu = hasEngine('food');
     const money = { htmlInput: { min: 0, step: '0.01' }, input: { startAdornment: <InputAdornment position="start">{currency}</InputAdornment> } };
 
     return (
@@ -102,11 +103,40 @@ export default function ProductForm({ form, onSubmit, submitLabel, cancelHref, c
                         </p>
                     </div>
                 ) : null}
+                {menu ? (
+                    <TextField
+                        select
+                        label="Food type"
+                        value={form.data.food_type ?? ''}
+                        onChange={(event) => form.setData('food_type', event.target.value || null)}
+                        error={Boolean(form.errors.food_type)}
+                        helperText={form.errors.food_type ?? 'Shown as the veg / non-veg mark on the menu.'}
+                        slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+                    >
+                        <MenuItem value="">
+                            <em>Not marked</em>
+                        </MenuItem>
+                        {foodTypes.map((type) => (
+                            <MenuItem key={type.value} value={type.value}>
+                                {type.label}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                ) : null}
                 <FormControlLabel
                     control={<Switch checked={form.data.is_active} onChange={(event) => form.setData('is_active', event.target.checked)} />}
                     label="Active — can be ordered and shown on your website"
                     className="sm:col-span-2"
                 />
+                {menu ? (
+                    <div className="sm:col-span-2">
+                        <FormControlLabel
+                            control={<Switch checked={form.data.is_available ?? true} onChange={(event) => form.setData('is_available', event.target.checked)} />}
+                            label="Available now"
+                        />
+                        <p className="text-sm text-slate-600">Switch off when the kitchen runs out today. The item stays on the menu, marked unavailable.</p>
+                    </div>
+                ) : null}
             </section>
 
             <section className="rounded-lg border border-slate-200 p-4">

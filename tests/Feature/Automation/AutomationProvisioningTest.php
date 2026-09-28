@@ -25,7 +25,9 @@ class AutomationProvisioningTest extends TestCase
 
         $automations = $this->inTenant($tenant, fn () => Automation::query()->with('nodes')->get()->keyBy('template_key'));
 
-        $this->assertEqualsCanonicalizing(config('automation.default_templates'), $automations->keys()->all());
+        $this->assertEqualsCanonicalizing([
+            'new_lead_welcome', 'new_lead_followup', 'appointment_confirmation', 'appointment_reminder', 'no_show_followup', 'thank_you', 'new_online_order_alert', 'order_ready',
+        ], $automations->keys()->all());
         $this->assertSame(['new_lead_followup', 'new_online_order_alert', 'no_show_followup'], $automations->where('is_active', true)->keys()->sort()->values()->all());
         $this->assertSame(['wait', 'condition', 'action'], $automations['new_lead_followup']->nodes->pluck('type.value')->all());
 
@@ -37,10 +39,28 @@ class AutomationProvisioningTest extends TestCase
     {
         $tenant = $this->createTenant('Bright Classes', 'coaching');
 
-        $keys = $this->inTenant($tenant, fn () => Automation::query()->pluck('template_key')->sort()->values()->all());
+        $automations = $this->inTenant($tenant, fn () => Automation::query()->get()->keyBy('template_key'));
 
-        // No booking or commerce engine: the appointment and order templates do not apply.
-        $this->assertSame(['new_lead_followup', 'new_lead_welcome'], $keys);
+        // No booking, commerce or food engine: only the lead and education templates apply.
+        $this->assertSame(
+            ['admission_welcome', 'demo_class_confirmation', 'fee_due_reminder', 'fee_overdue_followup', 'new_lead_followup', 'new_lead_welcome'],
+            $automations->keys()->sort()->values()->all(),
+        );
+        $this->assertSame(['fee_overdue_followup', 'new_lead_followup'], $automations->where('is_active', true)->keys()->sort()->values()->all());
+    }
+
+    public function test_a_cafe_gets_the_order_and_reservation_templates(): void
+    {
+        $tenant = $this->createTenant('ABC Cafe', 'cafe');
+
+        $automations = $this->inTenant($tenant, fn () => Automation::query()->get()->keyBy('template_key'));
+
+        // No leads module: the lead templates do not apply.
+        $this->assertSame(
+            ['new_online_order_alert', 'new_reservation_alert', 'order_ready', 'reservation_confirmation'],
+            $automations->keys()->sort()->values()->all(),
+        );
+        $this->assertSame(['new_online_order_alert', 'new_reservation_alert'], $automations->where('is_active', true)->keys()->sort()->values()->all());
     }
 
     public function test_a_business_type_can_choose_its_templates(): void

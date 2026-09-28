@@ -76,9 +76,18 @@ php artisan migrate --seed   # catalogue, RBAC templates, platform admin, AutoWa
 ```
 
 - `AUTOWAVE_ADMIN_PASSWORD` empty → a random admin password is printed once. Save it.
-- Demo data (local only, password `password`): tenants `abc-salon` (Beauty & Salon) and `abc-turf` (Turf);
-  users `owner@abc-salon.test`, `owner@abc-turf.test`, `staff@abc-salon.test`, `manager@autowave.test`
-  (manager in both tenants).
+- Demo data (local only, password `password`):
+
+  | Tenant | Business type | Users |
+  |---|---|---|
+  | `abc-salon` | Beauty & Salon | `owner@abc-salon.test`, `staff@abc-salon.test` |
+  | `abc-turf` | Turf (rates and an advance) | `owner@abc-turf.test` |
+  | `abc-coaching` | Coaching Centre | `owner@abc-coaching.test`, `teacher@abc-coaching.test` (Staff) |
+  | `abc-cafe` | Cafe & Restaurant | `owner@abc-cafe.test` |
+  | `abc-store` | Local Commerce | `owner@abc-store.test` |
+
+  `manager@autowave.test` is a manager in `abc-salon` and `abc-turf`. Coupon codes: `WELCOME10` (cafe,
+  online), `FLAT50` (cafe, in store), `SAVE50` and `DIWALI15` (store).
 - Seeders are idempotent; re-running is safe.
 
 ### Hosts
@@ -90,7 +99,7 @@ php artisan migrate --seed   # catalogue, RBAC templates, platform admin, AutoWa
 | http://autowave.localhost:8000 | Marketing site |
 | http://app.autowave.localhost:8000 | Business app (login, register, dashboard) |
 | http://admin.autowave.localhost:8000 | Super Admin |
-| http://abc-salon.autowave.localhost:8000 | Demo tenant website |
+| http://abc-salon.autowave.localhost:8000 | Demo tenant website (also `abc-turf`, `abc-coaching`, `abc-cafe`, `abc-store`) |
 
 Tools that do their own DNS (PowerShell `Invoke-WebRequest`, some HTTP clients) may not resolve `*.localhost`;
 send a `Host` header to `127.0.0.1:8000` instead.
@@ -114,12 +123,13 @@ then `docker compose up -d`. (The primary dev machine uses 5433 for this reason.
 | Web server only | `php artisan serve` → http://app.autowave.localhost:8000 |
 | Vite dev server (HMR) | `npm run dev` |
 | Queue worker | `php artisan queue:work redis --queue=automation,messaging,default` |
-| Scheduler (automation waits, recovery) | `php artisan schedule:work` |
+| Scheduler (automation waits, recovery, hourly fee reminders) | `php artisan schedule:work` |
 | Logs | `php artisan pail` or `storage/logs/laravel-YYYY-MM-DD.log` |
 
 Automations need both the queue worker and the scheduler; see [queue-workers.md](queue-workers.md).
 `php artisan db:seed` (local) also turns on the demo automations for `abc-salon` (`DemoAutomationSeeder`)
-and fills the website content of `abc-salon` and `abc-turf` (`DemoWebsiteSeeder`).
+and fills the website content of every demo tenant (`DemoWebsiteSeeder`). `DemoEducationSeeder` and
+`DemoFoodSeeder` add the coaching and cafe data.
 
 ## Tests and checks
 

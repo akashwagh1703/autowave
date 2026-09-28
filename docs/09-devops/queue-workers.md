@@ -22,12 +22,14 @@ flushing Redis loses no work: the scheduler finds the rows and dispatches them a
 
 ## Scheduled commands (`routes/console.php`)
 
-Both run every minute, `withoutOverlapping()` and `onOneServer()` (the lock is in the Redis cache).
+All run `withoutOverlapping()` and `onOneServer()` (the lock is in the Redis cache); the first two every
+minute.
 
 | Command | Does |
 |---|---|
 | `automation:dispatch-due` | Dispatches `pending` steps whose `run_at` has passed (waits). Re-queues steps stuck in `queued` for over 10 minutes (lost from Redis) or in `running` for over 15 minutes (crashed worker); a stuck step that has used all its tries fails the run. |
 | `messaging:dispatch-pending` | Re-dispatches messages stuck in `queued` (10 min) or `sending` (15 min). |
+| `education:fee-reminders` (**hourly**, Phase 10) | For every tenant with the education engine, fires `fee.due_soon` and `fee.overdue` once per unpaid instalment of an active student (claimed timestamps on `fee_instalments`, so re-runs and overlaps are safe). |
 
 The thresholds are `stuck_queued_minutes` / `stuck_running_minutes` in `config/automation.php` and
 `config/messaging.php`. A due wait starts at most about a minute late (AW-028).

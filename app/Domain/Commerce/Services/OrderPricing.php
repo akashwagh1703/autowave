@@ -61,6 +61,7 @@ class OrderPricing
             $product = $products->get($item['product_id']);
             $issue = match (true) {
                 $product === null => __('One of the products is no longer available.'),
+                ! $product->is_available => __(':name is not available right now.', ['name' => $product->name]),
                 $product->track_stock && $product->stock_quantity <= 0 => __(':name is out of stock.', ['name' => $product->name]),
                 $product->track_stock && $product->stock_quantity < $item['quantity'] => __('Only :count of :name left in stock.', ['count' => $product->stock_quantity, 'name' => $product->name]),
                 default => null,

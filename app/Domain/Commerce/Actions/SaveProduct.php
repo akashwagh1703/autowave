@@ -59,6 +59,8 @@ class SaveProduct
                 'price' => $price,
                 'compare_at_price' => $compareAt,
                 'is_active' => $data['is_active'] ?? true,
+                ...(array_key_exists('food_type', $data) ? ['food_type' => array_key_exists((string) $data['food_type'], config('food.food_types')) ? $data['food_type'] : null] : []),
+                ...(array_key_exists('is_available', $data) ? ['is_available' => (bool) $data['is_available']] : []),
                 'track_stock' => $trackStock,
                 'low_stock_threshold' => $trackStock && isset($data['low_stock_threshold']) && $data['low_stock_threshold'] !== ''
                     ? (int) $data['low_stock_threshold']

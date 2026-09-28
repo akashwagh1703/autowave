@@ -3,6 +3,8 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { useCallback, useMemo, useState } from 'react';
 import BookingSection from '@/modules/website/BookingSection';
 import ContactSection from '@/modules/website/ContactSection';
+import CoursesSection from '@/modules/website/CoursesSection';
+import ReservationSection from '@/modules/website/ReservationSection';
 import { CartDrawer, Products, useCart } from '@/modules/website/ShopSection';
 import { About, Faq, Footer, Gallery, Header, Hero, Offers, Services, Team, Testimonials } from '@/modules/website/sections';
 import { SiteContext, scrollToSection, siteTheme } from '@/modules/website/site';
@@ -14,6 +16,7 @@ const RENDERERS = {
     about: About,
     services: Services,
     products: Products,
+    courses: CoursesSection,
     team: Team,
     gallery: Gallery,
     testimonials: Testimonials,
@@ -21,10 +24,28 @@ const RENDERERS = {
     faq: Faq,
     contact: ContactSection,
     booking: BookingSection,
+    reservation: ReservationSection,
     footer: Footer,
 };
 
-export default function Home({ business, template, seo, contact, social, locale, sections, booking, shop, enquiry, preview, enquirySent, bookingConfirmation, orderConfirmation }) {
+export default function Home({
+    business,
+    template,
+    seo,
+    contact,
+    social,
+    locale,
+    sections,
+    booking,
+    reservation,
+    shop,
+    enquiry,
+    preview,
+    enquirySent,
+    bookingConfirmation,
+    reservationConfirmation,
+    orderConfirmation,
+}) {
     const theme = siteTheme(template, business.primary_color);
     const [selectedService, setSelectedService] = useState(null);
     const types = useMemo(() => new Set(sections.map((section) => section.type)), [sections]);
@@ -46,9 +67,11 @@ export default function Home({ business, template, seo, contact, social, locale,
         locale,
         theme,
         booking,
+        reservation,
         enquiry,
         enquirySent,
         bookingConfirmation,
+        reservationConfirmation,
         shop,
         cart,
         orderConfirmation,

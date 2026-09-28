@@ -8,6 +8,29 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- Phase 10 Additional verticals:
+  - **Coaching centres:** courses and batches (days, times, teacher, capacity, fee); admit students from
+    an enquiry, an existing customer or a walk-in, with the fee split into instalments and an optional
+    first payment; record and remove fee payments; change fee plans; drop, complete or re-activate
+    students; take and correct attendance per class; schedule demo classes for enquiries and mark them
+    attended or no-show; a Fees page with overdue and upcoming instalments; Settings → Coaching.
+  - Hourly fee reminders: automations "Fee due reminder" (WhatsApp, paused by default) and "Follow up on
+    overdue fees" (adds a task), plus "Welcome new students" and "Confirm demo classes" templates.
+  - Coaching website section "Courses" with fees, schedules and an enquire button.
+  - **Cafes and restaurants:** menu items marked veg / non-veg / egg and "available now" (bulk sold-out);
+    tables; reservations from the team or the website (party size, date, time) with confirm, seat,
+    complete, no-show and cancel; dine-in orders by table (walk-ins need no customer) with "Add items";
+    a kitchen screen that marks tickets ready; Settings → Reservation settings; website section
+    "Reserve a table".
+  - **Turfs:** hourly, peak and weekend rates per turf; the price shows on the website slot picker and the
+    team slot picker and is stored on the booking; advances and payments recorded on the appointment.
+  - **Local Commerce** (renamed from Local Store): coupon codes (percentage with a cap, or a fixed
+    amount; minimum order, dates, usage limit, online or in-store) on the Offers page, applied on the
+    order form and in the website cart; dashboard widgets for repeat customers and top products.
+  - Dashboard widgets: students, admissions, fees due, demo classes, reservations today, kitchen queue,
+    top products.
+  - Assistant tools for students (batches, seats left, overdue fees) and reservations.
+  - Demo businesses ABC Coaching, ABC Cafe and ABC Store with sample data (local only).
 - Phase 9 AI:
   - Inbox: "Suggest reply" writes a reply (or improves what you typed) from the conversation and your
     business details. It goes into the message box; AI never sends anything by itself.

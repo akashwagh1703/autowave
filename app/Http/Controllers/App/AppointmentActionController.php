@@ -4,18 +4,22 @@ namespace App\Http\Controllers\App;
 
 use App\Domain\Audit\Services\AuditLogger;
 use App\Domain\Booking\Actions\ChangeAppointmentStatus;
+use App\Domain\Booking\Actions\RecordAppointmentPayment;
+use App\Domain\Booking\Actions\RemoveAppointmentPayment;
 use App\Domain\Booking\Actions\RescheduleAppointment;
 use App\Domain\Booking\Enums\AppointmentStatus;
 use App\Domain\Booking\Models\Appointment;
+use App\Domain\Booking\Models\AppointmentPayment;
 use App\Http\Controllers\Controller;
 use App\Support\TenantTime;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
- * Lifecycle actions on existing appointments: status changes, reschedules and bulk updates.
+ * Lifecycle actions on existing appointments: status changes, reschedules, payments and bulk updates.
  * Cancelling needs `appointments.cancel`; everything else `appointments.update`.
  */
 class AppointmentActionController extends Controller
@@ -64,6 +68,33 @@ class AppointmentActionController extends Controller
         );
 
         return back()->with('success', __('Appointment rescheduled.'));
+    }
+
+    public function storePayment(Request $request, Appointment $appointment, RecordAppointmentPayment $recordPayment): RedirectResponse
+    {
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.01', 'max:'.config('booking.pricing.max_rate')],
+            'method' => ['required', Rule::in(array_keys(config('commerce.payment_methods')))],
+            'reference' => ['nullable', 'string', 'max:100'],
+            'paid_at' => ['nullable', 'date'],
+        ], ['method.required' => __('Choose how the customer paid.')]);
+
+        $paidAt = filled($validated['paid_at'] ?? null) ? TenantTime::parse($validated['paid_at']) : null;
+
+        if ($paidAt?->isFuture()) {
+            throw ValidationException::withMessages(['paid_at' => __('The payment date cannot be in the future.')]);
+        }
+
+        $recordPayment->handle($appointment, [...$validated, 'paid_at' => $paidAt], $request->user());
+
+        return back()->with('success', __('Payment recorded.'));
+    }
+
+    public function destroyPayment(Request $request, Appointment $appointment, AppointmentPayment $payment, RemoveAppointmentPayment $removePayment): RedirectResponse
+    {
+        $removePayment->handle($appointment, $payment, $request->user());
+
+        return back()->with('success', __('Payment removed.'));
     }
 
     /**

@@ -35,6 +35,11 @@ return [
         'appointment' => ['label' => 'appointment', 'entities' => ['appointment', 'customer']],
         'order' => ['label' => 'order', 'entities' => ['order', 'customer']],
         'conversation' => ['label' => 'conversation', 'entities' => ['conversation', 'lead', 'customer']],
+        // Phase 10 (ADR-020): education and food subjects.
+        'enrolment' => ['label' => 'admission', 'entities' => ['enrolment', 'customer']],
+        'fee' => ['label' => 'fee instalment', 'entities' => ['fee', 'enrolment', 'customer']],
+        'demo_class' => ['label' => 'demo class', 'entities' => ['demo_class', 'lead']],
+        'reservation' => ['label' => 'reservation', 'entities' => ['reservation', 'customer']],
     ],
 
     /*
@@ -62,6 +67,13 @@ return [
         'order.cancelled' => ['label' => 'Order cancelled', 'group' => 'Orders', 'subject' => 'order', 'engine' => 'commerce', 'description' => 'An order is cancelled.'],
         'order.paid' => ['label' => 'Order paid', 'group' => 'Orders', 'subject' => 'order', 'engine' => 'commerce', 'description' => 'The payments recorded for an order cover its total.'],
         'message.received' => ['label' => 'Message received', 'group' => 'Messages', 'subject' => 'conversation', 'module' => 'messaging', 'description' => 'A contact sends you a WhatsApp or Instagram message (opt-out keywords are ignored).'],
+        'enrolment.created' => ['label' => 'Student admitted', 'group' => 'Students', 'subject' => 'enrolment', 'engine' => 'education', 'description' => 'A student is admitted to a batch.'],
+        'fee.due_soon' => ['label' => 'Fee due soon', 'group' => 'Students', 'subject' => 'fee', 'engine' => 'education', 'description' => 'An unpaid fee instalment falls due within the reminder window (Settings → Education).'],
+        'fee.overdue' => ['label' => 'Fee overdue', 'group' => 'Students', 'subject' => 'fee', 'engine' => 'education', 'description' => 'A fee instalment is past its due date and still unpaid.'],
+        'demo.scheduled' => ['label' => 'Demo class scheduled', 'group' => 'Students', 'subject' => 'demo_class', 'engine' => 'education', 'description' => 'A demo (trial) class is scheduled for an enquiry.'],
+        'reservation.created' => ['label' => 'Table reserved', 'group' => 'Reservations', 'subject' => 'reservation', 'engine' => 'food', 'description' => 'A new table reservation, by the team or on your website.'],
+        'reservation.confirmed' => ['label' => 'Reservation confirmed', 'group' => 'Reservations', 'subject' => 'reservation', 'engine' => 'food', 'description' => 'A reservation is confirmed (including reservations confirmed automatically).'],
+        'reservation.cancelled' => ['label' => 'Reservation cancelled', 'group' => 'Reservations', 'subject' => 'reservation', 'engine' => 'food', 'description' => 'A reservation is cancelled.'],
     ],
 
     /*
@@ -96,6 +108,14 @@ return [
         'conversation.channel' => ['label' => 'Conversation channel', 'entity' => 'conversation', 'type' => 'enum', 'options' => 'conversation_channels'],
         'conversation.assigned' => ['label' => 'Conversation is assigned', 'entity' => 'conversation', 'type' => 'boolean'],
         'message.text' => ['label' => 'Message text', 'entity' => 'conversation', 'type' => 'text'],
+        'enrolment.status' => ['label' => 'Admission status', 'entity' => 'enrolment', 'type' => 'enum', 'options' => 'enrolment_statuses'],
+        'enrolment.course' => ['label' => 'Course', 'entity' => 'enrolment', 'type' => 'enum', 'options' => 'courses'],
+        'enrolment.balance' => ['label' => 'Fee balance due', 'entity' => 'enrolment', 'type' => 'number'],
+        'fee.amount_due' => ['label' => 'Instalment amount due', 'entity' => 'fee', 'type' => 'number'],
+        'demo_class.status' => ['label' => 'Demo class status', 'entity' => 'demo_class', 'type' => 'enum', 'options' => 'demo_statuses'],
+        'reservation.status' => ['label' => 'Reservation status', 'entity' => 'reservation', 'type' => 'enum', 'options' => 'reservation_statuses'],
+        'reservation.source' => ['label' => 'Reservation source', 'entity' => 'reservation', 'type' => 'enum', 'options' => 'reservation_sources'],
+        'reservation.party_size' => ['label' => 'Party size', 'entity' => 'reservation', 'type' => 'number'],
     ],
 
     'operators' => [
@@ -131,7 +151,7 @@ return [
     'actions' => [
         'send_whatsapp' => ['label' => 'Send WhatsApp message', 'group' => 'Messages', 'class' => SendWhatsAppStep::class, 'entities' => ['lead', 'customer'], 'module' => 'messaging'],
         'send_email' => ['label' => 'Send email', 'group' => 'Messages', 'class' => SendEmailStep::class, 'entities' => ['lead', 'customer'], 'module' => 'messaging'],
-        'send_notification' => ['label' => 'Notify the team', 'group' => 'Messages', 'class' => NotifyTeamStep::class, 'entities' => ['lead', 'customer', 'appointment', 'order', 'conversation']],
+        'send_notification' => ['label' => 'Notify the team', 'group' => 'Messages', 'class' => NotifyTeamStep::class, 'entities' => ['lead', 'customer', 'appointment', 'order', 'conversation', 'enrolment', 'fee', 'demo_class', 'reservation']],
         'create_task' => ['label' => 'Create follow-up task', 'group' => 'Records', 'class' => CreateTaskStep::class, 'entities' => ['lead', 'customer']],
         'assign_lead' => ['label' => 'Assign lead', 'group' => 'Records', 'class' => AssignLeadStep::class, 'entities' => ['lead'], 'module' => 'leads'],
         'update_lead' => ['label' => 'Move lead to stage', 'group' => 'Records', 'class' => MoveLeadStageStep::class, 'entities' => ['lead'], 'module' => 'leads'],
@@ -164,6 +184,19 @@ return [
         'order.fulfilment' => ['label' => 'Order type (pickup, delivery…)', 'entity' => 'order'],
         'conversation.channel' => ['label' => 'Conversation channel', 'entity' => 'conversation'],
         'message.text' => ['label' => 'Message text', 'entity' => 'conversation'],
+        'enrolment.course' => ['label' => 'Course', 'entity' => 'enrolment'],
+        'enrolment.batch' => ['label' => 'Batch', 'entity' => 'enrolment'],
+        'enrolment.schedule' => ['label' => 'Batch schedule', 'entity' => 'enrolment'],
+        'enrolment.balance' => ['label' => 'Fee balance due', 'entity' => 'enrolment'],
+        'fee.amount_due' => ['label' => 'Instalment amount due', 'entity' => 'fee'],
+        'fee.due_date' => ['label' => 'Instalment due date', 'entity' => 'fee'],
+        'demo_class.date' => ['label' => 'Demo class date', 'entity' => 'demo_class'],
+        'demo_class.time' => ['label' => 'Demo class time', 'entity' => 'demo_class'],
+        'demo_class.course' => ['label' => 'Demo class course', 'entity' => 'demo_class'],
+        'reservation.date' => ['label' => 'Reservation date', 'entity' => 'reservation'],
+        'reservation.time' => ['label' => 'Reservation time', 'entity' => 'reservation'],
+        'reservation.party_size' => ['label' => 'Party size', 'entity' => 'reservation'],
+        'reservation.table' => ['label' => 'Table', 'entity' => 'reservation'],
     ],
 
     /*
@@ -196,7 +229,10 @@ return [
     | actions the tenant cannot use are skipped. Message templates start paused
     | so nothing is sent to customers until the owner turns them on.
     */
-    'default_templates' => ['new_lead_welcome', 'new_lead_followup', 'appointment_confirmation', 'appointment_reminder', 'no_show_followup', 'thank_you', 'new_online_order_alert', 'order_ready'],
+    'default_templates' => [
+        'new_lead_welcome', 'new_lead_followup', 'appointment_confirmation', 'appointment_reminder', 'no_show_followup', 'thank_you', 'new_online_order_alert', 'order_ready',
+        'admission_welcome', 'fee_due_reminder', 'fee_overdue_followup', 'demo_class_confirmation', 'new_reservation_alert', 'reservation_confirmation',
+    ],
 
     'templates' => [
         'new_lead_welcome' => [
@@ -280,6 +316,66 @@ return [
             'active' => false,
             'steps' => [
                 ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => 'Hi {{customer.first_name}}, your order {{order.number}} from {{business.name}} is ready ({{order.fulfilment}}). Total: {{order.total}}.']],
+            ],
+        ],
+        'admission_welcome' => [
+            'name' => 'Welcome new students on WhatsApp',
+            'description' => 'Sends the batch and schedule as soon as a student is admitted.',
+            'trigger' => 'enrolment.created',
+            'active' => false,
+            'steps' => [
+                ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => 'Welcome to {{business.name}}, {{customer.first_name}}! You are admitted to {{enrolment.course}} ({{enrolment.batch}}, {{enrolment.schedule}}).']],
+            ],
+        ],
+        'fee_due_reminder' => [
+            'name' => 'Fee due reminder',
+            'description' => 'Reminds the student before an instalment is due.',
+            'trigger' => 'fee.due_soon',
+            'active' => false,
+            'steps' => [
+                ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => 'Hi {{customer.first_name}}, a fee instalment of {{fee.amount_due}} for {{enrolment.course}} at {{business.name}} is due on {{fee.due_date}}.']],
+            ],
+        ],
+        'fee_overdue_followup' => [
+            'name' => 'Follow up on overdue fees',
+            'description' => 'Adds a task to call the student when an instalment is overdue.',
+            'trigger' => 'fee.overdue',
+            'active' => true,
+            'steps' => [
+                ['type' => 'action', 'action' => 'create_task', 'config' => ['title' => 'Collect overdue fee of {{fee.amount_due}} from {{customer.name}} ({{enrolment.course}})', 'due_in_hours' => 4]],
+            ],
+        ],
+        'demo_class_confirmation' => [
+            'name' => 'Confirm demo classes on WhatsApp',
+            'description' => 'Sends the date and time when a demo class is scheduled.',
+            'trigger' => 'demo.scheduled',
+            'active' => false,
+            'steps' => [
+                ['type' => 'condition', 'config' => ['match' => 'all', 'rules' => [['field' => 'lead.phone', 'operator' => 'is_set']]]],
+                ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => 'Hi {{lead.first_name}}, your demo class at {{business.name}} is on {{demo_class.date}} at {{demo_class.time}}. See you there!']],
+            ],
+        ],
+        'new_reservation_alert' => [
+            'name' => 'Tell the team about website reservations',
+            'description' => 'Emails the owners when a table is reserved on your website.',
+            'trigger' => 'reservation.created',
+            'active' => true,
+            'steps' => [
+                ['type' => 'condition', 'config' => ['match' => 'all', 'rules' => [['field' => 'reservation.source', 'operator' => 'equals', 'value' => 'website']]]],
+                ['type' => 'action', 'action' => 'send_notification', 'config' => [
+                    'recipients' => 'owners',
+                    'subject' => 'New reservation for {{reservation.date}}',
+                    'message' => '{{customer.name}} ({{customer.phone}}) reserved a table for {{reservation.party_size}} on {{reservation.date}} at {{reservation.time}}.',
+                ]],
+            ],
+        ],
+        'reservation_confirmation' => [
+            'name' => 'Confirm reservations on WhatsApp',
+            'description' => 'Sends the date and time when a reservation is confirmed.',
+            'trigger' => 'reservation.confirmed',
+            'active' => false,
+            'steps' => [
+                ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => 'Hi {{customer.first_name}}, your table for {{reservation.party_size}} at {{business.name}} is confirmed for {{reservation.date}} at {{reservation.time}}.']],
             ],
         ],
     ],

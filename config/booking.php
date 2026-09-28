@@ -39,6 +39,16 @@ return [
 
     'duration' => ['min' => 5, 'max' => 720],
 
+    /*
+    | Prices of bookings without a service (Phase 10, e.g. a turf slot): an hourly rate per
+    | resource plus up to `max_rates` extra rates (peak hours, weekends). The first rate covering
+    | a minute wins; otherwise the hourly rate applies.
+    */
+    'pricing' => [
+        'max_rates' => 6,
+        'max_rate' => 999999.99,
+    ],
+
     'max_windows_per_day' => 4,
 
     /*

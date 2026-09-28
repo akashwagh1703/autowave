@@ -25,6 +25,7 @@ import Pagination from '@/components/Pagination';
 import SearchField from '@/components/SearchField';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import CategoryManager from '@/modules/services/CategoryManager';
+import FoodTypeMark from '@/modules/products/FoodTypeMark';
 import useFilters from '@/hooks/useFilters';
 import useTenant from '@/hooks/useTenant';
 import { formatPrice } from '@/utils/format';
@@ -61,7 +62,7 @@ function StockCell({ product }) {
     return <span className={product.is_low_stock ? 'font-semibold text-amber-700' : 'text-slate-900'}>{product.stock_quantity}</span>;
 }
 
-function BulkBar({ selected, onDone, canUpdate, canDelete }) {
+function BulkBar({ selected, onDone, canUpdate, canDelete, menu }) {
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [processing, setProcessing] = useState(false);
 
@@ -87,6 +88,16 @@ function BulkBar({ selected, onDone, canUpdate, canDelete }) {
                     <Button size="small" disabled={processing} onClick={() => run('deactivate')}>
                         Deactivate
                     </Button>
+                    {menu ? (
+                        <>
+                            <Button size="small" disabled={processing} onClick={() => run('available')}>
+                                Available now
+                            </Button>
+                            <Button size="small" disabled={processing} onClick={() => run('unavailable')}>
+                                Sold out today
+                            </Button>
+                        </>
+                    ) : null}
                 </>
             ) : null}
             {canDelete ? (
@@ -109,7 +120,8 @@ function BulkBar({ selected, onDone, canUpdate, canDelete }) {
 }
 
 export default function Index({ products, filters: initialFilters, categories, counts }) {
-    const { currency, can } = useTenant();
+    const { currency, can, hasEngine } = useTenant();
+    const menu = hasEngine('food');
     const { errors } = usePage().props;
     const { filters, apply, applyDebounced, loading } = useFilters('/products', initialFilters);
     const [selected, setSelected] = useState([]);
@@ -230,7 +242,7 @@ export default function Index({ products, filters: initialFilters, categories, c
                     </Alert>
                 ) : null}
 
-                {selected.length > 0 && canSelect ? <BulkBar selected={selected} onDone={() => setSelected([])} canUpdate={canUpdate} canDelete={canDelete} /> : null}
+                {selected.length > 0 && canSelect ? <BulkBar selected={selected} onDone={() => setSelected([])} canUpdate={canUpdate} canDelete={canDelete} menu={menu} /> : null}
 
                 {products.data.length === 0 ? (
                     <div className="p-6">
@@ -299,6 +311,13 @@ export default function Index({ products, filters: initialFilters, categories, c
                                                         <span className="font-medium text-slate-900">{product.name}</span>
                                                     )}
                                                     {product.sku ? <p className="text-xs text-slate-500">SKU {product.sku}</p> : null}
+                                                    {menu && (product.food_type || product.is_available === false) ? (
+                                                        <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                            <FoodTypeMark type={product.food_type} />
+                                                            {product.food_type_label}
+                                                            {product.is_available === false ? <span className="text-red-600">{product.food_type ? ' · ' : ''}Sold out today</span> : null}
+                                                        </p>
+                                                    ) : null}
                                                 </div>
                                             </div>
                                         </TableCell>

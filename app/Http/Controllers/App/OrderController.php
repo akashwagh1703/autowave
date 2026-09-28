@@ -8,8 +8,13 @@ use App\Domain\Commerce\Enums\OrderStatus;
 use App\Domain\Commerce\Enums\PaymentStatus;
 use App\Domain\Commerce\Models\Order;
 use App\Domain\Commerce\Models\Product;
+use App\Domain\Commerce\Services\Coupons;
+use App\Domain\Commerce\Services\OrderPricing;
 use App\Domain\Commerce\Support\CommerceSettings;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Food\Actions\AddOrderItems;
+use App\Domain\Food\Models\DiningTable;
+use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\CommercePresenter;
 use App\Http\Presenters\CrmPresenter;
@@ -19,6 +24,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -39,7 +45,7 @@ class OrderController extends Controller
             'range' => in_array($request->query('range'), self::RANGES, true) ? $request->query('range') : 'all',
         ];
 
-        $query = Order::query()->with(['customer', 'items']);
+        $query = Order::query()->with(['customer', 'table', 'items']);
 
         match ($filters['status']) {
             'open' => $query->open(),
@@ -96,24 +102,25 @@ class OrderController extends Controller
         ]);
     }
 
-    public function create(Request $request, CommerceSettings $settings): Response
+    public function create(Request $request, CommerceSettings $settings, TenantContext $context, Coupons $coupons): Response
     {
         $customer = $request->integer('customer') ? Customer::query()->find($request->integer('customer')) : null;
+        $food = $context->hasEngine('food');
 
         return Inertia::render('business/orders/Create', [
-            'products' => Product::query()->active()->with('category')->ordered()
-                ->limit((int) config('commerce.limits.products_in_order_form'))
-                ->get()
-                ->map(fn (Product $product) => [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'sku' => $product->sku,
-                    'price' => (string) $product->price,
-                    'category' => $product->category?->name,
-                    'track_stock' => $product->track_stock,
-                    'available' => $product->available(),
-                ]),
+            'products' => self::orderableProducts(),
             'customer' => $customer ? ['id' => $customer->id, 'name' => $customer->name, 'phone' => $customer->phone, 'address' => $customer->address] : null,
+            'tables' => $food
+                ? DiningTable::query()->active()->ordered()->get()->map(fn (DiningTable $table) => [
+                    'id' => $table->id,
+                    'name' => $table->name,
+                    'seats' => $table->seats,
+                    'area' => $table->area,
+                    'busy' => $table->orders()->open()->exists(),
+                ])
+                : [],
+            'defaultTableId' => $food && $request->integer('table') ? $request->integer('table') : null,
+            'couponsEnabled' => $coupons->enabled(),
             'fulfilmentOptions' => CommercePresenter::fulfilmentOptions(),
             'paymentMethods' => CommercePresenter::paymentMethods(),
             'defaultDeliveryFee' => $settings->online()['delivery_fee'],
@@ -128,15 +135,22 @@ class OrderController extends Controller
     {
         $order = $placeOrder->handle($request->orderData(), $request->user());
 
-        return to_route('orders.show', $order)->with('success', __('Order :number created for :name.', ['number' => $order->reference(), 'name' => $order->customer->name]));
+        return to_route('orders.show', $order)->with('success', match (true) {
+            $order->customer !== null => __('Order :number created for :name.', ['number' => $order->reference(), 'name' => $order->customer->name]),
+            $order->table !== null => __('Order :number created for :table.', ['number' => $order->reference(), 'table' => $order->table->name]),
+            default => __('Order :number created.', ['number' => $order->reference()]),
+        });
     }
 
-    public function show(Order $order): Response
+    public function show(Order $order, TenantContext $context): Response
     {
-        $order->load(['customer', 'items.product', 'payments.recorder:id,name', 'creator:id,name']);
+        $order->load(['customer', 'table', 'items.product', 'payments.recorder:id,name', 'creator:id,name']);
+        $canAddItems = $order->fulfilment === 'dine_in' && $order->status->isOpen();
 
         return Inertia::render('business/orders/Show', [
             'order' => CommercePresenter::order($order),
+            'products' => $canAddItems ? self::orderableProducts() : [],
+            'kitchen' => $context->hasEngine('food'),
             'transitions' => collect($order->status->allowedTransitions())
                 ->map(fn (OrderStatus $status) => ['value' => $status->value, 'label' => $status->labelFor($order->fulfilment)])
                 ->values(),
@@ -156,6 +170,57 @@ class OrderController extends Controller
         $order->update(['notes' => filled($validated['notes'] ?? null) ? trim($validated['notes']) : null]);
 
         return back()->with('success', __('Order notes saved.'));
+    }
+
+    /** Adds items to an open dine-in order (the table orders more). */
+    public function addItems(Request $request, Order $order, AddOrderItems $addItems): RedirectResponse
+    {
+        $request->validate([
+            'items' => ['required', 'array', 'min:1', 'max:'.config('commerce.limits.items_per_order')],
+            'items.*.product_id' => ['required', 'integer'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:'.config('commerce.limits.max_quantity')],
+        ], ['items.required' => __('Add at least one product.')]);
+
+        $addItems->handle($order, $request->input('items'), $request->user());
+
+        return back()->with('success', __('Items added to order :number.', ['number' => $order->reference()]));
+    }
+
+    /** Checks a coupon code against the order form's items and returns the discount (JSON). */
+    public function coupon(Request $request, Coupons $coupons, OrderPricing $pricing): JsonResponse
+    {
+        $request->validate([
+            'code' => ['required', 'string', 'max:30'],
+            'items' => ['required', 'array', 'min:1', 'max:'.config('commerce.limits.items_per_order')],
+        ], ['items.required' => __('Add products before applying a coupon.')]);
+
+        $priced = $pricing->lines(OrderPricing::normalize($request->input('items')));
+        $result = $coupons->resolve($request->string('code')->toString(), $priced['subtotal'], online: false, field: 'code');
+
+        return response()->json([
+            'code' => $result['coupon']->code,
+            'summary' => $result['coupon']->summary(),
+            'discount' => $result['discount'],
+        ]);
+    }
+
+    /** @return Collection<int, array<string, mixed>> products for the order forms */
+    private static function orderableProducts(): Collection
+    {
+        return Product::query()->active()->with('category')->ordered()
+            ->limit((int) config('commerce.limits.products_in_order_form'))
+            ->get()
+            ->map(fn (Product $product) => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'sku' => $product->sku,
+                'price' => (string) $product->price,
+                'category' => $product->category?->name,
+                'track_stock' => $product->track_stock,
+                'available' => $product->available(),
+                'is_available' => (bool) $product->is_available,
+                'food_type' => $product->food_type,
+            ]);
     }
 
     /** Customer lookup for the order form (JSON). */

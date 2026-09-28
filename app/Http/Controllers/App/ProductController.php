@@ -105,6 +105,7 @@ class ProductController extends Controller
             'categories' => $this->categories(),
             'defaultCategoryId' => $request->integer('category') ?: null,
             'defaultLowStock' => (int) config('commerce.low_stock_threshold'),
+            'foodTypes' => CommercePresenter::foodTypes(),
         ]);
     }
 
@@ -131,6 +132,7 @@ class ProductController extends Controller
             'product' => CommercePresenter::product($product),
             'categories' => $this->categories(),
             'defaultLowStock' => (int) config('commerce.low_stock_threshold'),
+            'foodTypes' => CommercePresenter::foodTypes(),
             'movements' => StockMovement::query()
                 ->where('product_id', $product->id)
                 ->with(['order:id,number', 'creator:id,name'])
@@ -193,7 +195,7 @@ class ProductController extends Controller
     public function bulk(Request $request, DeleteProduct $deleteProduct, AuditLogger $audit): RedirectResponse
     {
         $validated = $request->validate([
-            'action' => ['required', Rule::in(['activate', 'deactivate', 'delete'])],
+            'action' => ['required', Rule::in(['activate', 'deactivate', 'available', 'unavailable', 'delete'])],
             'ids' => ['required', 'array', 'min:1', 'max:'.self::BULK_LIMIT],
             'ids.*' => ['integer', 'distinct'],
         ]);
@@ -207,6 +209,8 @@ class ProductController extends Controller
             match ($validated['action']) {
                 'activate' => Product::query()->whereKey($products->modelKeys())->update(['is_active' => true]),
                 'deactivate' => Product::query()->whereKey($products->modelKeys())->update(['is_active' => false]),
+                'available' => Product::query()->whereKey($products->modelKeys())->update(['is_available' => true]),
+                'unavailable' => Product::query()->whereKey($products->modelKeys())->update(['is_available' => false]),
                 'delete' => $products->each(fn (Product $product) => $deleteProduct->handle($product)),
             };
 

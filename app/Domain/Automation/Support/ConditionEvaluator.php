@@ -70,6 +70,14 @@ class ConditionEvaluator
             'conversation.channel' => $context->conversation?->channel,
             'conversation.assigned' => $context->conversation ? $context->conversation->assigned_tenant_user_id !== null : null,
             'message.text' => $context->latestInboundText(),
+            'enrolment.status' => $context->enrolment()?->status->value,
+            'enrolment.course' => $context->enrolment()?->batch?->course_id !== null ? (string) $context->enrolment()->batch->course_id : null,
+            'enrolment.balance' => $context->enrolment() ? (float) $context->enrolment()->balance() : null,
+            'fee.amount_due' => $context->fee() ? (float) $context->fee()->due() : null,
+            'demo_class.status' => $context->demo()?->status->value,
+            'reservation.status' => $context->reservation()?->status->value,
+            'reservation.source' => $context->reservation()?->source,
+            'reservation.party_size' => $context->reservation()?->party_size,
             default => null,
         };
     }

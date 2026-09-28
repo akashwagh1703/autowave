@@ -1,7 +1,7 @@
 # Commerce: products, stock and orders
 
-- **Status:** ✅ Phase 7
-- **Last updated:** 2026-10-01
+- **Status:** ✅ Phase 7; coupons, dine-in and top products in Phase 10
+- **Last updated:** 2026-10-04
 
 ## Purpose
 
@@ -119,6 +119,37 @@ Protection is the same as the other public forms (ADR-016): a hidden honeypot fi
 limit per visitor IP and business (`commerce.online_per_hour`, 10 per hour for orders; 60 quotes per
 minute). An unpublished website accepts no orders.
 
+## Coupon codes (offers module, Phase 10)
+
+Businesses with the `offers` module (Cafe & Restaurant, Local Commerce) manage coupon codes on the
+**Offers** page ([ADR-020](../12-decisions/ADR-020-additional-verticals.md)):
+
+- A coupon is a percentage (optionally capped with a maximum discount) or a fixed amount, with an optional
+  minimum subtotal, start and end, usage limit, and "online" (usable on the website) or team-only.
+  Codes are 3–30 letters, digits, `-` or `_`, stored upper-case with spaces removed, unique per business.
+  Coupons can be paused or deleted (soft delete; old orders keep the code).
+- The team enters a code on the order form; the website cart has an Apply field. The server checks the
+  code in the quote (`coupon`, `discount`, `coupon_error`) and again when the order is placed.
+- The coupon discount is added to any manual discount, never more than the subtotal. The order keeps
+  `coupon_id` and `coupon_code`.
+- A use is claimed under a row lock when the order is placed, so a usage limit is never exceeded;
+  cancelling the order gives the use back.
+- Without the `offers` module the Offers page returns 404 and codes are refused ("Coupon codes are not
+  accepted.").
+
+| Route | Permission |
+|---|---|
+| `GET /offers` | `offers.view` |
+| `POST /offers`, `PUT/DELETE /offers/{coupon}` | `offers.manage` |
+
+Tests: `tests/Feature/Commerce/CouponTest.php` (rules, limits, website, module off, isolation).
+
+## Dine-in (food engine, Phase 10)
+
+Cafes add the `dine_in` fulfilment, with an optional table and no customer required, "add items" on open
+dine-in orders, food types and "available now" on products, and a kitchen screen. See
+[food.md](food.md).
+
 ## Configuration
 
 `config/commerce.php`:
@@ -214,7 +245,8 @@ Shown when listed in the business type's `dashboard_widgets`:
 - orders today (not cancelled; `orders.view`);
 - low stock: active products at or below their low-stock level (`products.view`);
 - repeat customers: 2+ completed orders (`orders.view`; businesses with the booking engine count visits
-  instead).
+  instead);
+- top products: the best sellers by quantity in completed orders over 30 days (`orders.view`, Phase 10).
 
 Money widgets also need `reports.view`:
 
@@ -253,7 +285,7 @@ and check constraint are covered by the ledger tests and the database checks.
 
 ## Known limitations
 
-No online payments (AW-041), no variants (AW-042), no returns or refunds (AW-043), no coupons or taxes
-(AW-044), carts do not reserve stock (AW-045), receptionists cannot update orders (AW-046), orders cannot be
+No online payments (AW-041), no variants (AW-042), no returns or refunds (AW-043), no taxes (AW-044;
+coupons arrived in Phase 10), discounts are not recomputed when items are added (AW-060), carts do not reserve stock (AW-045), receptionists cannot update orders (AW-046), orders cannot be
 edited (AW-047), no customer order messages or tracking by default (AW-048), flat delivery fee only
 (AW-049).

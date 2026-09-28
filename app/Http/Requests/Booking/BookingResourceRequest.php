@@ -41,6 +41,9 @@ class BookingResourceRequest extends FormRequest
             'working_hours.*.weekday' => ['required', 'integer', 'between:1,7'],
             'working_hours.*.starts_at' => ['required', 'date_format:H:i'],
             'working_hours.*.ends_at' => ['required', 'date_format:H:i'],
+            'hourly_rate' => ['nullable', 'numeric', 'min:0', 'max:'.config('booking.pricing.max_rate')],
+            'rates' => ['nullable', 'array', 'max:'.config('booking.pricing.max_rates')],
+            'rates.*' => ['array'],
         ];
     }
 
@@ -62,6 +65,8 @@ class BookingResourceRequest extends FormRequest
         $data = $this->validated();
         $data['is_active'] = (bool) $data['is_active'];
         $data['tenant_user_id'] = isset($data['tenant_user_id']) ? (int) $data['tenant_user_id'] : null;
+        $data['hourly_rate'] = $data['hourly_rate'] ?? null;
+        $data['rates'] = $this->input('rates') ?? [];
 
         return $data;
     }

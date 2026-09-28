@@ -36,6 +36,7 @@ enum OrderStatus: string
             ? match ($fulfilment) {
                 'pickup' => 'Ready for pickup',
                 'delivery' => 'Out for delivery',
+                'dine_in' => 'Ready to serve',
                 default => 'Ready',
             }
         : $this->label();

@@ -57,6 +57,29 @@ return [
             'create' => 'Create orders',
             'update' => 'Update orders',
         ],
+        'offers' => [
+            'view' => 'View offers and coupon codes',
+            'manage' => 'Create, edit and delete offers and coupon codes',
+        ],
+        'courses' => [
+            'view' => 'View courses and batches',
+            'manage' => 'Create, edit and delete courses and batches',
+        ],
+        'students' => [
+            'view' => 'View students, demo classes and attendance',
+            'admit' => 'Admit students and schedule demo classes',
+            'update' => 'Update enrolments, drop or complete students',
+            'attendance' => 'Take class attendance',
+        ],
+        'fees' => [
+            'view' => 'View fees and dues',
+            'collect' => 'Record and remove fee payments',
+            'manage' => 'Change fee plans, discounts and instalments',
+        ],
+        'reservations' => [
+            'view' => 'View table reservations and tables',
+            'manage' => 'Create and update reservations, manage tables',
+        ],
         'conversations' => [
             'view' => 'View the inbox and conversations',
             'reply' => 'Reply, send templates, close and reopen conversations',
@@ -109,6 +132,7 @@ return [
             'description' => 'Runs day-to-day operations.',
             'permissions' => [
                 'customers.*', 'leads.*', 'services.*', 'resources.*', 'appointments.*', 'products.*', 'orders.*',
+                'offers.*', 'courses.*', 'students.*', 'fees.*', 'reservations.*',
                 'conversations.*', 'automation.*', 'website.*', 'ai.*', 'reports.view', 'users.view', 'settings.view',
             ],
         ],
@@ -120,6 +144,7 @@ return [
                 'leads.view', 'leads.create', 'leads.update',
                 'services.view', 'resources.view',
                 'appointments.*', 'orders.view', 'orders.create',
+                'offers.view', 'courses.view', 'students.view', 'students.admit', 'fees.view', 'fees.collect', 'reservations.*',
                 'conversations.view', 'conversations.reply',
                 'ai.use',
             ],
@@ -132,6 +157,7 @@ return [
                 'leads.view', 'leads.create', 'leads.update', 'leads.assign',
                 'services.view', 'resources.view',
                 'appointments.view', 'appointments.create',
+                'courses.view', 'students.view', 'students.admit', 'reservations.view',
                 'conversations.view', 'conversations.reply',
                 'ai.use',
             ],
@@ -141,6 +167,7 @@ return [
             'description' => 'Sees their schedule and assigned customers.',
             'permissions' => [
                 'customers.view', 'services.view', 'resources.view', 'appointments.view', 'appointments.update',
+                'courses.view', 'students.view', 'students.attendance', 'reservations.view',
             ],
         ],
         'accountant' => [
@@ -148,6 +175,7 @@ return [
             'description' => 'Views orders and financial reports.',
             'permissions' => [
                 'customers.view', 'services.view', 'products.view', 'orders.view', 'reports.view',
+                'offers.view', 'courses.view', 'students.view', 'fees.view',
             ],
         ],
     ],

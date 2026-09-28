@@ -18,6 +18,7 @@ import Timeline from '@/modules/crm/Timeline';
 import ActivityComposer from '@/modules/crm/ActivityComposer';
 import LeadSuggestions from '@/modules/ai/LeadSuggestions';
 import SummaryCard from '@/modules/ai/SummaryCard';
+import LeadCoachingCard from '@/modules/education/LeadCoachingCard';
 import useTenant from '@/hooks/useTenant';
 import { formatDateTime, formatMoney, formatRelative, isOverdue } from '@/utils/format';
 
@@ -60,7 +61,7 @@ function StageBar({ lead, stages, canUpdate, onMove }) {
     );
 }
 
-export default function Show({ lead, activities, stages, members, activityTypes, ai }) {
+export default function Show({ lead, activities, stages, members, activityTypes, ai, education = null }) {
     const { timezone, currency, can, hasModule } = useTenant();
     const { errors } = usePage().props;
     const actionError = errors.lead_stage_id ?? errors.lost_reason ?? errors.assigned_tenant_user_id;
@@ -238,6 +239,8 @@ export default function Show({ lead, activities, stages, members, activityTypes,
                 </div>
 
                 <div className="space-y-4">
+                    {education ? <LeadCoachingCard lead={lead} education={education} /> : null}
+
                     <Card variant="outlined">
                         <CardContent>
                             <h2 className="font-semibold text-slate-900">Details</h2>

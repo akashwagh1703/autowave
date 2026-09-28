@@ -3,8 +3,10 @@
 namespace App\Domain\Website\Services;
 
 use App\Domain\Commerce\Actions\PlaceOrder;
+use App\Domain\Commerce\Models\Coupon;
 use App\Domain\Commerce\Models\Order;
 use App\Domain\Commerce\Models\Product;
+use App\Domain\Commerce\Services\Coupons;
 use App\Domain\Commerce\Services\OrderPricing;
 use App\Domain\Commerce\Support\CommerceSettings;
 use App\Domain\Tenant\Support\TenantContext;
@@ -30,6 +32,7 @@ class OnlineShop
         private readonly CommerceSettings $settings,
         private readonly OrderPricing $pricing,
         private readonly PlaceOrder $placeOrder,
+        private readonly Coupons $coupons,
     ) {}
 
     public function isOpen(): bool
@@ -44,9 +47,11 @@ class OnlineShop
     /**
      * What the visitor sees before checking out: server prices, stock problems and fees.
      *
-     * @return array{lines: list<array<string, mixed>>, subtotal: string, delivery_fee: string, total: string, min_order: ?string, issues: list<string>, can_checkout: bool}
+     * A coupon code that does not apply is reported in `coupon_error` and ignored (it never blocks checkout).
+     *
+     * @return array{lines: list<array<string, mixed>>, subtotal: string, discount: string, coupon: ?array{code: string, summary: string}, coupon_error: ?string, delivery_fee: string, total: string, min_order: ?string, issues: list<string>, can_checkout: bool}
      */
-    public function quote(mixed $items, ?string $fulfilment): array
+    public function quote(mixed $items, ?string $fulfilment, ?string $couponCode = null): array
     {
         $priced = $this->pricing->lines(OrderPricing::normalize($items));
         $online = $this->settings->online();
@@ -59,6 +64,17 @@ class OnlineShop
             $issues[] = __('The minimum order is :amount.', ['amount' => $online['min_order']]);
         }
 
+        $coupon = null;
+        $couponError = null;
+
+        try {
+            $coupon = $this->coupons->resolve($couponCode, $priced['subtotal'], online: true);
+        } catch (ValidationException $exception) {
+            $couponError = collect($exception->errors())->flatten()->first();
+        }
+
+        $discount = $coupon['discount'] ?? '0.00';
+
         return [
             'lines' => array_map(fn (array $line) => [
                 'product_id' => $line['product_id'],
@@ -70,8 +86,11 @@ class OnlineShop
                 'issue' => $line['issue'],
             ], $priced['lines']),
             'subtotal' => $priced['subtotal'],
+            'discount' => $discount,
+            'coupon' => $coupon ? ['code' => $coupon['coupon']->code, 'summary' => $coupon['coupon']->summary()] : null,
+            'coupon_error' => $couponError,
             'delivery_fee' => $deliveryFee,
-            'total' => bcadd($priced['subtotal'], $deliveryFee, 2),
+            'total' => bcadd(bcsub($priced['subtotal'], $discount, 2), $deliveryFee, 2),
             'min_order' => $online['min_order'],
             'issues' => $issues,
             'can_checkout' => $issues === [],
@@ -88,6 +107,7 @@ class OnlineShop
             'fulfilment' => ['required', 'string'],
             'delivery_address' => ['nullable', 'string', 'max:500'],
             'notes' => ['nullable', 'string', 'max:500'],
+            'coupon_code' => ['nullable', 'string', 'max:30'],
             'items' => ['required', 'array'],
         ], [
             'phone.regex' => __('Enter a valid phone number.'),
@@ -105,6 +125,7 @@ class OnlineShop
             'fulfilment' => $data['fulfilment'],
             'delivery_address' => $data['delivery_address'] ?? null,
             'notes' => $data['notes'] ?? null,
+            'coupon_code' => $data['coupon_code'] ?? null,
             'source' => 'website',
         ]);
     }
@@ -126,6 +147,7 @@ class OnlineShop
             'delivery_note' => $online['delivery_note'],
             'max_quantity' => (int) config('commerce.limits.max_quantity'),
             'max_items' => (int) config('commerce.limits.items_per_order'),
+            'coupons' => $this->coupons->enabled() && Coupon::query()->where('is_active', true)->where('online', true)->exists(),
         ];
     }
 }

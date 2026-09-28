@@ -20,9 +20,11 @@ return [
     /*
     | How an order reaches the customer. `staff_only` methods are not offered on
     | the website. Online ordering offers pickup and/or delivery (tenant setting).
+    | `engine` methods are only offered to tenants with that engine.
     */
     'fulfilment' => [
         'in_store' => ['label' => 'In store', 'staff_only' => true],
+        'dine_in' => ['label' => 'Dine-in', 'staff_only' => true, 'engine' => 'food'],
         'pickup' => ['label' => 'Pickup'],
         'delivery' => ['label' => 'Delivery'],
     ],

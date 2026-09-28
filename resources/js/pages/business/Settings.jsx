@@ -43,6 +43,16 @@ export default function Settings({ business, branding, profile, website, domains
                                 Order settings
                             </Button>
                         ) : null}
+                        {hasEngine('food') ? (
+                            <Button component={Link} href="/settings/food" variant="outlined">
+                                Reservation settings
+                            </Button>
+                        ) : null}
+                        {hasEngine('education') ? (
+                            <Button component={Link} href="/settings/education" variant="outlined">
+                                Coaching settings
+                            </Button>
+                        ) : null}
                         {hasModule('leads') ? (
                             <Button component={Link} href="/settings/crm" variant="outlined">
                                 CRM settings

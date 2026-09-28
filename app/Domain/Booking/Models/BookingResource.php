@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * Anything that can be booked for a period of time: a stylist, a doctor, a turf, a room (ADR-014).
  * The business type names it (`booking_resource_label`). A resource may be linked to a team member.
  */
-#[Fillable(['tenant_id', 'tenant_user_id', 'name', 'description', 'color', 'is_active', 'sort_order'])]
+#[Fillable(['tenant_id', 'tenant_user_id', 'name', 'description', 'color', 'hourly_rate', 'rates', 'is_active', 'sort_order'])]
 #[UseFactory(BookingResourceFactory::class)]
 class BookingResource extends Model
 {
@@ -39,7 +39,15 @@ class BookingResource extends Model
     {
         return [
             'is_active' => 'boolean',
+            'hourly_rate' => 'decimal:2',
+            'rates' => 'array',
         ];
+    }
+
+    /** Whether bookings without a service get a price from this resource's rates. */
+    public function hasRates(): bool
+    {
+        return $this->hourly_rate !== null || ! empty($this->rates);
     }
 
     public function member(): BelongsTo

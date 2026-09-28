@@ -5,7 +5,9 @@ import TextField from '@mui/material/TextField';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useEffect, useState } from 'react';
+import useTenant from '@/hooks/useTenant';
 import { addDays, formatDay, getJson } from '@/utils/booking';
+import { formatPrice } from '@/utils/format';
 
 const PERIODS = [
     { label: 'Morning', test: (time) => time < '12:00' },
@@ -18,6 +20,7 @@ const PERIODS = [
  * time off and existing bookings in the tenant timezone); a custom time can still be typed.
  */
 export default function SlotPicker({ resourceId, serviceId, duration, ignoreId, date, time, today, onDateChange, onTimeChange, error }) {
+    const { currency } = useTenant();
     const [state, setState] = useState({ loading: false, slots: [], windows: [], failed: false });
     const ready = Boolean(resourceId && date && (serviceId || duration));
 
@@ -95,6 +98,7 @@ export default function SlotPicker({ resourceId, serviceId, duration, ignoreId, 
                                             className={`rounded-md border px-3 py-1.5 text-sm transition ${time === slot.time ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-200 bg-white text-slate-800 hover:border-brand-400'}`}
                                         >
                                             {slot.time}
+                                            {slot.price != null ? <span className="ml-1 text-xs opacity-80">· {formatPrice(slot.price, currency)}</span> : null}
                                         </button>
                                     ))}
                                 </div>

@@ -11,6 +11,7 @@ use App\Domain\Booking\Models\BookingResource;
 use App\Domain\Booking\Models\TimeOff;
 use App\Domain\Booking\Services\Availability;
 use App\Domain\Booking\Support\BookingSettings;
+use App\Domain\Booking\Support\ResourceRates;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Service\Models\Service;
 use App\Domain\Tenant\Models\TenantUser;
@@ -188,7 +189,7 @@ class AppointmentController extends Controller
 
     public function show(Request $request, Appointment $appointment): Response
     {
-        $appointment->load(['customer', 'resource', 'service', 'creator:id,name']);
+        $appointment->load(['customer', 'resource', 'service', 'creator:id,name', 'payments.recorder:id,name']);
         $started = $appointment->starts_at->isPast();
 
         return Inertia::render('business/appointments/Show', [
@@ -207,6 +208,7 @@ class AppointmentController extends Controller
                 ->get()
                 ->map(fn (Activity $activity) => CrmPresenter::activity($activity)),
             'resources' => $appointment->status->isActive() ? $this->options->resources($appointment->booking_resource_id) : [],
+            'paymentMethods' => collect(config('commerce.payment_methods'))->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])->values(),
         ]);
     }
 
@@ -239,8 +241,14 @@ class AppointmentController extends Controller
         $ignore = ! empty($validated['ignore']) ? Appointment::query()->whereKey($validated['ignore'])->value('id') : null;
         $day = CarbonImmutable::parse($validated['date'], TenantTime::timezone())->startOfDay();
 
+        $slots = $duration > 0 ? $this->availability->slots($resource, $validated['date'], $duration, $ignore) : [];
+
+        if (! $service && $resource->hasRates()) {
+            $slots = array_map(fn (array $slot) => [...$slot, 'price' => ResourceRates::quote($resource, CarbonImmutable::parse($slot['starts_at']), CarbonImmutable::parse($slot['ends_at']))], $slots);
+        }
+
         return response()->json([
-            'slots' => $duration > 0 ? $this->availability->slots($resource, $validated['date'], $duration, $ignore) : [],
+            'slots' => $slots,
             'windows' => array_map(fn (array $window) => ['starts_at' => $window[0]->format('H:i'), 'ends_at' => $window[1]->format('H:i')], $this->availability->windowsOn($resource, $day)),
             'duration' => $duration,
             'interval' => $this->settings->slotInterval(),

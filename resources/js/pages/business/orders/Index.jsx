@@ -154,8 +154,11 @@ export default function Index({ orders, filters: initialFilters, counts, statuse
                                             </p>
                                         </TableCell>
                                         <TableCell>
-                                            <span className="text-slate-900">{order.customer?.name}</span>
-                                            <p className="text-xs text-slate-500">{order.customer?.phone ?? ''}</p>
+                                            <span className="text-slate-900">{order.customer?.name ?? (order.table ? `Walk-in · ${order.table.name}` : 'Walk-in')}</span>
+                                            <p className="text-xs text-slate-500">
+                                                {order.customer?.phone ?? ''}
+                                                {order.customer && order.table ? ` · ${order.table.name}` : ''}
+                                            </p>
                                         </TableCell>
                                         <TableCell className="hidden max-w-xs md:table-cell">
                                             <p className="truncate text-sm text-slate-700">{order.item_summary}</p>

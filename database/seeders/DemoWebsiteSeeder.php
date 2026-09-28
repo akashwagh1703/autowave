@@ -10,7 +10,7 @@ use Illuminate\Database\Seeder;
 use RuntimeException;
 
 /**
- * Local demo: website content for ABC Salon and ABC Turf (contact details, opening hours, social
+ * Local demo: website content for the demo tenants (contact details, opening hours, social
  * links, testimonials, offers and FAQs). Only fills values that are still empty, so edits made in
  * the website editor survive a re-run.
  */
@@ -52,6 +52,46 @@ class DemoWebsiteSeeder extends Seeder
                 'faq' => ['items' => [
                     ['question' => 'How many players per side?', 'answer' => 'Our turfs are sized for 5-a-side, up to 7 players per team.'],
                     ['question' => 'Do you provide balls and bibs?', 'answer' => 'Yes, both are free with every booking.'],
+                ]],
+            ],
+        ],
+        'abc-coaching' => [
+            'profile' => [
+                'whatsapp' => '+91 90000 11111',
+                'address' => '2nd floor, Vidya Complex, Kothrud',
+                'opening_hours' => "Mon–Sat: 7 am – 8 pm\nSunday: weekend batches only",
+            ],
+            'sections' => [
+                'hero' => ['headline' => 'Better marks, less stress', 'cta' => 'call'],
+                'faq' => ['items' => [
+                    ['question' => 'Can my child attend a demo class?', 'answer' => 'Yes. Send us an enquiry and we will book a free demo class in the right batch.'],
+                    ['question' => 'Can fees be paid in instalments?', 'answer' => 'Yes, most courses can be paid in two to four instalments.'],
+                ]],
+            ],
+        ],
+        'abc-cafe' => [
+            'profile' => [
+                'whatsapp' => '+91 90000 22222',
+                'address' => 'Lane 5, Prabhat Road',
+                'opening_hours' => 'Every day: 8 am – 11 pm',
+            ],
+            'sections' => [
+                'hero' => ['headline' => 'Great coffee, all-day breakfast', 'cta' => 'book'],
+                'offers' => ['items' => [
+                    ['title' => 'WELCOME10', 'description' => '10% off your first online order (up to ₹150).', 'price' => '10% off'],
+                ]],
+            ],
+        ],
+        'abc-store' => [
+            'profile' => [
+                'whatsapp' => '+91 90000 33333',
+                'address' => 'Shop 1, Green Park Society, Aundh',
+                'opening_hours' => 'Every day: 7 am – 10 pm',
+            ],
+            'sections' => [
+                'hero' => ['headline' => 'Your daily groceries, delivered', 'cta' => 'whatsapp'],
+                'offers' => ['items' => [
+                    ['title' => 'SAVE50', 'description' => '₹50 off orders over ₹999. Use the code at checkout.', 'price' => '₹50 off'],
                 ]],
             ],
         ],

@@ -288,10 +288,66 @@ Other changes:
   `automation_name` and `idempotency_key`.
 - New audit actions: `ai.settings_updated`, `ai.limit_updated`.
 
+## Additional verticals (Phase 10, `2026_10_04_100000`–`100300`) — ADR-020
+
+All new tables are tenant-owned (`BelongsToTenant`, `tenant_id` cascade on tenant delete), have unique
+(`id`, `tenant_id`) where referenced, and reference their parents with composite FKs.
+
+**Booking prices and payments (`2026_10_04_100000`)**
+
+| Table / column | Key columns |
+|---|---|
+| `booking_resources.hourly_rate` | decimal(12,2) null, CHECK ≥ 0 |
+| `booking_resources.rates` | jsonb null: list of `{label, weekdays[1-7], from, to (HH:MM, to ≤ 24:00), hourly_rate}` |
+| `appointments.amount_paid` | decimal(12,2) default 0, CHECK `0 ≤ amount_paid ≤ price` |
+| `appointment_payments` | `appointment_id` (composite FK, cascade), `amount` (> 0), `method` (20), `reference` (100), `paid_at`, `recorded_by_user_id` (null on delete) |
+
+**Education (`2026_10_04_100100`)**
+
+| Table | Key columns |
+|---|---|
+| `courses` | `name` (120, unique lower(name) per tenant among live rows), `description`, `fee` (≥ 0, null), `duration_label` (60), `is_active`, `sort_order`, soft deletes |
+| `batches` | `course_id`, `name`, `starts_on`/`ends_on`, `weekdays` jsonb, `start_time`/`end_time`, `capacity` (> 0, null), `teacher_tenant_user_id` (composite FK to `tenant_users`), `room` (60), `fee` (null = course fee), `is_active`, soft deletes; CHECK dates and times ordered |
+| `enrolments` | `customer_id`, `batch_id`, `lead_id` (null), `status` (`active\|completed\|dropped`), `enrolled_on`, `fee_total`, `discount` (≤ fee), `amount_paid` (≤ fee − discount), `notes`, `completed_at`, `dropped_at`, `created_by_user_id`. Partial unique (`tenant_id`, `batch_id`, `customer_id`) WHERE active |
+| `fee_instalments` | `enrolment_id` (cascade), `sequence` (unique per enrolment), `due_on`, `amount` (> 0), `amount_paid` (≤ amount), `reminded_at`, `overdue_notified_at` |
+| `fee_payments` | `enrolment_id` (cascade), `amount` (> 0), `method`, `reference`, `paid_at`, `recorded_by_user_id` |
+| `class_sessions` | `batch_id` (cascade), `held_on` (unique per batch), `topic` (150), `created_by_user_id` |
+| `attendance_records` | `class_session_id`, `enrolment_id` (both cascade; unique pair), `status` (`present\|absent\|late\|excused`) |
+| `demo_classes` | `lead_id` (cascade), `course_id`, `batch_id` (null), `scheduled_at`, `status` (`scheduled\|attended\|no_show\|cancelled`), `notes`, `created_by_user_id` |
+
+**Food (`2026_10_04_100200`)**
+
+| Table / column | Key columns |
+|---|---|
+| `products.food_type` | `veg\|non_veg\|egg` or null |
+| `products.is_available` | boolean default true ("sold out today") |
+| `dining_tables` | `name` (40, unique lower(name) per tenant among live rows), `seats` (1–100), `area` (40), `is_active`, `sort_order`, soft deletes |
+| `reservations` | `customer_id`, `dining_table_id` (null), `party_size` (1–100), `reserved_at`, `ends_at` (> reserved_at), `status` (`pending\|confirmed\|seated\|completed\|cancelled\|no_show`), `source` (`manual\|website`), `notes`, `cancellation_reason`, status timestamps, `created_by_user_id`. Exclusion constraint `reservations_no_overlap` (table × time range, live statuses) |
+| `orders.dining_table_id` | composite FK, null; CHECK only with `fulfilment = dine_in` |
+| `orders.customer_id` | now nullable; CHECK required unless `fulfilment = dine_in` |
+| `order_items.notes` / `kitchen_status` / `added_at` | `kitchen_status` `queued\|ready` or null; partial index on queued items |
+
+**Coupons (`2026_10_04_100300`)**
+
+| Table / column | Key columns |
+|---|---|
+| `coupons` | `code` (30, unique lower(code) per tenant among live rows), `description` (150), `type` (`percent\|fixed`), `value` (> 0, ≤ 100 for percent), `min_subtotal`, `max_discount`, `starts_at`/`ends_at`, `usage_limit`, `times_used`, `online`, `is_active`, soft deletes |
+| `orders.coupon_id` / `coupon_code` | composite FK (null) and the code as typed |
+
+Other changes:
+
+- Engines `education` and `food`; the catalogue module `offers` is offered to Cafe & Restaurant and Local
+  Commerce and backfilled once.
+- Permission groups `courses`, `students`, `fees`, `reservations`.
+- Tenant settings `education` (`default_instalments`, `reminder_days_before`) and `food`
+  (`reservations`: `online`, `auto_confirm`, `duration_minutes`, `opens`, `closes`, `slot_interval`,
+  `max_party_size`, `min_notice_minutes`, `max_days_ahead`).
+- Automation subjects `enrolment`, `fee`, `demo_class`, `reservation`.
+
 ## Deferred platform tables
 
 `feature_flags`, `custom_fields` — added with the first feature that needs them (AW-009).
 
-## Planned domain tables (Phase 10 onwards)
+## Planned domain tables (Phase 11 onwards)
 
 See `docs/01-product/master-prompt.md` §57. Implement only what the current phase needs.

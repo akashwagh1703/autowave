@@ -6,6 +6,7 @@ use App\Domain\Activity\Models\Activity;
 use App\Domain\Commerce\Enums\OrderStatus;
 use App\Domain\Commerce\Enums\PaymentStatus;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Food\Models\DiningTable;
 use App\Domain\Tenant\Concerns\BelongsToTenant;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -15,14 +16,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * A customer's order of products. `number` is sequential per tenant (#1001, #1002…). Items keep a
+ * A customer's order of products (a dine-in order may have no customer: a walk-in at a table).
+ * `number` is sequential per tenant (#1001, #1002…). Items keep a
  * copy of the product name and price at the time of the order. Never deleted: cancellation is a
  * status. Money columns always satisfy total = subtotal − discount + delivery_fee and
  * amount_paid ≤ total (database checks).
  */
 #[Fillable([
-    'tenant_id', 'number', 'customer_id', 'status', 'source', 'fulfilment', 'subtotal', 'discount',
-    'delivery_fee', 'total', 'amount_paid', 'payment_status', 'delivery_address', 'notes',
+    'tenant_id', 'number', 'customer_id', 'dining_table_id', 'status', 'source', 'fulfilment', 'subtotal', 'discount',
+    'coupon_id', 'coupon_code', 'delivery_fee', 'total', 'amount_paid', 'payment_status', 'delivery_address', 'notes',
     'confirmed_at', 'ready_at', 'completed_at', 'cancelled_at', 'cancellation_reason', 'created_by_user_id',
 ])]
 class Order extends Model
@@ -57,6 +59,16 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class)->orderBy('id');
+    }
+
+    public function table(): BelongsTo
+    {
+        return $this->belongsTo(DiningTable::class, 'dining_table_id')->withTrashed();
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class)->withTrashed();
     }
 
     public function payments(): HasMany

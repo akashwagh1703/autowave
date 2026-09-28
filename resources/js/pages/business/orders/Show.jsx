@@ -3,25 +3,22 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
-import MenuItem from '@mui/material/MenuItem';
+import Chip from '@mui/material/Chip';
 import TextField from '@mui/material/TextField';
+import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CallIcon from '@mui/icons-material/Call';
 import ChatIcon from '@mui/icons-material/Chat';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { useState } from 'react';
 import AppLayout from '@/layouts/AppLayout';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import Timeline from '@/modules/crm/Timeline';
+import AddItemsDialog from '@/modules/orders/AddItemsDialog';
 import { OrderStatusChip, PaymentChip } from '@/modules/orders/OrderChips';
+import PaymentDialog from '@/modules/payments/PaymentDialog';
+import PaymentsList from '@/modules/payments/PaymentsList';
 import useTenant from '@/hooks/useTenant';
-import { formatDateTime, formatPrice, toLocalInput } from '@/utils/format';
+import { formatDateTime, formatPrice } from '@/utils/format';
 
 function Row({ label, value, strong = false }) {
     return (
@@ -29,87 +26,6 @@ function Row({ label, value, strong = false }) {
             <dt>{label}</dt>
             <dd>{value}</dd>
         </div>
-    );
-}
-
-function PaymentDialog({ order, methods, open, onClose }) {
-    const { currency, timezone } = useTenant();
-    const form = useForm({ amount: order.balance, method: methods[0]?.value ?? 'cash', reference: '', paid_at: toLocalInput(new Date().toISOString(), timezone) });
-
-    const submit = (event) => {
-        event.preventDefault();
-        form.post(`/orders/${order.id}/payments`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                form.reset();
-                onClose();
-            },
-        });
-    };
-
-    return (
-        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-            <form onSubmit={submit} noValidate>
-                <DialogTitle>Record payment</DialogTitle>
-                <DialogContent className="space-y-4">
-                    <p className="text-sm text-slate-600">Balance due: {formatPrice(order.balance, currency)}</p>
-                    <TextField
-                        label="Amount"
-                        type="number"
-                        required
-                        fullWidth
-                        autoFocus
-                        value={form.data.amount}
-                        onChange={(event) => form.setData('amount', event.target.value)}
-                        error={Boolean(form.errors.amount)}
-                        helperText={form.errors.amount}
-                        slotProps={{ htmlInput: { min: 0.01, max: order.balance, step: '0.01' }, input: { startAdornment: <InputAdornment position="start">{currency}</InputAdornment> } }}
-                    />
-                    <TextField
-                        select
-                        label="Method"
-                        fullWidth
-                        value={form.data.method}
-                        onChange={(event) => form.setData('method', event.target.value)}
-                        error={Boolean(form.errors.method)}
-                        helperText={form.errors.method}
-                    >
-                        {methods.map((method) => (
-                            <MenuItem key={method.value} value={method.value}>
-                                {method.label}
-                            </MenuItem>
-                        ))}
-                    </TextField>
-                    <TextField
-                        label="Reference"
-                        fullWidth
-                        value={form.data.reference}
-                        onChange={(event) => form.setData('reference', event.target.value)}
-                        error={Boolean(form.errors.reference)}
-                        helperText={form.errors.reference ?? 'Optional, e.g. UPI transaction ID.'}
-                        slotProps={{ htmlInput: { maxLength: 100 } }}
-                    />
-                    <TextField
-                        label="Received"
-                        type="datetime-local"
-                        fullWidth
-                        value={form.data.paid_at}
-                        onChange={(event) => form.setData('paid_at', event.target.value)}
-                        error={Boolean(form.errors.paid_at)}
-                        helperText={form.errors.paid_at}
-                        slotProps={{ inputLabel: { shrink: true } }}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={onClose} color="inherit">
-                        Cancel
-                    </Button>
-                    <Button type="submit" variant="contained" disabled={form.processing}>
-                        Record payment
-                    </Button>
-                </DialogActions>
-            </form>
-        </Dialog>
     );
 }
 
@@ -145,9 +61,10 @@ function NotesForm({ order }) {
     );
 }
 
-export default function Show({ order, transitions, activities, paymentMethods }) {
+export default function Show({ order, transitions, activities, paymentMethods, products = [], kitchen = false }) {
     const { timezone, currency, can } = useTenant();
     const { errors } = usePage().props;
+    const [addingItems, setAddingItems] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [cancelling, setCancelling] = useState(false);
     const [reason, setReason] = useState('');
@@ -196,7 +113,8 @@ export default function Show({ order, transitions, activities, paymentMethods })
                         <PaymentChip order={order} size="medium" />
                     </div>
                     <p className="mt-1 text-sm text-slate-600">
-                        {formatDateTime(order.created_at, timezone)} · {order.fulfilment_label} · {order.source_label}
+                        {formatDateTime(order.created_at, timezone)} · {order.fulfilment_label}
+                        {order.table ? ` · ${order.table.name}` : ''} · {order.source_label}
                         {order.creator ? ` · by ${order.creator.name}` : ''}
                     </p>
                 </div>
@@ -226,9 +144,9 @@ export default function Show({ order, transitions, activities, paymentMethods })
                 ) : null}
             </div>
 
-            {errors.status || errors.amount ? (
+            {errors.status || errors.amount || errors.order ? (
                 <Alert severity="error" className="mb-4">
-                    {errors.status ?? errors.amount}
+                    {errors.status ?? errors.amount ?? errors.order}
                 </Alert>
             ) : null}
 
@@ -236,13 +154,22 @@ export default function Show({ order, transitions, activities, paymentMethods })
                 <div className="space-y-4 lg:col-span-2">
                     <Card variant="outlined">
                         <CardContent>
-                            <h2 className="font-semibold text-slate-900">Items</h2>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <h2 className="font-semibold text-slate-900">Items</h2>
+                                {canUpdate && products.length > 0 ? (
+                                    <Button size="small" startIcon={<AddIcon />} onClick={() => setAddingItems(true)}>
+                                        Add items
+                                    </Button>
+                                ) : null}
+                            </div>
                             <ul className="mt-3 divide-y divide-slate-100">
                                 {order.items.map((item) => (
                                     <li key={item.id} className="flex items-center justify-between gap-3 py-2 text-sm">
                                         <div className="min-w-0">
                                             <p className="text-slate-900">
                                                 {item.quantity} × {item.product_name}
+                                                {kitchen && item.kitchen_status === 'queued' ? <Chip label="In kitchen" size="small" color="warning" variant="outlined" className="ml-2" /> : null}
+                                                {kitchen && item.kitchen_status === 'ready' ? <Chip label="Ready" size="small" color="success" variant="outlined" className="ml-2" /> : null}
                                             </p>
                                             <p className="text-xs text-slate-500">
                                                 {formatPrice(item.unit_price, currency)} each
@@ -256,7 +183,9 @@ export default function Show({ order, transitions, activities, paymentMethods })
                             </ul>
                             <dl className="mt-3 space-y-1 border-t border-slate-200 pt-3">
                                 <Row label="Subtotal" value={formatPrice(order.subtotal, currency)} />
-                                {Number(order.discount) > 0 ? <Row label="Discount" value={`− ${formatPrice(order.discount, currency)}`} /> : null}
+                                {Number(order.discount) > 0 ? (
+                                    <Row label={order.coupon_code ? `Discount (coupon ${order.coupon_code})` : 'Discount'} value={`− ${formatPrice(order.discount, currency)}`} />
+                                ) : null}
                                 {order.fulfilment === 'delivery' ? <Row label="Delivery" value={formatPrice(order.delivery_fee, currency)} /> : null}
                                 <Row label="Total" value={formatPrice(order.total, currency)} strong />
                                 <Row label="Paid" value={formatPrice(order.amount_paid, currency)} />
@@ -268,31 +197,7 @@ export default function Show({ order, transitions, activities, paymentMethods })
                     <Card variant="outlined">
                         <CardContent>
                             <h2 className="font-semibold text-slate-900">Payments</h2>
-                            {order.payments.length === 0 ? (
-                                <p className="mt-2 text-sm text-slate-500">No payments recorded.</p>
-                            ) : (
-                                <ul className="mt-2 divide-y divide-slate-100">
-                                    {order.payments.map((payment) => (
-                                        <li key={payment.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                                            <div>
-                                                <p className="text-slate-900">
-                                                    {formatPrice(payment.amount, currency)} · {payment.method_label}
-                                                    {payment.reference ? <span className="text-slate-500"> · {payment.reference}</span> : null}
-                                                </p>
-                                                <p className="text-xs text-slate-500">
-                                                    {formatDateTime(payment.paid_at, timezone)}
-                                                    {payment.recorded_by ? ` · recorded by ${payment.recorded_by}` : ''}
-                                                </p>
-                                            </div>
-                                            {canUpdate ? (
-                                                <IconButton size="small" aria-label="Remove payment" onClick={() => setRemoving(payment)}>
-                                                    <DeleteOutlineIcon fontSize="small" />
-                                                </IconButton>
-                                            ) : null}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
+                            <PaymentsList payments={order.payments} onRemove={canUpdate ? setRemoving : null} />
                             <p className="mt-3 text-xs text-slate-500">Payments are recorded by hand. Online payments are not available yet.</p>
                         </CardContent>
                     </Card>
@@ -309,6 +214,7 @@ export default function Show({ order, transitions, activities, paymentMethods })
                     <Card variant="outlined">
                         <CardContent>
                             <h2 className="font-semibold text-slate-900">Customer</h2>
+                            {!order.customer ? <p className="mt-2 text-sm text-slate-600">Walk-in guest{order.table ? ` at ${order.table.name}` : ''}.</p> : null}
                             <p className="mt-2 text-sm text-slate-900">
                                 {order.customer && can('customers.view') && !order.customer.deleted ? (
                                     <Link href={`/customers/${order.customer.id}`} className="font-medium text-brand-700 hover:underline">
@@ -318,7 +224,7 @@ export default function Show({ order, transitions, activities, paymentMethods })
                                     order.customer?.name
                                 )}
                             </p>
-                            <p className="text-sm text-slate-600">{order.customer?.phone ?? 'No phone number'}</p>
+                            {order.customer ? <p className="text-sm text-slate-600">{order.customer.phone ?? 'No phone number'}</p> : null}
                             {order.customer?.email ? <p className="text-sm text-slate-600">{order.customer.email}</p> : null}
                             <div className="mt-3 flex flex-wrap gap-2">
                                 {order.customer?.phone ? (
@@ -368,8 +274,10 @@ export default function Show({ order, transitions, activities, paymentMethods })
                 </div>
             </div>
 
+            {addingItems ? <AddItemsDialog order={order} products={products} open onClose={() => setAddingItems(false)} /> : null}
+
             {canUpdate && hasBalance ? (
-                <PaymentDialog key={order.balance} order={order} methods={paymentMethods} open={paying} onClose={() => setPaying(false)} />
+                <PaymentDialog key={order.balance} action={`/orders/${order.id}/payments`} balance={order.balance} methods={paymentMethods} open={paying} onClose={() => setPaying(false)} />
             ) : null}
 
             <ConfirmDialog

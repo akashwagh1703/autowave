@@ -148,6 +148,25 @@ Phase 9 (AI):
 | `ai_results (tenant_id, subject_type, subject_id, feature)` | Latest summary, pending draft or suggestions for a record page |
 | `ai_usage.user_id`, `ai_results.created_by_user_id` | FK side |
 
+Phase 10 (verticals):
+
+| Index / constraint | Serves |
+|---|---|
+| `(id, tenant_id)` unique on `courses`, `batches`, `enrolments`, `fee_instalments`, `class_sessions`, `demo_classes`, `dining_tables`, `reservations`, `coupons` | Targets of the composite FKs |
+| `courses_name_unique`, `dining_tables_name_unique`, `coupons_code_unique` partial unique `(tenant_id, lower(…)) WHERE deleted_at IS NULL` | Case-insensitive names/codes, reusable after delete |
+| `courses (tenant_id, is_active, sort_order)`, `batches (tenant_id, is_active)`, `dining_tables (tenant_id, is_active, sort_order)`, `coupons (tenant_id, is_active)` | Lists and pickers |
+| `enrolments_active_unique` partial unique `(tenant_id, batch_id, customer_id) WHERE status = 'active'` | One active enrolment per student and batch; race-safe admission |
+| `enrolments (tenant_id, status, enrolled_on)` | Students list tabs; admissions widget |
+| `fee_instalments (tenant_id, due_on)`, unique `(enrolment_id, sequence)` | Fees page, overdue widget, hourly `education:fee-reminders` |
+| `class_sessions (batch_id, held_on)` unique, `(tenant_id, held_on)` | One class per batch and day; attendance history |
+| `attendance_records (class_session_id, enrolment_id)` unique | Attendance upsert |
+| `demo_classes (tenant_id, scheduled_at)` | Upcoming / past demo lists; widget |
+| `reservations (tenant_id, reserved_at)`, `(tenant_id, status)` | Day list, today widget, assistant tool |
+| `reservations_no_overlap` EXCLUDE (int8range(table), tsrange(reserved_at, ends_at)) WHERE live | No double booking of a table |
+| `order_items_kitchen_queued` partial `(order_id) WHERE kitchen_status = 'queued'` | Kitchen screen and queue widget |
+| `fee_payments (tenant_id, paid_at)`, `appointment_payments (tenant_id, paid_at)` | Payment history and reports |
+| FK-side indexes on every new FK column (`course_id`, `batch_id`, `customer_id`, `lead_id`, `enrolment_id`, `dining_table_id`, `coupon_id`, `appointment_id`, `teacher_tenant_user_id`, `*_by_user_id`) | Cascades and joins |
+
 Text search uses `ILIKE '%…%'` on name/email and `LIKE '%digits%'` on `phone_normalized`; these scans
 are filtered by `tenant_id` first and are fine at current volumes. Add `pg_trgm` GIN indexes
 when a tenant's lead count makes the list slow.

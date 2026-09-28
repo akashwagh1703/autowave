@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getJson } from '@/utils/booking';
 
 /** Search existing customers by name, phone or email. */
-export default function CustomerPicker({ value, onChange, error, autoFocus = false, endpoint = '/appointments/customers' }) {
+export default function CustomerPicker({ value, onChange, error, autoFocus = false, endpoint = '/appointments/customers', label = 'Customer' }) {
     const [input, setInput] = useState('');
     const [options, setOptions] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -63,7 +63,7 @@ export default function CustomerPicker({ value, onChange, error, autoFocus = fal
             renderInput={(params) => (
                 <TextField
                     {...params}
-                    label="Customer"
+                    label={label}
                     autoFocus={autoFocus}
                     placeholder="Search name, phone or email"
                     error={Boolean(error)}

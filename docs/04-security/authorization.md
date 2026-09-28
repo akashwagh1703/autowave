@@ -25,6 +25,11 @@ resources.view  resources.manage
 appointments.view  appointments.create  appointments.update  appointments.cancel
 products.view  products.create  products.update  products.delete
 orders.view  orders.create  orders.update
+offers.view  offers.manage
+courses.view  courses.manage
+students.view  students.admit  students.update  students.attendance
+fees.view  fees.collect  fees.manage
+reservations.view  reservations.manage
 automation.view  automation.create  automation.update  automation.delete
 website.view  website.manage
 conversations.view  conversations.reply  conversations.assign
@@ -168,9 +173,26 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
     Accountant have none.
   - Settings → AI: view with `settings.view`, save with `settings.update`. The monthly allowance
     (`ai_quota`) is set only in Super Admin.
+- **Verticals (Phase 10, ADR-020):**
+  - Coaching routes need the `education` engine; cafe routes need `food` (the kitchen also `commerce`);
+    coupon routes need the `offers` module. Otherwise 404.
+  - `courses.manage` for courses and batches; `students.attendance` to take attendance;
+    `students.admit` to admit and schedule demos (demos also need the `leads` module); `students.update`
+    to drop, complete or edit; `fees.collect` for payments; `fees.manage` for fee plans and discounts.
+  - `reservations.manage` for tables and reservations; the kitchen screen needs `orders.view` and marking
+    ready `orders.update` (Staff has neither by default, AW-062). Adding items to a dine-in order needs
+    `orders.update`. Coupons: `offers.view` / `offers.manage`.
+  - Turf advances (`/appointments/{id}/payments`) need `appointments.update`.
+  - Default roles: Manager gets every new group; Receptionist views courses and students, admits,
+    views and collects fees, and manages reservations; Sales Executive views and admits, views
+    reservations; Staff views courses, students and reservations and takes attendance; Accountant views
+    courses, students, fees and offers.
+  - Settings → Coaching and Settings → Reservations: view with `settings.view`, save with
+    `settings.update`.
 - **New permission groups for existing tenants:** `RbacSeeder` updates the templates, but tenant roles are
   copies. `TenantBackfillSeeder` calls `ProvisionTenantRoles::grantNewPermissionGroups()` for `services`,
-  `resources`, `website`, `conversations` and `ai`:
+  `resources`, `website`, `conversations`, `ai`, `offers`, `courses`, `students`, `fees` and
+  `reservations`:
   - it gives each tenant role its template's permissions in those groups;
   - it runs once per tenant and group (recorded in the `rbac_backfilled_groups` setting);
   - it skips roles that already hold any permission of the group.

@@ -16,16 +16,19 @@ import { ActionButton, Card, Section, SectionHeading, useSite } from './site';
 const NAV = [
     { type: 'services', label: 'Services' },
     { type: 'products', label: 'Shop' },
+    { type: 'courses', label: 'Courses' },
     { type: 'team', label: 'Team' },
     { type: 'gallery', label: 'Gallery' },
     { type: 'offers', label: 'Offers' },
     { type: 'booking', label: 'Book' },
+    { type: 'reservation', label: 'Reserve' },
     { type: 'contact', label: 'Contact' },
 ];
 
 export function Header({ config }) {
     const { business, contact, theme, has, shop } = useSite();
     const links = NAV.filter((item) => has(item.type));
+    const book = has('booking') ? { href: '#booking', label: 'Book now' } : has('reservation') ? { href: '#reservation', label: 'Reserve a table' } : null;
 
     return (
         <header className="sticky top-0 z-20 border-b border-slate-100 bg-white/95 backdrop-blur">
@@ -45,12 +48,12 @@ export function Header({ config }) {
                 </nav>
                 <div className="flex shrink-0 items-center gap-2">
                     {config.show_call && contact.phone_href ? (
-                        <ActionButton href={contact.phone_href} variant={config.show_book && has('booking') ? 'secondary' : 'primary'} aria-label={`Call ${contact.phone}`}>
+                        <ActionButton href={contact.phone_href} variant={config.show_book && book ? 'secondary' : 'primary'} aria-label={`Call ${contact.phone}`}>
                             <CallIcon fontSize="small" />
                             <span className="hidden sm:inline">Call us</span>
                         </ActionButton>
                     ) : null}
-                    {config.show_book && has('booking') ? <ActionButton href="#booking">Book now</ActionButton> : null}
+                    {config.show_book && book ? <ActionButton href={book.href}>{book.label}</ActionButton> : null}
                     {shop ? <CartButton /> : null}
                 </div>
             </div>
@@ -97,6 +100,9 @@ export function Hero({ config, data }) {
 function heroCta(cta, contact, has) {
     if (cta === 'book' && has('booking')) {
         return { href: '#booking', label: 'Book now' };
+    }
+    if (cta === 'book' && has('reservation')) {
+        return { href: '#reservation', label: 'Reserve a table' };
     }
     if (cta === 'whatsapp' && contact.whatsapp_url) {
         return { href: contact.whatsapp_url, label: 'Chat on WhatsApp', external: true };

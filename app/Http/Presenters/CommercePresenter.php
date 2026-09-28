@@ -2,6 +2,7 @@
 
 namespace App\Http\Presenters;
 
+use App\Domain\Commerce\Actions\PlaceOrder;
 use App\Domain\Commerce\Enums\OrderStatus;
 use App\Domain\Commerce\Enums\PaymentStatus;
 use App\Domain\Commerce\Models\Order;
@@ -10,6 +11,7 @@ use App\Domain\Commerce\Models\OrderPayment;
 use App\Domain\Commerce\Models\Product;
 use App\Domain\Commerce\Models\ProductCategory;
 use App\Domain\Commerce\Models\StockMovement;
+use App\Domain\Tenant\Support\TenantContext;
 
 /**
  * Browser-safe shapes for product and order pages. Only fields listed here reach the frontend.
@@ -28,6 +30,9 @@ final class CommercePresenter
             'price' => (string) $product->price,
             'compare_at_price' => $product->compare_at_price !== null ? (string) $product->compare_at_price : null,
             'is_active' => $product->is_active,
+            'food_type' => $product->food_type,
+            'food_type_label' => $product->food_type ? config("food.food_types.{$product->food_type}") : null,
+            'is_available' => (bool) $product->is_available,
             'track_stock' => $product->track_stock,
             'stock_quantity' => $product->stock_quantity,
             'low_stock_threshold' => $product->low_stock_threshold,
@@ -87,6 +92,11 @@ final class CommercePresenter
             'fulfilment_label' => config("commerce.fulfilment.{$order->fulfilment}.label", $order->fulfilment),
             'subtotal' => (string) $order->subtotal,
             'discount' => (string) $order->discount,
+            'coupon_code' => $order->coupon_code,
+            'dining_table_id' => $order->dining_table_id,
+            'table' => $order->dining_table_id && $order->relationLoaded('table') && $order->table
+                ? ['id' => $order->table->id, 'name' => $order->table->name, 'deleted' => $order->table->trashed()]
+                : null,
             'delivery_fee' => (string) $order->delivery_fee,
             'total' => (string) $order->total,
             'amount_paid' => (string) $order->amount_paid,
@@ -136,6 +146,9 @@ final class CommercePresenter
             'unit_price' => (string) $item->unit_price,
             'quantity' => $item->quantity,
             'line_total' => (string) $item->line_total,
+            'notes' => $item->notes,
+            'kitchen_status' => $item->kitchen_status,
+            'added_at' => $item->added_at?->toIso8601String(),
             'product_available' => $item->relationLoaded('product') ? ($item->product !== null && ! $item->product->trashed()) : null,
         ];
     }
@@ -172,14 +185,22 @@ final class CommercePresenter
         return array_map(fn (string $value, string $label) => ['value' => $value, 'label' => $label], array_keys(config('commerce.payment_methods')), config('commerce.payment_methods'));
     }
 
-    /** @return list<array{value: string, label: string, staff_only: bool}> */
+    /** @return list<array{value: string, label: string, staff_only: bool}> methods the current tenant can use */
     public static function fulfilmentOptions(): array
     {
+        $methods = PlaceOrder::staffFulfilment(app(TenantContext::class));
+
         return array_map(
             fn (string $value, array $method) => ['value' => $value, 'label' => $method['label'], 'staff_only' => (bool) ($method['staff_only'] ?? false)],
-            array_keys(config('commerce.fulfilment')),
-            config('commerce.fulfilment'),
+            array_keys($methods),
+            $methods,
         );
+    }
+
+    /** @return list<array{value: string, label: string}> */
+    public static function foodTypes(): array
+    {
+        return array_map(fn (string $value, string $label) => ['value' => $value, 'label' => $label], array_keys(config('food.food_types')), config('food.food_types'));
     }
 
     /** @return list<array{value: string, label: string}> */

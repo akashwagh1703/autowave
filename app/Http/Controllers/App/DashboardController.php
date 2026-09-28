@@ -4,6 +4,8 @@ namespace App\Http\Controllers\App;
 
 use App\Domain\Booking\Services\BookingMetrics;
 use App\Domain\Commerce\Services\CommerceMetrics;
+use App\Domain\Education\Services\EducationMetrics;
+use App\Domain\Food\Services\FoodMetrics;
 use App\Domain\Lead\Services\CrmMetrics;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
@@ -19,6 +21,8 @@ class DashboardController extends Controller
         CrmMetrics $crmMetrics,
         BookingMetrics $bookingMetrics,
         CommerceMetrics $commerceMetrics,
+        EducationMetrics $educationMetrics,
+        FoodMetrics $foodMetrics,
     ): Response {
         $tenant = $context->tenant()->loadMissing(['businessType:id,code,name', 'primaryDomain']);
         $widgets = $context->setting('dashboard_widgets', []);
@@ -38,6 +42,8 @@ class DashboardController extends Controller
                     $bookingMetrics->for($request->user(), $widgets),
                     $commerceMetrics->for($request->user(), $widgets),
                 ),
+                ...$educationMetrics->for($request->user(), $widgets),
+                ...$foodMetrics->for($request->user(), $widgets),
             ],
         ]);
     }

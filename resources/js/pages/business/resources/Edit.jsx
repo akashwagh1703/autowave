@@ -16,6 +16,8 @@ export default function Edit({ resource, members, services, servicesEnabled }) {
         tenant_user_id: resource.tenant_user_id,
         service_ids: resource.service_ids ?? [],
         working_hours: resource.working_hours ?? [],
+        hourly_rate: resource.hourly_rate ?? '',
+        rates: resource.rates ?? [],
     });
 
     const submit = (event) => {

@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 #[Fillable([
     'tenant_id', 'customer_id', 'booking_resource_id', 'service_id', 'starts_at', 'ends_at', 'status',
-    'price', 'notes', 'source', 'confirmed_at', 'completed_at', 'cancelled_at', 'cancellation_reason',
+    'price', 'amount_paid', 'notes', 'source', 'confirmed_at', 'completed_at', 'cancelled_at', 'cancellation_reason',
     'no_show_at', 'created_by_user_id',
 ])]
 class Appointment extends Model
@@ -34,6 +34,7 @@ class Appointment extends Model
             'ends_at' => 'datetime',
             'status' => AppointmentStatus::class,
             'price' => 'decimal:2',
+            'amount_paid' => 'decimal:2',
             'confirmed_at' => 'datetime',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
@@ -64,6 +65,17 @@ class Appointment extends Model
     public function activities(): HasMany
     {
         return $this->hasMany(Activity::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(AppointmentPayment::class)->orderBy('paid_at')->orderBy('id');
+    }
+
+    /** What is still owed, or null when the appointment has no price. */
+    public function balance(): ?string
+    {
+        return $this->price === null ? null : bcsub((string) $this->price, (string) ($this->amount_paid ?? '0'), 2);
     }
 
     public function durationMinutes(): int

@@ -138,10 +138,10 @@ return [
             'version' => '1.0',
             'website_templates' => ['corporate', 'modern', 'minimal'],
             'engines' => ['education'],
-            'modules' => ['crm', 'leads', 'messaging', 'automation', 'website', 'ai'],
+            'modules' => ['crm', 'leads', 'customers', 'messaging', 'automation', 'website', 'ai'],
             'configuration' => [
                 'dashboard_widgets' => ['new_enquiries', 'admissions', 'students', 'fees_due', 'demo_classes'],
-                'website_sections' => ['header', 'hero', 'about', 'services', 'team', 'testimonials', 'faq', 'contact', 'footer'],
+                'website_sections' => ['header', 'hero', 'about', 'courses', 'team', 'testimonials', 'faq', 'contact', 'footer'],
                 'lead_stages' => [
                     ['code' => 'new', 'name' => 'New enquiry', 'color' => '#6366f1', 'outcome' => 'open'],
                     ['code' => 'contacted', 'name' => 'Contacted', 'color' => '#0ea5e9', 'outcome' => 'open'],
@@ -159,10 +159,11 @@ return [
             'version' => '1.0',
             'website_templates' => ['premium', 'elegant', 'modern'],
             'engines' => ['food', 'commerce'],
-            'modules' => ['crm', 'messaging', 'offers', 'automation', 'website', 'ai'],
+            'modules' => ['crm', 'customers', 'messaging', 'offers', 'automation', 'website', 'ai'],
             'configuration' => [
-                'dashboard_widgets' => ['orders_today', 'revenue_today', 'reservations_today', 'new_customers'],
-                'website_sections' => ['header', 'hero', 'about', 'products', 'gallery', 'offers', 'reviews', 'contact', 'footer'],
+                'dashboard_widgets' => ['orders_today', 'revenue_today', 'reservations_today', 'kitchen_queue', 'top_products', 'new_customers'],
+                'website_sections' => ['header', 'hero', 'about', 'products', 'reservation', 'gallery', 'offers', 'reviews', 'contact', 'footer'],
+                'commerce' => ['online' => ['pickup' => true, 'delivery' => false]],
             ],
         ],
         'clinic' => [
@@ -181,15 +182,15 @@ return [
             ],
         ],
         'local_store' => [
-            'name' => 'Local Store',
-            'description' => 'Retail and neighbourhood stores.',
+            'name' => 'Local Commerce',
+            'description' => 'Retail shops, kirana and neighbourhood stores selling in store and online.',
             'icon' => 'store',
             'version' => '1.0',
             'website_templates' => ['modern', 'minimal', 'corporate'],
             'engines' => ['commerce'],
-            'modules' => ['crm', 'customers', 'messaging', 'marketing', 'automation', 'website', 'inventory', 'ai'],
+            'modules' => ['crm', 'customers', 'messaging', 'marketing', 'offers', 'automation', 'website', 'inventory', 'ai'],
             'configuration' => [
-                'dashboard_widgets' => ['orders_today', 'revenue_today', 'low_stock', 'repeat_customers'],
+                'dashboard_widgets' => ['orders_today', 'revenue_today', 'low_stock', 'repeat_customers', 'top_products'],
                 'website_sections' => ['header', 'hero', 'about', 'products', 'offers', 'contact', 'footer'],
                 'commerce' => ['online' => ['pickup' => true, 'delivery' => true]],
             ],

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Automation\Support;
 
+use App\Domain\Education\Support\BatchSchedule;
 use App\Domain\Tenant\Models\TenantSetting;
 use Illuminate\Support\Str;
 
@@ -52,6 +53,19 @@ class TemplateRenderer
             'order.fulfilment' => $order ? config("commerce.fulfilment.{$order->fulfilment}.label", $order->fulfilment) : null,
             'conversation.channel' => $context->conversation ? config("messaging.channels.{$context->conversation->channel}.label", $context->conversation->channel) : null,
             'message.text' => $context->latestInboundText(),
+            'enrolment.course' => $context->enrolment()?->batch?->course?->name,
+            'enrolment.batch' => $context->enrolment()?->batch?->name,
+            'enrolment.schedule' => $context->enrolment()?->batch ? BatchSchedule::describe($context->enrolment()->batch) : null,
+            'enrolment.balance' => $context->enrolment() ? number_format((float) $context->enrolment()->balance(), 2) : null,
+            'fee.amount_due' => $context->fee() ? number_format((float) $context->fee()->due(), 2) : null,
+            'fee.due_date' => $context->fee()?->due_on->format('D, j M'),
+            'demo_class.date' => $context->demo()?->scheduled_at->setTimezone($timezone)->format('D, j M'),
+            'demo_class.time' => $context->demo()?->scheduled_at->setTimezone($timezone)->format('g:i A'),
+            'demo_class.course' => $context->demo()?->course?->name,
+            'reservation.date' => $context->reservation()?->reserved_at->setTimezone($timezone)->format('D, j M'),
+            'reservation.time' => $context->reservation()?->reserved_at->setTimezone($timezone)->format('g:i A'),
+            'reservation.party_size' => $context->reservation()?->party_size,
+            'reservation.table' => $context->reservation()?->table?->name,
             default => null,
         };
     }

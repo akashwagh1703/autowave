@@ -4,7 +4,11 @@ namespace App\Domain\Website\Services;
 
 use App\Domain\Booking\Models\BookingResource;
 use App\Domain\Booking\Support\BookingSettings;
+use App\Domain\Booking\Support\ResourceRates;
 use App\Domain\Commerce\Models\Product;
+use App\Domain\Education\Models\Batch;
+use App\Domain\Education\Models\Course;
+use App\Domain\Education\Support\BatchSchedule;
 use App\Domain\Media\Models\Media;
 use App\Domain\Service\Models\Service;
 use App\Domain\Tenant\Support\TenantContext;
@@ -29,6 +33,7 @@ class WebsiteContent
         private readonly OnlineBooking $booking,
         private readonly BookingSettings $bookingSettings,
         private readonly OnlineShop $shop,
+        private readonly OnlineReservations $reservations,
     ) {}
 
     /** @return array<string, mixed> */
@@ -69,6 +74,7 @@ class WebsiteContent
             'sections' => $sections,
             'booking' => in_array('booking', $types, true) ? $this->bookingProps() : null,
             'shop' => in_array('products', $types, true) && $this->shop->isOpen() ? $this->shop->props() : null,
+            'reservation' => in_array('reservation', $types, true) ? $this->reservations->props() : null,
             'enquiry' => in_array('contact', $types, true) ? $this->enquiryProps($sections) : null,
         ];
     }
@@ -114,7 +120,9 @@ class WebsiteContent
             'hero' => ['image' => Media::query()->inCollection('hero')->first()?->url()],
             'about' => filled($config['body'] ?? null) || filled($business['description']) ? [] : false,
             'booking' => $this->booking->isOpen() ? [] : false,
+            'reservation' => $this->reservations->isOpen() ? [] : false,
             default => match ($source) {
+                'courses' => $this->courses(),
                 'services' => $this->services(),
                 'team' => $this->team(),
                 'gallery' => Media::query()->inCollection('gallery')->get()
@@ -180,11 +188,42 @@ class WebsiteContent
                     'price' => (string) $product->price,
                     'compare_at_price' => $product->compare_at_price !== null ? (string) $product->compare_at_price : null,
                     'image' => $product->image?->url(),
-                    'in_stock' => $product->isInStock(),
+                    'in_stock' => $product->isInStock() && $product->is_available,
                     'max_quantity' => $product->track_stock ? min($product->available(), $max) : $max,
+                    'food_type' => $product->food_type,
                 ])->values()->all(),
             ])
             ->values()
+            ->all();
+    }
+
+    /**
+     * Active courses with their active batches (public timings and fees only; no teacher or room).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function courses(): array
+    {
+        if (! $this->context->hasEngine('education')) {
+            return [];
+        }
+
+        return Course::query()->active()->ordered()
+            ->with(['batches' => fn ($query) => $query->active()->orderBy('name')])
+            ->get()
+            ->map(fn (Course $course) => [
+                'id' => $course->id,
+                'name' => $course->name,
+                'description' => $course->description,
+                'duration_label' => $course->duration_label,
+                'fee' => $course->fee !== null ? (string) $course->fee : null,
+                'batches' => $course->batches->map(fn (Batch $batch) => [
+                    'name' => $batch->name,
+                    'schedule' => BatchSchedule::describe($batch),
+                    'starts_on' => $batch->starts_on?->toDateString(),
+                    'fee' => $batch->fee !== null ? (string) $batch->fee : null,
+                ])->values()->all(),
+            ])
             ->all();
     }
 
@@ -251,6 +290,7 @@ class WebsiteContent
                 'name' => $resource->name,
                 'color' => $resource->color,
                 'service_ids' => $resource->services->pluck('id')->all(),
+                ...($this->booking->usesServices() ? [] : ResourceRates::summary($resource)),
             ])->values()->all(),
         ];
     }
@@ -265,9 +305,11 @@ class WebsiteContent
 
         return [
             'enabled' => $this->context->hasModule('leads') && (bool) ($contact['config']['show_form'] ?? false),
-            'interests' => $this->context->hasEngine('service')
-                ? Service::query()->active()->ordered()->pluck('name')->all()
-                : [],
+            'interests' => match (true) {
+                $this->context->hasEngine('service') => Service::query()->active()->ordered()->pluck('name')->all(),
+                $this->context->hasEngine('education') => Course::query()->active()->ordered()->pluck('name')->all(),
+                default => [],
+            },
         ];
     }
 }

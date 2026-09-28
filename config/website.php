@@ -83,6 +83,30 @@ return [
                 'show_prices' => ['type' => 'boolean', 'label' => 'Show prices', 'default' => true, 'help' => 'Prices are always shown in the cart.'],
             ],
         ],
+        'courses' => [
+            'label' => 'Courses',
+            'description' => 'Your active courses and batches with timings, straight from Courses.',
+            'engine' => 'education',
+            'data' => 'courses',
+            'empty_hint' => 'Add active courses to show this section.',
+            'fields' => [
+                'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Our courses'],
+                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300, 'ai' => true],
+                'show_fees' => ['type' => 'boolean', 'label' => 'Show fees', 'default' => true],
+                'show_batches' => ['type' => 'boolean', 'label' => 'Show batch timings', 'default' => true],
+                'show_enquire' => ['type' => 'boolean', 'label' => 'Show an "Enquire / book a demo" button', 'default' => true, 'module' => 'leads'],
+            ],
+        ],
+        'reservation' => [
+            'label' => 'Table reservation',
+            'description' => 'Visitors request a table for a date, time and party size. Uses Settings → Reservations.',
+            'engine' => 'food',
+            'fields' => [
+                'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Reserve a table'],
+                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300, 'ai' => true],
+                'success_message' => ['type' => 'text', 'label' => 'Message after the request', 'max' => 200, 'default' => 'Thank you! We have received your reservation request.'],
+            ],
+        ],
         'packages' => [
             'label' => 'Packages',
             'description' => 'Bundles of services and products.',

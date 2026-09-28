@@ -8,6 +8,7 @@ use App\Domain\Booking\Models\Appointment;
 use App\Domain\Booking\Models\BookingResource;
 use App\Domain\Booking\Services\Availability;
 use App\Domain\Booking\Support\BookingSettings;
+use App\Domain\Booking\Support\ResourceRates;
 use App\Domain\Service\Models\Service;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Requests\Onboarding\StoreBusinessRequest;
@@ -24,7 +25,8 @@ use Illuminate\Validation\ValidationException;
  * - Offered when the tenant has the booking engine, online booking is on and at least one active
  *   resource with working hours exists (and, with the service engine, a service it offers).
  * - With the service engine the visitor picks a service (its duration and price apply); without
- *   it a booking lasts one slot interval (e.g. an hour on a turf).
+ *   it a booking lasts one slot interval (e.g. an hour on a turf) and is priced from the
+ *   resource's rates (ADR-020).
  * - "Any available" tries each resource offering the service in order until one is free.
  * - Minimum notice and how far ahead come from the tenant's online booking settings.
  * - BookAppointment keeps its double-booking guarantees; website bookings start pending unless
@@ -90,9 +92,10 @@ class OnlineBooking
 
     /**
      * Free start times on a local date for a service (or one slot interval) with a resource, or
-     * with any resource offering it.
+     * with any resource offering it. Without a service, `price` is the lowest rate-based price among
+     * the resources free at that time (`price_varies` when they differ).
      *
-     * @return list<array{starts_at: string, time: string}>
+     * @return list<array{starts_at: string, time: string, price: ?string, price_varies: bool}>
      */
     public function slots(?int $serviceId, ?int $resourceId, string $date): array
     {
@@ -108,9 +111,23 @@ class OnlineBooking
 
         foreach ($this->candidates($service, $resourceId) as $resource) {
             foreach ($this->availability->slots($resource, $date, $this->duration($service)) as $slot) {
-                if (CarbonImmutable::parse($slot['starts_at']) >= $earliest) {
-                    $slots[$slot['starts_at']] = ['starts_at' => $slot['starts_at'], 'time' => $slot['time']];
+                if (CarbonImmutable::parse($slot['starts_at']) < $earliest) {
+                    continue;
                 }
+
+                $price = $service ? null : ResourceRates::quote($resource, CarbonImmutable::parse($slot['starts_at']), CarbonImmutable::parse($slot['ends_at']));
+                $existing = $slots[$slot['starts_at']] ?? null;
+
+                $slots[$slot['starts_at']] = [
+                    'starts_at' => $slot['starts_at'],
+                    'time' => $slot['time'],
+                    'price' => match (true) {
+                        $existing === null => $price,
+                        $existing['price'] === null || $price === null => $existing['price'] ?? $price,
+                        default => bccomp($price, $existing['price'], 2) < 0 ? $price : $existing['price'],
+                    },
+                    'price_varies' => $existing !== null && ($existing['price_varies'] || $existing['price'] !== $price),
+                ];
             }
         }
 

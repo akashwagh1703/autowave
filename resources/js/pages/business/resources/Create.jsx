@@ -18,6 +18,8 @@ export default function Create({ members, services, servicesEnabled, defaultHour
         tenant_user_id: null,
         service_ids: services.map((service) => service.id),
         working_hours: defaultHours,
+        hourly_rate: '',
+        rates: [],
     });
 
     const submit = (event) => {

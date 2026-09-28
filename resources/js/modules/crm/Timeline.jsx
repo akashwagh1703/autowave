@@ -22,7 +22,9 @@ import LanguageIcon from '@mui/icons-material/Language';
 import LocalShippingIcon from '@mui/icons-material/LocalShippingOutlined';
 import PaymentsIcon from '@mui/icons-material/PaymentsOutlined';
 import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCartOutlined';
+import SchoolIcon from '@mui/icons-material/SchoolOutlined';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBagOutlined';
+import TableRestaurantIcon from '@mui/icons-material/TableRestaurantOutlined';
 import useTenant from '@/hooks/useTenant';
 import { formatDateTime, formatPrice, formatRelative, humanize } from '@/utils/format';
 
@@ -56,7 +58,61 @@ const icons = {
     order_cancelled: RemoveShoppingCartIcon,
     payment_recorded: PaymentsIcon,
     payment_removed: PaymentsIcon,
+    order_items_added: ShoppingBagIcon,
+    admitted: SchoolIcon,
+    enrolment_active: SchoolIcon,
+    enrolment_completed: TaskAltIcon,
+    enrolment_dropped: ThumbDownOffAltIcon,
+    fee_paid: PaymentsIcon,
+    fee_payment_removed: PaymentsIcon,
+    demo_scheduled: EventIcon,
+    demo_attended: EventAvailableIcon,
+    demo_no_show: EventBusyIcon,
+    demo_cancelled: EventBusyIcon,
+    reservation_created: TableRestaurantIcon,
+    reservation_confirmed: EventAvailableIcon,
+    reservation_seated: TableRestaurantIcon,
+    reservation_completed: TaskAltIcon,
+    reservation_cancelled: EventBusyIcon,
+    reservation_no_show: EventBusyIcon,
+    reservation_table_assigned: TableRestaurantIcon,
 };
+
+const enrolmentVerbs = {
+    enrolment_active: 're-activated',
+    enrolment_completed: 'marked as completed',
+    enrolment_dropped: 'marked as dropped',
+};
+
+const demoVerbs = {
+    demo_attended: 'marked as attended',
+    demo_no_show: 'marked as a no-show',
+    demo_cancelled: 'cancelled',
+};
+
+const reservationVerbs = {
+    reservation_confirmed: 'confirmed',
+    reservation_seated: 'seated',
+    reservation_completed: 'completed',
+    reservation_cancelled: 'cancelled',
+    reservation_no_show: 'marked as a no-show',
+};
+
+function enrolmentLabel(meta) {
+    return [meta.course, meta.batch].filter(Boolean).join(' · ') || 'the course';
+}
+
+function demoLabel(meta, timezone) {
+    const when = meta.scheduled_at ? formatDateTime(meta.scheduled_at, timezone, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : null;
+
+    return `the demo class${meta.course ? ` for ${meta.course}` : ''}${when ? ` on ${when}` : ''}`;
+}
+
+function reservationLabel(meta, timezone) {
+    const when = meta.reserved_at ? formatDateTime(meta.reserved_at, timezone, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : null;
+
+    return `the table for ${meta.party_size ?? '?'}${when ? ` on ${when}` : ''}${meta.table ? ` (${meta.table})` : ''}`;
+}
 
 const orderVerbs = {
     order_confirmed: 'confirmed',
@@ -120,13 +176,39 @@ function describe(activity, timezone, currency) {
         return `${orderVerbs[activity.type]} ${orderLabel(meta)}`;
     }
 
+    if (enrolmentVerbs[activity.type]) {
+        return `${enrolmentVerbs[activity.type]} in ${enrolmentLabel(meta)}`;
+    }
+
+    if (demoVerbs[activity.type]) {
+        return `${demoVerbs[activity.type]} ${demoLabel(meta, timezone)}`;
+    }
+
+    if (reservationVerbs[activity.type]) {
+        return `${reservationVerbs[activity.type]} ${reservationLabel(meta, timezone)}`;
+    }
+
     switch (activity.type) {
+        case 'admitted':
+            return `admitted the student to ${enrolmentLabel(meta)}`;
+        case 'fee_paid':
+            return `recorded a fee payment of ${formatPrice(meta.amount, currency)}${meta.method_label ? ` (${meta.method_label})` : ''} for ${enrolmentLabel(meta)}`;
+        case 'fee_payment_removed':
+            return `removed a fee payment of ${formatPrice(meta.amount, currency)} from ${enrolmentLabel(meta)}`;
+        case 'demo_scheduled':
+            return `scheduled ${demoLabel(meta, timezone)}`;
+        case 'reservation_created':
+            return `reserved ${reservationLabel(meta, timezone)}${meta.source === 'website' ? ' online' : ''}`;
+        case 'reservation_table_assigned':
+            return `updated ${reservationLabel(meta, timezone)}`;
+        case 'order_items_added':
+            return `added ${meta.added || 'items'} to ${orderLabel(meta)}`;
         case 'order_placed':
             return `placed ${orderLabel(meta)}${meta.source === 'website' ? ' on the website' : ''}${meta.items ? `: ${meta.items}` : ''}`;
         case 'payment_recorded':
-            return `recorded a payment of ${formatPrice(meta.amount, currency)}${meta.method_label ? ` (${meta.method_label})` : ''} for ${orderLabel(meta)}`;
+            return `recorded a payment of ${formatPrice(meta.amount, currency)}${meta.method_label ? ` (${meta.method_label})` : ''} for ${activity.appointment_id ? appointmentLabel(meta, timezone) : orderLabel(meta)}`;
         case 'payment_removed':
-            return `removed a payment of ${formatPrice(meta.amount, currency)} from ${orderLabel(meta)}`;
+            return `removed a payment of ${formatPrice(meta.amount, currency)} from ${activity.appointment_id ? appointmentLabel(meta, timezone) : orderLabel(meta)}`;
         case 'created':
             if (activity.lead_id) {
                 return `created the lead${meta.source ? ` from ${meta.source}` : ''}`;
@@ -146,6 +228,18 @@ function describe(activity, timezone, currency) {
 
             if (meta.via === 'online_order') {
                 return 'added the customer from a website order';
+            }
+
+            if (meta.via === 'admission') {
+                return 'added the customer while admitting a student';
+            }
+
+            if (meta.via === 'reservation') {
+                return 'added the customer while booking a table';
+            }
+
+            if (meta.via === 'online_reservation') {
+                return 'added the customer from an online table booking';
             }
 
             return meta.lead_name ? `added the customer when converting ${meta.lead_name}` : 'added the customer';

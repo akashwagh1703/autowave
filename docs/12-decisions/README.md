@@ -26,3 +26,4 @@ Format: **Title, Status, Date, Context, Decision, Alternatives, Consequences.**
 | [ADR-017](ADR-017-commerce-engine.md) | Commerce engine: server-priced orders, a locked stock ledger, manual payments | Accepted |
 | [ADR-018](ADR-018-messaging-channels.md) | Messaging channels: per-business Meta apps, stored webhooks, one compliance gate | Accepted |
 | [ADR-019](ADR-019-ai-features.md) | AI features: OpenRouter behind one gateway, drafts never sent, metered monthly cap | Accepted |
+| [ADR-020](ADR-020-additional-verticals.md) | Additional verticals: education and food engines, turf rates, coupons | Accepted |
