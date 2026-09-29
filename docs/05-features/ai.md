@@ -130,6 +130,9 @@ Automation messages may use only the placeholders of the chosen trigger; the mod
 | `provider` (`AI_PROVIDER`) | `openrouter` | `openrouter` or `fake` (sample answers, no network) |
 | `openrouter.api_key` (`OPENROUTER_API_KEY`) | — | Platform key; server-side only |
 | `openrouter.model` (`OPENROUTER_MODEL`) | `openai/gpt-4o-mini` | Default model |
+| `openrouter.timeout` (`OPENROUTER_TIMEOUT`) | 30 | Seconds to wait for an answer |
+| `openrouter.reasoning` (`OPENROUTER_REASONING`) | — | `off`, `low`, `medium`, `high`; empty = model default |
+| `job_timeout` | `OPENROUTER_TIMEOUT` + 30, at least 60 | Timeout of queued jobs that call AI; must be below the queue's `retry_after` |
 | `features.*` | — | Per feature: label, `max_tokens`, `temperature`, optional `model` |
 | `limits.monthly_tokens` (`AI_MONTHLY_TOKENS`) | 300000 | Default monthly allowance per business |
 | `limits.per_minute` | 20 | AI requests per user per minute (`throttle:ai`) |

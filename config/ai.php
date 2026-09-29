@@ -30,7 +30,10 @@ return [
         'api_key' => env('OPENROUTER_API_KEY'),
         'base_url' => env('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
         'model' => env('OPENROUTER_MODEL', 'openai/gpt-4o-mini'),
-        'timeout' => 30,
+        // Seconds to wait for an answer. Free models can queue for a minute or more.
+        'timeout' => (int) env('OPENROUTER_TIMEOUT', 30),
+        // off | low | medium | high. Empty sends nothing, so the model's own default applies.
+        'reasoning' => env('OPENROUTER_REASONING'),
         // Sent as HTTP-Referer / X-Title so OpenRouter can attribute usage to the app.
         'referer' => env('APP_URL'),
         'title' => env('APP_NAME', 'AutoWave'),
@@ -109,5 +112,7 @@ return [
     'queue' => env('AI_QUEUE', 'ai'),
     'tries' => 2,
     'backoff' => [60],
+    // Seconds a queued job that calls AI may run. The queue's retry_after must be larger (autowave:health checks).
+    'job_timeout' => max(60, (int) env('OPENROUTER_TIMEOUT', 30) + 30),
 
 ];

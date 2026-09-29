@@ -70,7 +70,21 @@ Details: [openrouter.md](../06-integrations/openrouter.md).
    OPENROUTER_MODEL=openai/gpt-4o-mini
    ```
 
-3. `optimize` + `queue:restart` (the worker already listens on the `ai` queue).
+   A free `:free` model (no credits) instead needs longer timeouts in `.env` and Nginx, and answers take
+   1–2 minutes — see [Slow and free models](../06-integrations/openrouter.md#slow-and-free-models):
+
+   ```dotenv
+   OPENROUTER_MODEL=nvidia/nemotron-3.5-lightning:free
+   OPENROUTER_TIMEOUT=120
+   OPENROUTER_REASONING=off
+   REDIS_QUEUE_RETRY_AFTER=200
+   ```
+
+   and `fastcgi_read_timeout 150s;` in the PHP `location` of `/etc/nginx/sites-available/autowave-platform`,
+   then `sudo nginx -t && sudo systemctl reload nginx`.
+
+3. `optimize` + `queue:restart` (the worker already listens on the `ai` queue), then
+   `php artisan autowave:health` (fails if `REDIS_QUEUE_RETRY_AFTER` is too small).
 4. Check: Super Admin → AI usage shows "OpenRouter · configured"; in a business, AI reply drafts and the
    assistant answer with real text (not "sample answer").
 5. Customer messages are sent to OpenRouter without redaction (AW-055); mention it in the privacy policy.

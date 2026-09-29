@@ -21,6 +21,7 @@ class HealthCheckCommand extends Command
             'Database' => fn () => $this->checkDatabase(),
             'Redis' => fn () => $this->checkRedis(),
             'Cache' => fn () => $this->checkCache(),
+            'Queue' => fn () => $this->checkQueue(),
         ];
 
         $failed = false;
@@ -63,5 +64,22 @@ class HealthCheckCommand extends Command
         }
 
         return 'store: '.config('cache.default');
+    }
+
+    /**
+     * A job still running when retry_after passes is handed out again, so an automation step could
+     * send the same message twice.
+     */
+    private function checkQueue(): string
+    {
+        $connection = (string) config('queue.default');
+        $retryAfter = config("queue.connections.{$connection}.retry_after");
+        $jobTimeout = (int) config('ai.job_timeout');
+
+        if ($retryAfter !== null && (int) $retryAfter <= $jobTimeout) {
+            throw new \RuntimeException("retry_after ({$retryAfter}s) must be larger than the AI job timeout ({$jobTimeout}s); raise REDIS_QUEUE_RETRY_AFTER");
+        }
+
+        return sprintf('%s, job timeout %ds', $connection, $jobTimeout);
     }
 }

@@ -39,6 +39,7 @@ class OpenRouterProvider implements AIProvider
             'temperature' => $request->temperature,
             'response_format' => $request->json ? ['type' => 'json_object'] : null,
             'tools' => $request->tools !== [] ? array_map(fn (array $tool) => ['type' => 'function', 'function' => $tool], $request->tools) : null,
+            'reasoning' => $this->reasoning(),
             'usage' => ['include' => true],
         ], fn ($value) => $value !== null);
 
@@ -81,6 +82,20 @@ class OpenRouterProvider implements AIProvider
             cost: is_numeric($response->json('usage.cost')) ? (float) $response->json('usage.cost') : null,
             model: $response->json('model'),
         );
+    }
+
+    /**
+     * @return array<string, bool|string>|null
+     */
+    private function reasoning(): ?array
+    {
+        $setting = strtolower(trim((string) config('ai.openrouter.reasoning')));
+
+        return match ($setting) {
+            'off' => ['enabled' => false],
+            'low', 'medium', 'high' => ['effort' => $setting],
+            default => null,
+        };
     }
 
     /**

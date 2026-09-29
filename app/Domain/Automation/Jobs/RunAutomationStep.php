@@ -17,10 +17,14 @@ class RunAutomationStep implements ShouldQueue
 
     public int $tries;
 
+    // AI summary and draft steps call the AI provider from inside the step.
+    public int $timeout;
+
     public function __construct(public readonly int $automationJobId)
     {
         $this->onQueue(config('automation.queue'));
         $this->tries = (int) config('automation.tries');
+        $this->timeout = (int) config('ai.job_timeout');
     }
 
     /** @return list<int> */

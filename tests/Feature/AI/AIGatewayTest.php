@@ -39,6 +39,7 @@ class AIGatewayTest extends TestCase
                 && $request['model'] === 'openai/gpt-4o-mini'
                 && $request['max_tokens'] === 350
                 && $request['usage'] === ['include' => true]
+                && ! isset($request['reasoning'])
                 && str_contains($request['messages'][1]['content'], 'Are you open today evening?')
                 && ! str_contains(json_encode($request->data()), self::OPENROUTER_KEY);
         });
@@ -64,6 +65,25 @@ class AIGatewayTest extends TestCase
             ['id' => 'call_1', 'name' => 'leads', 'arguments' => ['stage' => 'new']],
             ['id' => 'call_2', 'name' => 'business_overview', 'arguments' => []],
         ], $response->toolCalls);
+    }
+
+    public function test_reasoning_can_be_switched_off_or_limited(): void
+    {
+        $this->useOpenRouter(['openrouter.ai/*' => Http::response($this->completion('"Hi"'))]);
+        $tenant = $this->createTenant();
+        $chat = fn () => $this->inTenant($tenant, fn () => app(AIGateway::class)->chat(ChatRequest::for('copy', [['role' => 'user', 'content' => 'Hi']])));
+
+        config(['ai.openrouter.reasoning' => 'off']);
+        $chat();
+        Http::assertSent(fn (Request $request) => $request['reasoning'] === ['enabled' => false]);
+
+        config(['ai.openrouter.reasoning' => ' Low ']);
+        $chat();
+        Http::assertSent(fn (Request $request) => $request['reasoning'] === ['effort' => 'low']);
+
+        config(['ai.openrouter.reasoning' => 'maximum']);
+        $chat();
+        $this->assertFalse(isset(Http::recorded()->last()[0]['reasoning']));
     }
 
     public function test_provider_errors_are_classified_and_metered_as_failed(): void

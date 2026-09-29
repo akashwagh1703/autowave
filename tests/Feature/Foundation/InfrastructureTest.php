@@ -16,4 +16,15 @@ class InfrastructureTest extends TestCase
     {
         $this->artisan('autowave:health')->assertSuccessful();
     }
+
+    public function test_health_command_fails_when_ai_jobs_could_outlive_retry_after(): void
+    {
+        config(['queue.default' => 'redis', 'queue.connections.redis.retry_after' => 90, 'ai.job_timeout' => 150]);
+
+        $this->artisan('autowave:health')->assertFailed();
+
+        config(['queue.connections.redis.retry_after' => 200]);
+
+        $this->artisan('autowave:health')->assertSuccessful();
+    }
 }

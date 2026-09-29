@@ -52,6 +52,8 @@ Template: `.env.example`. Never commit `.env`. Production secrets live only on t
 | `META_GRAPH_VERSION` | `v21.0` | `v21.0` | Meta Graph API version |
 | `AI_PROVIDER` | `openrouter` | `openrouter` (or `fake` until a key is set) | AI provider (ADR-019) |
 | `OPENROUTER_API_KEY` / `OPENROUTER_MODEL` | empty / `openai/gpt-4o-mini` | secret / same | OpenRouter key (server only) and default model |
+| `OPENROUTER_TIMEOUT` / `OPENROUTER_REASONING` | `30` / empty | same | Seconds to wait; `off`/`low`/`medium`/`high`. Above 30 s see [openrouter.md](../06-integrations/openrouter.md#slow-and-free-models) |
+| `REDIS_QUEUE_RETRY_AFTER` | `90` | `90`, or more than `OPENROUTER_TIMEOUT` + 30 | Must exceed the AI job timeout (`autowave:health` checks) |
 | `AI_MONTHLY_TOKENS` / `AI_AUTO_EXTRACT` / `AI_QUEUE` | `300000` / `true` / `ai` | same | AI cap per business, automatic lead extraction, queue |
 | `AWS_*` | empty | DigitalOcean Spaces (future) | S3-compatible storage |
 | `VITE_APP_NAME` | `${APP_NAME}` | same | App name available to frontend at build time |

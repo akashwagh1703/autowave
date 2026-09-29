@@ -26,11 +26,14 @@ class ExtractLeadFromConversation implements ShouldBeUnique, ShouldQueue
 
     public int $tries;
 
+    public int $timeout;
+
     public function __construct(public readonly int $tenantId, public readonly int $conversationId)
     {
         $this->onQueue(config('ai.queue'));
         $this->afterCommit();
         $this->tries = (int) config('ai.tries');
+        $this->timeout = (int) config('ai.job_timeout');
     }
 
     public function uniqueId(): string
