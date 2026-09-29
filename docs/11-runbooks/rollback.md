@@ -1,15 +1,28 @@
 # Runbook: Rollback
 
+- **Last updated:** 2026-09-30
+
 ## Code rollback (no destructive migration)
 
 ```bash
-cd /var/www/autowave
-ls -dt releases/*                      # newest first
-PREV=$(ls -dt releases/* | sed -n 2p)
-ln -sfn "$PWD/$PREV" current
-sudo systemctl reload php8.4-fpm
-cd current && php artisan config:cache && php artisan route:cache && php artisan queue:restart
-php artisan autowave:health
+sudo -iu autowave /var/www/autowave-platform/deploy.sh releases    # the live one is marked
+sudo -iu autowave /var/www/autowave-platform/deploy.sh rollback
+sudo -u autowave php8.4 /var/www/autowave-platform/current/artisan autowave:health
+```
+
+`rollback` switches `current` to the release before the live one, re-caches its config (so `.env` edits
+made since then apply), restarts the queue worker and smoke-tests `/up`. Run it again to go back further
+(the last 5 releases are kept). To return to the newest release, deploy again.
+
+By hand, if the script is unavailable:
+
+```bash
+cd /var/www/autowave-platform
+ls -1d releases/* | sort -r                        # newest first
+PREV=$(ls -1d releases/* | sort -r | sed -n 2p)
+sudo -u autowave bash -c "cd $PREV && php8.4 artisan optimize"
+sudo -u autowave ln -sfn "$PWD/$PREV" current.new && sudo -u autowave mv -Tf current.new current
+sudo -u autowave php8.4 current/artisan queue:restart
 ```
 
 ## Migration rollback
@@ -17,7 +30,7 @@ php artisan autowave:health
 Only if the release's migrations are reversible and no new data depends on them:
 
 ```bash
-php artisan migrate:rollback --step=<n> --force    # run from the NEW release before switching back
+sudo -u autowave php8.4 artisan migrate:rollback --step=<n> --force   # from the NEW release, before switching back
 ```
 
 If a migration was destructive, restore from backup instead (`restore-database.md`) — this loses data written

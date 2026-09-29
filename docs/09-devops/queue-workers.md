@@ -1,6 +1,6 @@
 # Queue workers and scheduler
 
-- **Last updated:** 2026-10-03 (Phase 9: `ai` queue)
+- **Last updated:** 2026-09-30 (production worker and scheduler)
 - **Related:** [ADR-015](../12-decisions/ADR-015-automation-engine.md), [redis.md](redis.md), [supervisor.md](supervisor.md)
 
 Automations and messages only run when **a queue worker and the scheduler are both running**. Without the
@@ -65,16 +65,51 @@ exhausts its tries fails immediately (AW-032).
 
 ## Production
 
-Run the Supervisor programs in [supervisor.md](supervisor.md): the high-priority worker includes
-`automation,messaging`. Add the cron entry for `schedule:run`. After every deploy:
+One worker process for all queues, in priority order, run by systemd (the 2 GB server has no room for
+more; see AW-065). It exits after an hour or 128 MB and systemd starts it again, on the release `current`
+points to at that moment.
+
+`/etc/systemd/system/autowave-platform-worker.service`:
+
+```ini
+[Unit]
+Description=AutoWave Platform queue worker
+After=network.target redis-server.service postgresql.service
+
+[Service]
+User=autowave
+Group=autowave
+WorkingDirectory=/var/www/autowave-platform/current
+ExecStart=/usr/bin/php8.4 /var/www/autowave-platform/current/artisan queue:work redis --queue=automation,messaging,notifications,default,ai,reports,media --sleep=3 --tries=3 --max-time=3600 --memory=128
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
 
 ```bash
-php artisan queue:restart
+systemctl daemon-reload && systemctl enable --now autowave-platform-worker
+systemctl status autowave-platform-worker
+journalctl -u autowave-platform-worker -n 100      # worker output
 ```
+
+Scheduler, `/etc/cron.d/autowave-platform` (mode 644):
+
+```cron
+* * * * * autowave cd /var/www/autowave-platform/current && /usr/bin/php8.4 artisan schedule:run >> /dev/null 2>&1
+```
+
+Check it with `sudo -u autowave php8.4 /var/www/autowave-platform/current/artisan schedule:list`.
+
+The deploy script runs `php artisan queue:restart` after switching releases; the worker finishes its
+current job, exits and systemd restarts it on the new code. After editing `shared/.env`, run
+`php8.4 artisan optimize && php8.4 artisan queue:restart` as `autowave`.
 
 Monitor:
 
-- Redis queue length: `LLEN queues:automation`, `LLEN queues:messaging`.
+- Redis queue length: `redis-cli -n 2 LLEN awp_queues:automation` (production uses DB 2 and prefix
+  `awp_`; locally `autowave_database_queues:automation` in DB 0).
 - `failed_jobs`.
 - Runs and messages with status `failed` (Run history, filter "Failed").
 - Run-log warnings and errors, which are copied to the application log as `automation.<event>` with the

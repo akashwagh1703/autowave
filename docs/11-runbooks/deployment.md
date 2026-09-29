@@ -1,17 +1,29 @@
 # Runbook: Deployment
 
-1. Confirm CI is green on the commit to deploy (`main`).
-2. Read `CHANGELOG.md` / PR for risky migrations. If any: take a manual backup first (`backup.md` → manual backup).
-3. SSH to the server as `autowave` and run the deploy script (`docs/09-devops/deployment.md`).
-4. Verify:
+- **Last updated:** 2026-09-30 (validated in production)
+- **Details:** [docs/09-devops/deployment.md](../09-devops/deployment.md)
+
+1. Confirm CI is green on the commit to deploy and that it is pushed to GitHub (`master`).
+2. Read `CHANGELOG.md` for risky migrations. If any: take a manual backup first ([backup.md](backup.md)).
+3. On the server, as root or a sudoer:
+
    ```bash
-   cd /var/www/autowave/current
-   php artisan autowave:health
-   curl -fsS https://app.autowave.in/up
-   sudo supervisorctl status
-   php artisan queue:failed | head
-   tail -n 50 storage/logs/laravel-$(date +%F).log
+   sudo -iu autowave /var/www/autowave-platform/deploy.sh
    ```
-5. Smoke test: log in, open dashboard, open one tenant website.
+
+   It ends with `==> Deployed <sha> (master)` and `https://app.autowave.co.in/up answered 200`. On
+   failure before the switch the live site is untouched; read the error, fix, deploy again.
+4. Verify:
+
+   ```bash
+   cd /var/www/autowave-platform/current
+   sudo -u autowave php8.4 artisan autowave:health
+   systemctl is-active autowave-platform-worker
+   sudo -u autowave php8.4 artisan queue:failed | head
+   tail -n 50 storage/logs/laravel-$(date +%F).log 2>/dev/null
+   ```
+
+5. Smoke test in a private window: <https://admin.autowave.co.in> login, <https://app.autowave.co.in>
+   dashboard, one tenant website.
 6. If anything is wrong → [rollback.md](rollback.md).
-7. Record the deployment (date, commit, operator) in the release notes / CHANGELOG section.
+7. `deployments.log` records every deploy; add a CHANGELOG line for notable releases.

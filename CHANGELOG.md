@@ -8,6 +8,10 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- First production deployment at autowave.co.in (marketing, business app, Super Admin and tenant
+  websites on `*.autowave.co.in`, HTTPS with a wildcard certificate). `scripts/deploy.sh` builds a new
+  release from GitHub and switches to it with no downtime, keeps the last five, and rolls back with
+  `deploy.sh rollback`. Runbook for turning on email, AI and WhatsApp/Instagram in production.
 - Phase 10 Additional verticals:
   - **Coaching centres:** courses and batches (days, times, teacher, capacity, fee); admit students from
     an enquiry, an existing customer or a walk-in, with the fee split into instalments and an optional

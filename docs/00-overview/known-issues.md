@@ -43,8 +43,11 @@ with the date and commit/PR reference; do not delete it.
 - **Description:** DevOps and runbook documents were written from the target architecture before any
   server exists. Commands have not been executed against a real DigitalOcean VPS.
 - **Impact:** Procedures may need corrections on first real deployment.
-- **Status:** Open — validate and update during first staging deployment.
-- **Workaround:** Treat as a checklist; verify each step.
+- **Status:** Resolved 2026-09-30 — first production deployment (autowave.co.in). Deployment, nginx, SSL,
+  environment, queue-worker, PostgreSQL and Redis docs and the deployment, rollback, SSL and domain
+  runbooks were rewritten from what was actually run; `scripts/deploy.sh` added. Staging (no server) and
+  the failure/restore runbooks remain unexercised.
+- **Workaround:** —
 - **Affected:** `docs/09-devops/*`, `docs/11-runbooks/*`
 - **Created:** 2026-09-27
 
@@ -720,3 +723,51 @@ with the date and commit/PR reference; do not delete it.
 - **Status:** Open — add a preferred sending hour to Settings → Education.
 - **Affected:** `FeeReminders`, `SendFeeReminders`
 - **Created:** 2026-10-04
+
+### AW-065 — Production runs on a small server shared with other projects
+
+- **Category:** DevOps / Performance
+- **Description:** Production is a 1 vCPU / 1.9 GB droplet (plus 2 GB swap) that also hosts the owner's
+  older AutoWave micro-SaaS, playltp and a MinIO container. AutoWave runs lean: PHP-FPM on demand (max 4
+  processes), one queue worker for all queues, frontend builds using swap.
+- **Impact:** Slow deploys (5–10 minutes), limited concurrency, and one busy project can slow the others.
+  One worker means a long job delays automations and messages behind it.
+- **Status:** Open — resize to 2 vCPU / 4 GB before real traffic, then split the worker (high-priority
+  and default) as in `docs/09-devops/supervisor.md`.
+- **Affected:** Production server, `docs/09-devops/production.md`
+- **Created:** 2026-09-30
+
+### AW-066 — Production database backups are not automated
+
+- **Category:** DevOps / Data
+- **Description:** No daily off-server `pg_dump` job exists for `autowave_platform` yet.
+- **Impact:** Losing the server or the database loses all tenant data since the last manual dump.
+- **Status:** Open — set up the daily job and off-server copy in `docs/11-runbooks/backup.md` before
+  onboarding real businesses.
+- **Workaround:** Manual dump before risky deploys, copied off the server.
+- **Affected:** Production server
+- **Created:** 2026-09-30
+
+### AW-067 — Shared production server: firewall off, MinIO public, Redis without password
+
+- **Category:** Security / DevOps
+- **Description:** On the shared server UFW is inactive, the MinIO container (used by the older
+  micro-SaaS and playltp) publishes ports 9000–9001 to the internet, and Redis has no password.
+  PostgreSQL and Redis listen on localhost only.
+- **Impact:** Larger attack surface; any local process can read or write AutoWave's Redis queues.
+- **Status:** Open — enable UFW (22, 80, 443) keeping SSH open; restrict MinIO after checking how the
+  other projects use it (Docker bypasses UFW for published ports); set `requirepass` and update all
+  projects' Redis settings together.
+- **Affected:** Production server
+- **Created:** 2026-09-30
+
+### AW-068 — Marketing site has no privacy policy or terms pages
+
+- **Category:** Product / Compliance
+- **Description:** The marketing host serves only the home page. Meta apps need a privacy policy URL to go
+  Live (needed to receive real WhatsApp/Instagram webhooks), and customer data is processed by OpenRouter
+  (AW-055).
+- **Impact:** Businesses must supply their own privacy URL for their Meta app; no platform terms exist.
+- **Status:** Open — add `/privacy` and `/terms` to the marketing site.
+- **Affected:** `routes/web.php`, marketing pages
+- **Created:** 2026-09-30

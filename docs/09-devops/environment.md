@@ -1,6 +1,9 @@
 # Environment Variables
 
-Template: `.env.example`. Never commit `.env`. Production secrets live only on the server (`/var/www/autowave/shared/.env`).
+Template: `.env.example`. Never commit `.env`. Production secrets live only on the server
+(`/var/www/autowave-platform/shared/.env`, mode 600, owner `autowave`). The full production file is in
+[production.md](production.md#production-env). After editing it, run
+`php8.4 artisan optimize && php8.4 artisan queue:restart` as `autowave` in `current/`.
 
 | Variable | Local default | Production | Description |
 |---|---|---|---|
@@ -8,11 +11,11 @@ Template: `.env.example`. Never commit `.env`. Production secrets live only on t
 | `APP_ENV` | `local` | `production` | Environment name |
 | `APP_KEY` | generated | generated once, secret | Encryption key (`php artisan key:generate`) — rotating invalidates sessions/encrypted data |
 | `APP_DEBUG` | `true` | **`false`** | Detailed errors — must be false in production |
-| `APP_URL` | `http://app.autowave.localhost:8000` | `https://app.autowave.in` | Base URL for generated links (the business app host) |
-| `AUTOWAVE_ROOT_DOMAIN` | `autowave.localhost` | `autowave.in` | Tenant subdomains are `{slug}.{root}`; `www.{root}` redirects to marketing |
-| `AUTOWAVE_MARKETING_HOST` | `autowave.localhost` | `autowave.in` | Marketing site host |
-| `AUTOWAVE_APP_HOST` | `app.autowave.localhost` | `app.autowave.in` | Business app + Fortify auth host |
-| `AUTOWAVE_ADMIN_HOST` | `admin.autowave.localhost` | `admin.autowave.in` | Super Admin host |
+| `APP_URL` | `http://app.autowave.localhost:8000` | `https://app.autowave.co.in` | Base URL for generated links (the business app host) |
+| `AUTOWAVE_ROOT_DOMAIN` | `autowave.localhost` | `autowave.co.in` | Tenant subdomains are `{slug}.{root}`; `www.{root}` redirects to marketing |
+| `AUTOWAVE_MARKETING_HOST` | `autowave.localhost` | `autowave.co.in` | Marketing site host |
+| `AUTOWAVE_APP_HOST` | `app.autowave.localhost` | `app.autowave.co.in` | Business app + Fortify auth host |
+| `AUTOWAVE_ADMIN_HOST` | `admin.autowave.localhost` | `admin.autowave.co.in` | Super Admin host |
 | `AUTOWAVE_DOMAIN_CACHE_TTL` | `600` | `600` | Seconds a host → tenant lookup is cached |
 | `AUTOWAVE_ADMIN_NAME` / `AUTOWAVE_ADMIN_EMAIL` | `AutoWave Admin` / `admin@autowave.in` | real values | First platform admin (`PlatformAdminSeeder`) |
 | `AUTOWAVE_ADMIN_PASSWORD` | empty (random, printed once) | set once, then remove | First platform admin password; never changes an existing admin |
@@ -35,13 +38,21 @@ Template: `.env.example`. Never commit `.env`. Production secrets live only on t
 | `SESSION_SECURE_COOKIE` | `false` | **`true`** | Cookies only over HTTPS |
 | `BROADCAST_CONNECTION` | `log` | `log` | Broadcasting (unused) |
 | `FILESYSTEM_DISK` | `local` | `local` (later S3-compatible Spaces) | Default disk |
+| `WEBSITE_MEDIA_DISK` | `public` | `public` | Disk for website images; needs `storage:link` (the deploy script runs it) |
 | `QUEUE_CONNECTION` | `redis` | `redis` | Queue backend (ADR-004) |
 | `CACHE_STORE` | `redis` | `redis` | Cache backend |
-| `CACHE_PREFIX` | `autowave_cache_` | same | Cache key prefix |
-| `REDIS_CLIENT` | `predis` | `predis` or `phpredis` | Redis client library (ADR-009) |
-| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | `127.0.0.1` / `6379` / `null` | server values, password set | Redis connection |
-| `REDIS_PREFIX` | `autowave_database_` | same | Redis key prefix |
-| `MAIL_*` | `log` mailer | SMTP provider | Outgoing mail |
+| `CACHE_PREFIX` | `autowave_cache_` | `awp_cache_` | Cache key prefix |
+| `REDIS_CLIENT` | `predis` | `phpredis` | Redis client library (ADR-009) |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | `127.0.0.1` / `6379` / `null` | `127.0.0.1` / `6379` / `null` (AW-067) | Redis connection |
+| `REDIS_DB` / `REDIS_CACHE_DB` | `0` / `1` | `2` / `3` | Redis databases for queues and cache; production shares Redis with other projects |
+| `REDIS_PREFIX` | `autowave_database_` | `awp_` | Redis key prefix |
+| `MAIL_*` | `log` mailer | SMTP provider ([enable-integrations](../11-runbooks/enable-integrations.md)) | Outgoing mail |
+| `MESSAGING_WHATSAPP_PROVIDER` / `MESSAGING_INSTAGRAM_PROVIDER` | `log` | `log` | Fallback for businesses that have not connected the channel; connected channels always use Meta |
+| `MESSAGING_EMAIL_PROVIDER` | `mail` | `mail` | Email channel provider |
+| `META_GRAPH_VERSION` | `v21.0` | `v21.0` | Meta Graph API version |
+| `AI_PROVIDER` | `openrouter` | `openrouter` (or `fake` until a key is set) | AI provider (ADR-019) |
+| `OPENROUTER_API_KEY` / `OPENROUTER_MODEL` | empty / `openai/gpt-4o-mini` | secret / same | OpenRouter key (server only) and default model |
+| `AI_MONTHLY_TOKENS` / `AI_AUTO_EXTRACT` / `AI_QUEUE` | `300000` / `true` / `ai` | same | AI cap per business, automatic lead extraction, queue |
 | `AWS_*` | empty | DigitalOcean Spaces (future) | S3-compatible storage |
 | `VITE_APP_NAME` | `${APP_NAME}` | same | App name available to frontend at build time |
 

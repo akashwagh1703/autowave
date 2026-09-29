@@ -1,6 +1,6 @@
 # Current State
 
-_Last updated: 2026-10-04 — end of Phase 10 (additional verticals)._
+_Last updated: 2026-09-30 — Phase 10 complete; first production deployment._
 
 This document describes what **actually exists** in the repository today. Planned work is in
 [roadmap.md](roadmap.md).
@@ -315,6 +315,19 @@ This document describes what **actually exists** in the repository today. Planne
   `Commerce/CouponTest` (7), `Booking/TurfPricingTest` (9), `Tenancy/VerticalProvisioningTest` (5),
   `AI/VerticalAssistantToolsTest` (3) and a cafe automation provisioning test.
 
+### Production (2026-09-29)
+
+- **Live:** <https://autowave.co.in>, <https://app.autowave.co.in>, <https://admin.autowave.co.in> and
+  `https://{slug}.autowave.co.in`, on a DigitalOcean droplet shared with other projects
+  ([production.md](../09-devops/production.md)). Started clean: platform data and one Super Admin.
+- **Deploys:** `scripts/deploy.sh` builds atomic releases from GitHub `master` (migrate, cache, health
+  check, switch, worker restart, keep 5) and rolls back ([deployment.md](../09-devops/deployment.md)).
+- **Runs with:** Nginx and a Let's Encrypt wildcard certificate (DNS-01 via DigitalOcean), PHP-FPM 8.4
+  pool, PostgreSQL 16, shared Redis (DB 2/3), one systemd queue worker, cron scheduler.
+- **Not yet on:** real email (SMTP), OpenRouter and Meta per business — see
+  [enable-integrations.md](../11-runbooks/enable-integrations.md). Backups, firewall and server size:
+  AW-065–067.
+
 ## In progress
 
 - Nothing. Phase 10 is complete and awaiting approval before Phase 11.
@@ -346,4 +359,4 @@ This document describes what **actually exists** in the repository today. Planne
 
 ## Known technical debt
 
-See [known-issues.md](known-issues.md) (AW-001 → AW-064).
+See [known-issues.md](known-issues.md) (AW-001 → AW-068).

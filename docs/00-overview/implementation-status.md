@@ -1,6 +1,6 @@
 # Implementation Status
 
-_Last updated: 2026-10-03_
+_Last updated: 2026-09-30 (production deployment)_
 
 Legend: ✅ done · 🚧 in progress · ⏳ not started
 
@@ -28,3 +28,4 @@ Legend: ✅ done · 🚧 in progress · ⏳ not started
 | Super Admin | 🚧 | 1+ | Login, dashboard, tenant list/suspend done; more with each phase |
 | Billing / plans | ⏳ | later | Architecture only until needed |
 | Horizon | ⏳ | production setup | See AW-001 |
+| Production deployment | ✅ | ops | Live at autowave.co.in since 2026-09-29 on a shared DigitalOcean droplet: atomic releases with `scripts/deploy.sh` (deploy, rollback), wildcard TLS, systemd worker, cron scheduler. Backups, firewall and a bigger server pending (AW-065–067) |
