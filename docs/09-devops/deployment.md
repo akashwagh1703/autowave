@@ -71,8 +71,12 @@ The first release was built by hand with the same steps before the script existe
 script on a new server, clone the repository once and copy it:
 
 ```bash
-sudo -iu autowave bash -c 'git clone --depth 1 git@github.com:akashwagh1703/autowave.git /tmp/aw \
-  && install -m 755 /tmp/aw/scripts/deploy.sh /var/www/autowave-platform/deploy.sh && rm -rf /tmp/aw'
+cd /tmp && sudo -u autowave git clone --depth 1 git@github.com:akashwagh1703/autowave.git /tmp/aw
+sudo -u autowave install -m 755 /tmp/aw/scripts/deploy.sh /var/www/autowave-platform/deploy.sh
+rm -rf /tmp/aw
 ```
+
+Keep these as separate lines: a `\` line break inside `sudo -iu autowave bash -c '…'` reaches git as an
+extra argument ("fatal: Too many arguments").
 
 CI-triggered deploys over SSH are the next step ([ci-cd.md](ci-cd.md)).
