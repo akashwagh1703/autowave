@@ -12,6 +12,9 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
   websites on `*.autowave.co.in`, HTTPS with a wildcard certificate). `scripts/deploy.sh` builds a new
   release from GitHub and switches to it with no downtime, keeps the last five, and rolls back with
   `deploy.sh rollback`. Runbook for turning on email, AI and WhatsApp/Instagram in production.
+- Super Admin → Settings with **Require email confirmation for new accounts**. When switched off, new
+  sign-ups can use the app straight away without a confirmation email (for testing, or while email is not
+  set up). `php artisan autowave:admin-password` sets a new password for a platform admin.
 - `OPENROUTER_TIMEOUT` and `OPENROUTER_REASONING` (`off`, `low`, `medium`, `high`) so slower or free
   OpenRouter models can be used; queued AI jobs get a matching timeout and `autowave:health` fails when
   the queue's `retry_after` is shorter than it.

@@ -344,6 +344,12 @@ Other changes:
   `max_party_size`, `min_notice_minutes`, `max_days_ahead`).
 - Automation subjects `enrolment`, `fee`, `demo_class`, `reservation`.
 
+## Platform settings (`2026_10_05_100000`) — not tenant-owned
+
+| Table | Key columns |
+|---|---|
+| `platform_settings` | `key` unique, `value` json. Keys: `require_email_verification` (bool). Missing keys fall back to `config('autowave.platform_settings')`; read through `PlatformSettings` (cached one hour, cleared on change) |
+
 ## Deferred platform tables
 
 `feature_flags`, `custom_fields` — added with the first feature that needs them (AW-009).

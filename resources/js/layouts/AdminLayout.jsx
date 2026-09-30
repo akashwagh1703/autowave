@@ -7,6 +7,7 @@ const navigation = [
     { label: 'Dashboard', href: '/' },
     { label: 'Tenants', href: '/tenants' },
     { label: 'AI usage', href: '/ai-usage' },
+    { label: 'Settings', href: '/settings' },
 ];
 
 export default function AdminLayout({ title, children }) {

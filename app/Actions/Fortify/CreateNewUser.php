@@ -2,6 +2,7 @@
 
 namespace App\Actions\Fortify;
 
+use App\Domain\Platform\Support\PlatformSettings;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -34,10 +35,17 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        return User::create([
+        $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
         ]);
+
+        // Already verified, so Fortify's Registered event sends no verification email.
+        if (! app(PlatformSettings::class)->requireEmailVerification()) {
+            $user->forceFill(['email_verified_at' => now()])->save();
+        }
+
+        return $user;
     }
 }

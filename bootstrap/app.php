@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\EnsureEmailIsVerifiedWhenRequired;
 use App\Http\Middleware\EnsureEngineEnabled;
 use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsurePlatformAdmin;
@@ -9,7 +10,6 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ResolveTenantFromDomain;
 use App\Http\Middleware\ResolveTenantFromMembership;
 use App\Http\Middleware\SecurityHeaders;
-use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -60,11 +60,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'engine' => EnsureEngineEnabled::class,
             'active' => EnsureAccountIsActive::class,
             'platform.admin' => EnsurePlatformAdmin::class,
+            'verified' => EnsureEmailIsVerifiedWhenRequired::class,
         ]);
 
         // Route model binding (in the web group) must run after the tenant is resolved, or
         // tenant-scoped models such as {lead} could never be found.
-        foreach ([EnsureAccountIsActive::class, EnsureEmailIsVerified::class, ResolveTenantFromMembership::class, ResolveTenantFromDomain::class] as $tenantMiddleware) {
+        foreach ([EnsureAccountIsActive::class, EnsureEmailIsVerifiedWhenRequired::class, ResolveTenantFromMembership::class, ResolveTenantFromDomain::class] as $tenantMiddleware) {
             $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: $tenantMiddleware);
         }
 

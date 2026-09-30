@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Domain\Platform\Support\PlatformSettings;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,6 +37,37 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticatedAs($user);
         $this->assertFalse($user->is_platform_admin);
         Notification::assertSentTo($user, VerifyEmail::class);
+
+        $this->get($this->appUrl('/dashboard'))->assertRedirect(route('verification.notice'));
+    }
+
+    public function test_with_email_confirmation_off_new_users_are_confirmed_without_an_email(): void
+    {
+        Notification::fake();
+        app(PlatformSettings::class)->set(PlatformSettings::REQUIRE_EMAIL_VERIFICATION, false);
+
+        $this->post($this->appUrl('/register'), [
+            'name' => 'Asha Patil',
+            'email' => 'asha@example.com',
+            'password' => 'Str0ng-passw0rd!',
+            'password_confirmation' => 'Str0ng-passw0rd!',
+        ])->assertRedirect('/dashboard');
+
+        $user = User::query()->where('email', 'asha@example.com')->firstOrFail();
+        $this->assertTrue($user->hasVerifiedEmail());
+        Notification::assertNothingSent();
+
+        $this->get($this->appUrl('/dashboard'))->assertRedirect(route('onboarding.create'));
+    }
+
+    public function test_unconfirmed_users_get_in_while_confirmation_is_off_and_not_after(): void
+    {
+        $user = User::factory()->unverified()->create();
+        app(PlatformSettings::class)->set(PlatformSettings::REQUIRE_EMAIL_VERIFICATION, false);
+
+        $this->actingAs($user)->get($this->appUrl('/dashboard'))->assertRedirect(route('onboarding.create'));
+
+        app(PlatformSettings::class)->set(PlatformSettings::REQUIRE_EMAIL_VERIFICATION, true);
 
         $this->get($this->appUrl('/dashboard'))->assertRedirect(route('verification.notice'));
     }

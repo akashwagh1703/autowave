@@ -66,4 +66,10 @@ return [
         'password' => env('AUTOWAVE_ADMIN_PASSWORD'),
     ],
 
+    // Defaults for Super Admin → Settings until a platform admin changes them.
+    'platform_settings' => [
+        // New sign-ups must confirm their email before using the app.
+        'require_email_verification' => true,
+    ],
+
 ];
