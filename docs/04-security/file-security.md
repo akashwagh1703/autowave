@@ -1,7 +1,8 @@
 # File Security
 
 > Status: website and product images through `ManageMedia`; customer and student documents (private disk)
-> and product, service and course videos and brochures (public disk) through `ManageAttachments`.
+> and inbox files (private disk), and product, service and course videos and brochures and the website's
+> Video and Downloads sections (public disk) through `ManageAttachments`.
 
 ## Storage layout
 
@@ -10,6 +11,7 @@ tenant/{tenant_id}/logo/                   logo-{ulid}.{png|jpg|webp}
 tenant/{tenant_id}/website/                hero-{ulid}.*, gallery-{ulid}.*
 tenant/{tenant_id}/products/               product-{ulid}.*
 tenant/{tenant_id}/documents/customers/    {ulid}.{pdf|docx|xlsx|jpg|png}   (private disk)
+tenant/{tenant_id}/inbox/                  {ulid}.{jpg|png|webp|pdf|docx|xlsx|mp4|webm|ogg|mp3|m4a|aac|amr}   (private disk)
 tenant/{tenant_id}/catalog/products/       {ulid}.{mp4|webm|pdf|docx|xlsx|jpg|png}   (public disk)
 tenant/{tenant_id}/catalog/services/       (same)
 tenant/{tenant_id}/catalog/courses/        (same)
@@ -85,6 +87,18 @@ The website's **Video** section (up to three videos) and **Downloads** section (
 same way: public files owned by the `website_sections` row, uploaded with `website.manage`, opened with
 `website.view`, and deleted when the section is removed.
 
+## Inbox files
+
+Each conversation message can carry one private file (owner `conversation_message`): photos (JPG, PNG,
+WebP, 5 MB), documents (10 MB), videos and voice notes (OGG, MP3, M4A, AAC, AMR; 16 MB, WhatsApp's limit).
+Opening one needs `conversations.view`; attaching one to a reply needs `conversations.reply`.
+
+Files contacts send are downloaded by `DownloadInboundMedia` on the media queue and then go through the
+same content checks and storage allowance as an upload. The download itself is restricted: HTTPS only, only
+from Meta's media hosts (`messaging.meta.media_hosts`, re-checked on every redirect), and never more than
+16 MB (declared size, `Content-Length` and the body are all checked). The WhatsApp token is only sent to
+those hosts. A file that fails a check is not stored; the message keeps its `[Image]` text with the reason.
+
 ## Storage allowance
 
 `App\Domain\Files\Support\StorageAllowance` adds up `media.size_bytes` and `attachments.size_bytes` for the
@@ -95,5 +109,4 @@ per-business value a platform admin sets in Super Admin → Tenants (tenant sett
 ## Still to do
 
 - Strip EXIF metadata and create resized variants on the media queue (AW-035).
-- Inbox attachments.
 - Malware scanning of uploaded documents (for example ClamAV on the media queue).

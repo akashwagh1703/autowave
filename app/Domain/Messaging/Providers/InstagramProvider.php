@@ -26,6 +26,10 @@ class InstagramProvider implements MessagingProvider
         $channel = $this->channels->connected('instagram')
             ?? throw new PermanentDeliveryFailure('Instagram is not connected for this business.');
 
+        if ($message->entry()->first()?->attachment()->exists()) {
+            throw new PermanentDeliveryFailure('Files cannot be sent on Instagram yet.');
+        }
+
         try {
             return $this->client->sendInstagram((string) $channel->external_id, (string) $channel->credential('access_token'), $message->recipient, $message->body);
         } catch (MetaApiException $exception) {

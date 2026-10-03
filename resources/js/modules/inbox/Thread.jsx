@@ -7,15 +7,18 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import IconButton from '@mui/material/IconButton';
+import LinearProgress from '@mui/material/LinearProgress';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
+import CloseIcon from '@mui/icons-material/Close';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SendIcon from '@mui/icons-material/Send';
 import TextSnippetIcon from '@mui/icons-material/TextSnippetOutlined';
@@ -24,11 +27,12 @@ import { useEffect, useRef, useState } from 'react';
 import useAi from '@/hooks/useAi';
 import useTenant from '@/hooks/useTenant';
 import SummaryCard from '@/modules/ai/SummaryCard';
+import MessageFile from '@/modules/inbox/MessageFile';
 import MessageStatus from '@/modules/inbox/MessageStatus';
 import { errorMessage, postJson } from '@/utils/http';
 import TemplateDialog from '@/modules/inbox/TemplateDialog';
 import { channelColors, channelIcons, uuid } from '@/modules/inbox/channels';
-import { formatDateTime, formatRelative } from '@/utils/format';
+import { formatBytes, formatDateTime, formatRelative } from '@/utils/format';
 
 function dayLabel(iso, timezone) {
     return formatDateTime(iso, timezone, { weekday: 'long', day: 'numeric', month: 'long' });
@@ -45,7 +49,12 @@ function Bubble({ message, timezone }) {
                 } ${message.status === 'failed' ? 'ring-2 ring-red-300' : ''}`}
             >
                 {message.template ? <p className={`mb-1 text-[11px] font-medium ${outbound ? 'text-brand-100' : 'text-slate-500'}`}>Template · {message.template}</p> : null}
-                <p className="break-words whitespace-pre-line">{message.body || <span className="italic opacity-75">(no text)</span>}</p>
+                {message.attachment ? <MessageFile file={message.attachment} outbound={outbound} /> : null}
+                {message.body || !message.attachment ? (
+                    <p className={`break-words whitespace-pre-line ${message.attachment ? 'mt-1' : ''}`}>{message.body || <span className="italic opacity-75">(no text)</span>}</p>
+                ) : null}
+                {message.media_status === 'pending' ? <p className="mt-1 text-xs italic opacity-75">Saving the file…</p> : null}
+                {message.media_status === 'skipped' ? <p className="mt-1 text-xs opacity-75">File not saved: {message.media_error}</p> : null}
                 <div className={`mt-1 flex items-center justify-end gap-1 text-[11px] ${outbound ? 'text-brand-100' : 'text-slate-500'}`}>
                     {outbound && message.sender ? <span>{message.sender} ·</span> : null}
                     {message.simulated ? <span title="No channel connected: recorded, not delivered">simulated ·</span> : null}
@@ -135,20 +144,50 @@ function SuggestReply({ conversation, body, onSuggest, onError, disabled }) {
 }
 
 function Composer({ conversation, onTemplate }) {
-    const form = useForm({ body: '', client_id: uuid() });
+    const form = useForm({ body: '', client_id: uuid(), file: null });
     const blocked = conversation.text_blocked;
+    const files = conversation.files;
+    const picker = useRef(null);
     const [aiError, setAiError] = useState(null);
+    const [tooLarge, setTooLarge] = useState(null);
+    const fileError = tooLarge ?? form.errors.file;
+    const empty = !form.data.body.trim() && !form.data.file;
+
+    const choose = (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+
+        if (!file) {
+            return;
+        }
+
+        const extension = (file.name.split('.').pop() ?? '').toLowerCase();
+        const kind = files.kinds.find((candidate) => candidate.extensions.includes(extension === 'jpeg' ? 'jpg' : extension));
+        const limit = kind?.max_bytes ?? files.max_bytes;
+
+        form.clearErrors('file');
+        setTooLarge(file.size > limit ? `This file is ${formatBytes(file.size)}. The limit is ${formatBytes(limit)}.` : null);
+        form.setData('file', file);
+    };
+
+    const clearFile = () => {
+        form.setData('file', null);
+        form.clearErrors('file');
+        setTooLarge(null);
+    };
 
     const submit = (event) => {
         event?.preventDefault();
 
-        if (!form.data.body.trim() || form.processing) {
+        if (empty || form.processing || tooLarge) {
             return;
         }
 
         form.post(`/inbox/${conversation.id}/messages`, {
             preserveScroll: true,
-            onSuccess: () => form.setData({ body: '', client_id: uuid() }),
+            preserveState: true,
+            forceFormData: Boolean(form.data.file),
+            onSuccess: () => form.setData({ body: '', client_id: uuid(), file: null }),
         });
     };
 
@@ -177,13 +216,49 @@ function Composer({ conversation, onTemplate }) {
                     {aiError}
                 </Alert>
             ) : null}
+            {form.data.file ? (
+                <div className="mb-2 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-sm">
+                    <AttachFileIcon fontSize="small" className="shrink-0 text-slate-500" />
+                    <span className="min-w-0 flex-1 truncate" title={form.data.file.name}>
+                        {form.data.file.name}
+                    </span>
+                    <span className="shrink-0 text-xs text-slate-500">{formatBytes(form.data.file.size)}</span>
+                    <IconButton size="small" onClick={clearFile} disabled={form.processing} aria-label="Remove the file">
+                        <CloseIcon fontSize="small" />
+                    </IconButton>
+                </div>
+            ) : null}
+            {form.progress && form.data.file ? <LinearProgress variant="determinate" value={form.progress.percentage ?? 0} className="mb-2" /> : null}
+            {fileError ? (
+                <p className="mb-2 text-sm text-red-600" role="alert">
+                    {fileError}
+                </p>
+            ) : null}
             <div className="flex items-end gap-2">
+                {files && !blocked ? (
+                    <>
+                        <input ref={picker} type="file" accept={files.accept} className="hidden" onChange={choose} aria-label="Attach a file" />
+                        <Tooltip title={`Attach a file. ${files.hint}`}>
+                            <span>
+                                <IconButton onClick={() => picker.current?.click()} disabled={form.processing} aria-label="Attach a file">
+                                    <AttachFileIcon />
+                                </IconButton>
+                            </span>
+                        </Tooltip>
+                    </>
+                ) : null}
                 <TextField
                     fullWidth
                     multiline
                     maxRows={6}
                     size="small"
-                    placeholder={blocked ? 'Free-form replies are closed for this contact' : 'Type a reply… (Enter to send, Shift+Enter for a new line)'}
+                    placeholder={
+                        blocked
+                            ? 'Free-form replies are closed for this contact'
+                            : form.data.file
+                              ? 'Add a caption (optional)'
+                              : 'Type a reply… (Enter to send, Shift+Enter for a new line)'
+                    }
                     value={form.data.body}
                     disabled={Boolean(blocked)}
                     onChange={(event) => form.setData('body', event.target.value)}
@@ -213,7 +288,7 @@ function Composer({ conversation, onTemplate }) {
                         </span>
                     </Tooltip>
                 ) : null}
-                <Button type="submit" variant="contained" endIcon={<SendIcon />} disabled={Boolean(blocked) || form.processing || !form.data.body.trim()}>
+                <Button type="submit" variant="contained" endIcon={<SendIcon />} disabled={Boolean(blocked) || form.processing || empty || Boolean(tooLarge)}>
                     Send
                 </Button>
             </div>

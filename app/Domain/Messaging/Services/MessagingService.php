@@ -9,6 +9,7 @@ use App\Domain\Messaging\Enums\MessagePurpose;
 use App\Domain\Messaging\Enums\MessageStatus;
 use App\Domain\Messaging\Inbound\StatusUpdate;
 use App\Domain\Messaging\Jobs\SendOutboundMessage;
+use App\Domain\Messaging\Models\ConversationMessage;
 use App\Domain\Messaging\Models\OutboundMessage;
 use App\Domain\Messaging\Support\ChannelResolver;
 use App\Domain\Messaging\Support\MessagingCompliance;
@@ -258,19 +259,21 @@ class MessagingService
             return;
         }
 
-        $message->loadMissing(['lead', 'customer', 'run.automation', 'sender']);
+        $message->loadMissing(['lead', 'customer', 'run.automation', 'sender', 'entry:id,tenant_id,outbound_message_id,type']);
         $lead = $message->lead?->trashed() ? null : $message->lead;
 
         if (! $lead && ! $message->customer) {
             return;
         }
 
+        $placeholder = ConversationMessage::PLACEHOLDERS[$message->entry->type ?? ''] ?? '';
+
         $this->recordActivity->handle(
             $message->channel,
             lead: $lead,
             customer: $lead ? null : $message->customer,
             actor: $message->sender,
-            body: $message->body,
+            body: $placeholder !== '' ? trim($placeholder.' '.$message->body) : $message->body,
             metadata: array_filter([
                 'via' => $message->automation_run_id ? 'automation' : ($message->sent_by_user_id ? 'inbox' : 'system'),
                 'automation_id' => $message->run?->automation_id,

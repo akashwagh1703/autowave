@@ -567,14 +567,17 @@ with the date and commit/PR reference; do not delete it.
 - **Affected:** Settings → Messaging, `ConnectChannel`
 - **Created:** 2026-10-02
 
-### AW-051 — Media messages are placeholders
+### AW-051 — Instagram replies cannot carry files; locations and contacts are placeholders
 
 - **Category:** Product
-- **Description:** Incoming images, videos, voice notes, documents, stickers, locations and contact cards are
-  stored as text such as `[Image] caption`. The media is not downloaded, and the inbox cannot send files.
-- **Impact:** Staff must open WhatsApp on the business phone to see a photo or document.
-- **Status:** Open — download media on the `media` queue into tenant storage, with size and type checks.
-- **Affected:** `MetaWebhookNormalizer`, inbox
+- **Description:** Received photos, videos, voice notes, documents and stickers are downloaded into private
+  storage and shown in the inbox, and WhatsApp replies can carry one file. Instagram replies are text
+  only (sending a file needs a public URL), and locations and contact cards are still stored as text such
+  as `[Location]`. Received files over 16 MB are not saved.
+- **Impact:** To send a photo on Instagram, staff use the Instagram app.
+- **Status:** Partly resolved — media download and WhatsApp sending done. Instagram sending needs a
+  short-lived signed public link to the file.
+- **Affected:** `InstagramProvider`, `MetaWebhookNormalizer`
 - **Created:** 2026-10-02
 
 ### AW-052 — Everyone with inbox access sees every conversation

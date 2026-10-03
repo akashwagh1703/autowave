@@ -5,12 +5,14 @@ namespace Tests\Feature\Messaging;
 use App\Domain\Activity\Models\Activity;
 use App\Domain\Lead\Models\Lead;
 use App\Domain\Messaging\Enums\MessageStatus;
+use App\Domain\Messaging\Jobs\DownloadInboundMedia;
 use App\Domain\Messaging\Jobs\ProcessWebhookCall;
 use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Messaging\Models\ConversationMessage;
 use App\Domain\Messaging\Models\WebhookCall;
 use App\Domain\Messaging\Services\MessagingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Tests\Concerns\CreatesCrmRecords;
@@ -129,8 +131,9 @@ class MetaWebhookTest extends TestCase
         $this->assertSame(0, ConversationMessage::withoutTenantScope()->count());
     }
 
-    public function test_media_messages_are_stored_as_placeholders(): void
+    public function test_media_messages_are_stored_as_placeholders_and_queued_for_download(): void
     {
+        Bus::fake([DownloadInboundMedia::class]);
         $tenant = $this->createTenant();
         $channel = $this->connectWhatsApp($tenant);
 
@@ -140,6 +143,8 @@ class MetaWebhookTest extends TestCase
 
         $message = ConversationMessage::withoutTenantScope()->sole();
         $this->assertSame(['image', '[Image] My hair'], [$message->type, $message->body]);
+        $this->assertSame(['id' => 'media-1', 'status' => 'pending'], array_filter($message->meta['media']));
+        Bus::assertDispatched(DownloadInboundMedia::class, fn (DownloadInboundMedia $job) => $job->messageId === $message->id);
     }
 
     public function test_stop_opts_the_contact_out_and_start_opts_them_back_in(): void

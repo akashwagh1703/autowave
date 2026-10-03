@@ -55,6 +55,7 @@ Template: `.env.example`. Never commit `.env`. Production secrets live only on t
 | `MAIL_*` | `log` mailer | SMTP provider ([enable-integrations](../11-runbooks/enable-integrations.md)) | Outgoing mail |
 | `MESSAGING_WHATSAPP_PROVIDER` / `MESSAGING_INSTAGRAM_PROVIDER` | `log` | `log` | Fallback for businesses that have not connected the channel; connected channels always use Meta |
 | `MESSAGING_EMAIL_PROVIDER` | `mail` | `mail` | Email channel provider |
+| `MESSAGING_MEDIA_QUEUE` | `media` | `media` | Queue that downloads files contacts send in the inbox; a worker must listen on it |
 | `META_GRAPH_VERSION` | `v21.0` | `v21.0` | Meta Graph API version |
 | `AI_PROVIDER` | `openrouter` | `openrouter` (or `fake` until a key is set) | AI provider (ADR-019) |
 | `OPENROUTER_API_KEY` / `OPENROUTER_MODEL` | empty / `openai/gpt-4o-mini` | secret / same | OpenRouter key (server only) and default model |

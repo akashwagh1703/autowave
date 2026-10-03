@@ -11,6 +11,8 @@ final readonly class InboundMessage
      * @param  string  $handle  normalised phone (WhatsApp) or scoped user id (Instagram)
      * @param  string  $type  text, image, audio, video, document, sticker, location, contacts, interactive, unsupported
      * @param  array<string, scalar|null>  $meta
+     * @param  ?array{id?: string, url?: string, filename?: ?string}  $media  where to fetch the attached file: a
+     *                                                                        WhatsApp media id or an Instagram CDN URL
      */
     public function __construct(
         public string $channel,
@@ -21,5 +23,6 @@ final readonly class InboundMessage
         public CarbonImmutable $occurredAt,
         public ?string $name = null,
         public array $meta = [],
+        public ?array $media = null,
     ) {}
 }

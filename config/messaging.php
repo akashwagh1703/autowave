@@ -59,6 +59,10 @@ return [
         'instagram_url' => env('META_INSTAGRAM_URL', 'https://graph.instagram.com'),
         'timeout' => 15,
         'template_pages' => 10,
+        // Sending and fetching files (up to 16 MB) takes longer than a text message.
+        'media_timeout' => 60,
+        // Files are only downloaded over HTTPS from these hosts (and their subdomains).
+        'media_hosts' => ['fbsbx.com', 'fbcdn.net', 'cdninstagram.com', 'whatsapp.net'],
     ],
 
     'webhooks' => [
@@ -90,6 +94,8 @@ return [
     ],
 
     'queue' => env('MESSAGING_QUEUE', 'messaging'),
+    // Downloads of files contacts send (DownloadInboundMedia).
+    'media_queue' => env('MESSAGING_MEDIA_QUEUE', 'media'),
     'tries' => 3,
     'backoff' => [60, 300],
     'stuck_queued_minutes' => 10,

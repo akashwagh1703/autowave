@@ -9,18 +9,21 @@ use App\Domain\Lead\Models\Lead;
 use App\Domain\Messaging\Enums\ConversationStatus;
 use App\Domain\Messaging\Events\ConversationMessageReceived;
 use App\Domain\Messaging\Inbound\InboundMessage;
+use App\Domain\Messaging\Jobs\DownloadInboundMedia;
 use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Messaging\Models\ConversationMessage;
 use App\Domain\Messaging\Services\ConversationRecorder;
 use App\Domain\Messaging\Support\MessagingCompliance;
 use App\Domain\Tenant\Support\TenantContext;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
  * Stores a message from a contact in the current tenant (ADR-018):
- * conversation → idempotent message → counters and opt-out → lead/customer link → timeline.
+ * conversation → idempotent message → counters and opt-out → lead/customer link → timeline. An attached
+ * file is fetched afterwards on the media queue (DownloadInboundMedia); until then the text placeholder shows.
  */
 class ReceiveInboundMessage
 {
@@ -66,6 +69,10 @@ class ReceiveInboundMessage
 
             $this->recordOnTimeline($conversation, $message, $keyword);
 
+            if ($inbound->media) {
+                Bus::dispatch((new DownloadInboundMedia($message->id))->afterCommit());
+            }
+
             ConversationMessageReceived::dispatch($conversation, $message);
 
             return $message;
@@ -91,7 +98,10 @@ class ReceiveInboundMessage
                 'type' => $inbound->type,
                 'body' => $inbound->text,
                 'provider_message_id' => $inbound->providerMessageId,
-                'meta' => $inbound->meta ?: null,
+                'meta' => array_filter([
+                    ...$inbound->meta,
+                    'media' => $inbound->media ? ['status' => ConversationMessage::MEDIA_PENDING, ...$inbound->media] : null,
+                ], fn ($value) => $value !== null) ?: null,
                 'sent_at' => $inbound->occurredAt,
             ]));
         } catch (UniqueConstraintViolationException) {

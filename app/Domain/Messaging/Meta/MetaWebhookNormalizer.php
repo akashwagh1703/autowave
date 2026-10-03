@@ -4,6 +4,7 @@ namespace App\Domain\Messaging\Meta;
 
 use App\Domain\Messaging\Inbound\InboundMessage;
 use App\Domain\Messaging\Inbound\StatusUpdate;
+use App\Domain\Messaging\Models\ConversationMessage;
 use App\Domain\Messaging\Models\MessagingChannel;
 use App\Domain\Messaging\Support\ContactHandle;
 use Carbon\CarbonImmutable;
@@ -16,16 +17,13 @@ use Illuminate\Support\Str;
  */
 class MetaWebhookNormalizer
 {
-    private const PLACEHOLDERS = [
-        'image' => '[Image]',
-        'video' => '[Video]',
-        'audio' => '[Voice message]',
-        'document' => '[Document]',
-        'sticker' => '[Sticker]',
-        'location' => '[Location]',
-        'contacts' => '[Contact card]',
-        'unsupported' => '[Unsupported message]',
-    ];
+    private const PLACEHOLDERS = ConversationMessage::PLACEHOLDERS;
+
+    /** Message types whose file is downloaded into the inbox (DownloadInboundMedia). */
+    private const MEDIA_TYPES = ['image', 'video', 'audio', 'document', 'sticker'];
+
+    /** Instagram attachment types, in AutoWave's terms. */
+    private const INSTAGRAM_TYPES = ['image' => 'image', 'video' => 'video', 'audio' => 'audio', 'file' => 'document'];
 
     /**
      * @param  array<string, mixed>  $payload
@@ -71,6 +69,7 @@ class MetaWebhookNormalizer
                     }
 
                     [$type, $text] = $this->whatsappContent($type, $message);
+                    $mediaId = in_array($type, self::MEDIA_TYPES, true) ? $this->string(Arr::get($message, "{$type}.id"), 191) : null;
 
                     $events[] = new InboundMessage(
                         channel: 'whatsapp',
@@ -81,6 +80,7 @@ class MetaWebhookNormalizer
                         occurredAt: $this->time($message['timestamp'] ?? null),
                         name: $names[(string) $message['from']] ?? null,
                         meta: array_filter(['reply_to' => $this->string(Arr::get($message, 'context.id'), 191)]),
+                        media: $mediaId ? ['id' => $mediaId, 'filename' => $this->string(Arr::get($message, "{$type}.filename"), 200)] : null,
                     );
                 }
 
@@ -152,11 +152,13 @@ class MetaWebhookNormalizer
 
                     $text = $this->string($message['text'] ?? null, 4096);
                     $type = 'text';
+                    $url = null;
 
                     if ($text === null && $this->list($message['attachments'] ?? null) !== []) {
-                        $attachment = (string) ($this->list($message['attachments'])[0]['type'] ?? '');
-                        $type = array_key_exists($attachment, self::PLACEHOLDERS) ? $attachment : 'unsupported';
+                        $attachment = $this->list($message['attachments'])[0];
+                        $type = self::INSTAGRAM_TYPES[(string) ($attachment['type'] ?? '')] ?? 'unsupported';
                         $text = self::PLACEHOLDERS[$type];
+                        $url = $type !== 'unsupported' ? $this->string(Arr::get($attachment, 'payload.url'), 2000) : null;
                     }
 
                     $events[] = new InboundMessage(
@@ -166,6 +168,7 @@ class MetaWebhookNormalizer
                         type: $type,
                         text: $text ?? self::PLACEHOLDERS['unsupported'],
                         occurredAt: $this->time(isset($event['timestamp']) ? intdiv((int) $event['timestamp'], 1000) : null),
+                        media: $url ? ['url' => $url] : null,
                     );
                 }
 

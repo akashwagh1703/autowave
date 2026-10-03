@@ -148,7 +148,8 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
   - Every business-app route is behind `module:messaging` (404 without it).
   - `conversations.view`: the inbox, conversation pages, the nav unread badge, and the **Chat** buttons on
     customer pages (also `customers.view`) and lead pages (also `module:leads` and `leads.view`).
-  - `conversations.reply`: text replies (60/minute), templates (30/minute), close/reopen and opt-out.
+  - `conversations.reply`: text replies (60/minute), templates (30/minute), close/reopen and opt-out,
+    and attaching a file to a WhatsApp reply. Opening a file in a conversation needs `conversations.view`.
   - `conversations.assign`: assigning. Only active members whose role grants `conversations.view` (or
     `grants_all`) can be chosen; the member list is only sent to users who can assign.
   - Everyone with `conversations.view` sees every conversation, not only their own (AW-052).

@@ -2,6 +2,7 @@
 
 namespace App\Http\Presenters;
 
+use App\Domain\Files\Actions\ManageAttachments;
 use App\Domain\Files\Models\Attachment;
 use App\Domain\Files\Support\StorageAllowance;
 use App\Domain\Tenant\Models\Tenant;
@@ -56,16 +57,6 @@ final class FilesPresenter
             return null;
         }
 
-        $kinds = collect($definition['kinds'])
-            ->map(fn (string $key) => [
-                'kind' => $key,
-                'label' => config("files.kinds.{$key}.label"),
-                'extensions' => collect(config("files.kinds.{$key}.types"))->values()->unique()->values()->all(),
-                'max_bytes' => config("files.kinds.{$key}.max_kb") * 1024,
-                'max_files' => $definition['kind_max'][$key] ?? $definition['max'],
-            ]);
-
-        $extensions = $kinds->flatMap(fn (array $kind) => $kind['extensions'])->unique()->values();
         $items = Attachment::query()
             ->where('attachable_type', $owners->first()?->getMorphClass())
             ->whereIn('attachable_id', $owners->map(fn (Model $owner) => $owner->getKey())->all())
@@ -75,8 +66,39 @@ final class FilesPresenter
             ->groupBy('attachable_id');
 
         $shared = [
+            ...self::rules($ownerKey),
             'can_manage' => $user->can($definition['manage']),
             'public' => ($definition['visibility'] ?? Attachment::PRIVATE) === Attachment::PUBLIC,
+            'storage' => app(StorageAllowance::class)->summary($tenant),
+        ];
+
+        return $owners->mapWithKeys(fn (Model $owner) => [$owner->getKey() => [
+            ...$shared,
+            'items' => ($items->get($owner->getKey()) ?? collect())->map(fn (Attachment $attachment) => self::attachment($attachment))->values(),
+            'upload_url' => $uploadUrl($owner),
+        ]]);
+    }
+
+    /**
+     * What an owner type accepts, for the file picker and client-side size checks (the server checks again).
+     *
+     * @return array{kinds: list<array<string, mixed>>, accept: string, hint: string, max_bytes: int, max_files: int, title_max: int}
+     */
+    public static function rules(string $ownerKey): array
+    {
+        $definition = config("files.owners.{$ownerKey}");
+        $kinds = collect(ManageAttachments::kindsFor($definition))
+            ->map(fn (array $kind, string $key) => [
+                'kind' => $key,
+                'label' => $kind['label'],
+                'extensions' => collect($kind['types'])->values()->unique()->values()->all(),
+                'max_bytes' => $kind['max_kb'] * 1024,
+                'max_files' => $definition['kind_max'][$key] ?? $definition['max'],
+            ])
+            ->values();
+        $extensions = $kinds->flatMap(fn (array $kind) => $kind['extensions'])->unique()->values();
+
+        return [
             'kinds' => $kinds->all(),
             'accept' => $extensions->map(fn (string $extension) => '.'.$extension)->push($extensions->contains('jpg') ? '.jpeg' : null)->filter()->join(','),
             'hint' => $kinds->map(fn (array $kind) => __(':label: :types, up to :max MB', [
@@ -87,13 +109,6 @@ final class FilesPresenter
             'max_bytes' => $kinds->max('max_bytes'),
             'max_files' => $definition['max'],
             'title_max' => config('files.title_max'),
-            'storage' => app(StorageAllowance::class)->summary($tenant),
         ];
-
-        return $owners->mapWithKeys(fn (Model $owner) => [$owner->getKey() => [
-            ...$shared,
-            'items' => ($items->get($owner->getKey()) ?? collect())->map(fn (Attachment $attachment) => self::attachment($attachment))->values(),
-            'upload_url' => $uploadUrl($owner),
-        ]]);
     }
 }

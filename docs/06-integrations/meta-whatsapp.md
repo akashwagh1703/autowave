@@ -33,6 +33,9 @@ Then, in the app's WhatsApp → Configuration:
 | `providers.meta_whatsapp.window_hours` | — | 24 |
 | `webhooks.rate_limit` | — | 600 requests/minute per IP and key |
 | `webhooks.max_payload_kb` | — | 512 |
+| `meta.media_timeout` | — | 60 s (file upload and download) |
+| `meta.media_hosts` | — | `fbsbx.com`, `fbcdn.net`, `cdninstagram.com`, `whatsapp.net` (and subdomains) |
+| `media_queue` | `MESSAGING_MEDIA_QUEUE` | `media` |
 
 No platform-level secrets: every token lives encrypted in the tenant's `messaging_channels.credentials`.
 
@@ -41,7 +44,9 @@ No platform-level secrets: every token lives encrypted in the tenant's `messagin
 | Purpose | Request |
 |---|---|
 | Verify on connect | `GET /{version}/{phone_number_id}?fields=display_phone_number,verified_name` |
-| Send | `POST /{version}/{phone_number_id}/messages` with `type: text` or `type: template` (body parameters), `biz_opaque_callback_data` = our message id |
+| Send | `POST /{version}/{phone_number_id}/messages` with `type: text`, `type: template` (body parameters) or `type: image / video / audio / document` (media id, caption, file name), `biz_opaque_callback_data` = our message id |
+| Upload a file for a reply | `POST /{version}/{phone_number_id}/media` (multipart: `file`, `type`, `messaging_product`) → media id |
+| Download a received file | `GET /{version}/{media_id}` → `url`, `mime_type`, `file_size`; then `GET url` with the token (Meta media hosts only, 16 MB max) |
 | Sync templates | `GET /{version}/{waba_id}/message_templates` (follows `paging.next` on the Graph host only) |
 
 The token is sent as `Authorization: Bearer …`, never in a URL or log.
@@ -61,7 +66,8 @@ Normalised events:
 | Meta | AutoWave |
 |---|---|
 | `messages[]` type `text`, `button`, `interactive` | `InboundMessage` with the text |
-| `image`, `video`, `document` (+caption), `audio`, `sticker`, `location`, `contacts` | `InboundMessage` with a placeholder (`[Image] caption`) |
+| `image`, `video`, `document` (+caption, file name), `audio`, `sticker` | `InboundMessage` with a placeholder (`[Image] caption`) and the media id; the file is downloaded on the `media` queue |
+| `location`, `contacts` | `InboundMessage` with a placeholder (`[Location]`) |
 | `reaction` | ignored |
 | `statuses[]` `sent`, `delivered`, `read`, `failed` (+ error title and details) | `StatusUpdate` |
 

@@ -39,12 +39,17 @@ class MessagingPresenter
     public static function message(ConversationMessage $message): array
     {
         $outbound = $message->outbound;
+        $attachment = $message->attachment;
+        $media = $message->meta['media'] ?? null;
 
         return [
             'id' => $message->id,
             'direction' => $message->direction,
             'type' => $message->type,
-            'body' => $message->body,
+            'body' => $attachment ? $message->caption() : $message->body,
+            'attachment' => $attachment ? FilesPresenter::attachment($attachment) : null,
+            'media_status' => $attachment ? null : ($media['status'] ?? null),
+            'media_error' => $attachment ? null : ($media['error'] ?? null),
             'sent_at' => $message->sent_at->toIso8601String(),
             'status' => $outbound?->status->value,
             'status_label' => $outbound?->status->label(),

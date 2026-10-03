@@ -94,9 +94,16 @@ class ConversationRecorder
             return;
         }
 
+        $text = trim((string) $message->body);
+        $placeholder = ConversationMessage::PLACEHOLDERS[$message->type] ?? '';
+
+        if ($placeholder !== '' && ! str_starts_with($text, $placeholder)) {
+            $text = trim($placeholder.' '.$text);
+        }
+
         $conversation->forceFill([
             'last_message_at' => $message->sent_at,
-            'last_message_preview' => Str::limit(preg_replace('/\s+/', ' ', (string) $message->body) ?? '', (int) config('messaging.inbox.preview_length')),
+            'last_message_preview' => Str::limit(preg_replace('/\s+/', ' ', $text) ?? '', (int) config('messaging.inbox.preview_length')),
             'last_message_direction' => $direction,
         ]);
     }

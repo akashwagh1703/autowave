@@ -54,6 +54,8 @@ The owner uses their own Meta app (manual connection; Embedded Signup is AW-050)
 - **Reply** (`conversations.reply`): Enter sends. Each send carries a client id, so a double submit sends
   once. With a real provider, free text is only allowed within 24 hours of the contact's last message;
   outside it the composer offers **Send template** (WhatsApp) instead.
+- **Attach a file** (WhatsApp only): the paperclip adds one photo, video, voice note or document; the text
+  becomes its caption and may be empty. See [Files in conversations](#files-in-conversations).
 - **Assign** (`conversations.assign`) to an active member who can see the inbox. **Close / Reopen**; a new
   message from the contact reopens a closed conversation.
 - **Opt-out:** staff can mark a contact opted out or remove it.
@@ -73,8 +75,43 @@ Webhook → signature check → stored `messaging_webhook_calls` row → `Proces
    phone, else a **new lead** (source WhatsApp or Instagram) when the Leads module is on.
 5. The message goes on the lead or customer timeline ("Priya sent a WhatsApp message").
 
-Images, voice notes, documents and other media are shown as a placeholder such as `[Image] caption`
-(AW-051). Reactions are ignored.
+A photo, video, voice note, document or sticker is stored as `[Image] caption` (the caption is kept) and
+its file is downloaded afterwards (below). Locations, contact cards and other types stay a placeholder
+such as `[Location]`. Reactions are ignored.
+
+## Files in conversations
+
+Files use the `conversation_message` owner in `config/files.php` (one file per message, private, folder
+`inbox/`, see [file security](../04-security/file-security.md)):
+
+| Kind | Types | Max |
+|---|---|---|
+| Image | JPG, PNG, WebP | 5 MB |
+| Document | PDF, Word, Excel, JPG, PNG | 10 MB |
+| Video | MP4, WebM | 16 MB (WhatsApp's limit) |
+| Voice note | OGG, MP3, M4A, AAC, AMR | 16 MB |
+
+**Received:** `ReceiveInboundMessage` sets `meta.media = {status: pending, id | url, filename}` and
+queues `DownloadInboundMedia` on the `media` queue (`MESSAGING_MEDIA_QUEUE`) after commit. The job:
+
+1. WhatsApp: asks Graph for the media URL with the channel's token, then downloads it with the token.
+   Instagram: downloads the signed CDN link from the webhook, without a token.
+2. Downloads only over HTTPS from Meta's media hosts (`messaging.meta.media_hosts`, also checked on
+   redirects) and stops at 16 MB (declared size, `Content-Length` and the body).
+3. Checks the content like any upload (type from the bytes, size per kind, storage allowance) and
+   attaches the file to the message: `meta.media.status = stored`.
+4. A refused or failed file is `skipped` with the reason in `meta.media.error`; the bubble shows "File not
+   saved: …" and keeps the placeholder text. Temporary errors retry (`messaging.tries`).
+
+**Sent:** `ReplyToConversation::text()` with a file queues the message and attaches the file to its
+conversation entry in one transaction, so `SendOutboundMessage` always finds it. `MetaWhatsAppProvider`
+uploads the file to `/{phone-number-id}/media` and sends it by media id: JPG/PNG as image, MP4 as video,
+audio as a voice note (or as a document when it has a caption, which voice notes cannot carry), anything
+else as a document with its file name. Instagram refuses files ("Files can only be sent on WhatsApp for
+now."): sending one needs a public URL.
+
+Files open through `/attachments/{id}` after the `conversations.view` check; uploading needs
+`conversations.reply`. The preview shows `[Document] caption` for both directions.
 
 ## Outbound messages
 
@@ -159,11 +196,13 @@ inbox for ABC Salon locally.
 - `InboxHttpTest`: inbox, replies, templates, assignment, permissions, chat buttons, backfill, simulate
   command.
 - `MessagingIsolationTest`: cross-tenant access, templates, members, webhooks and composite FKs.
+- `InboxAttachmentsTest`: received WhatsApp and Instagram files, refused types, oversized files and
+  foreign hosts, WhatsApp replies with a file, Instagram refusal.
 
 ## Known Limitations
 
 - Manual connection only; no Embedded Signup (AW-050).
-- Media is not downloaded; no sending of images or documents (AW-051).
+- Files cannot be sent on Instagram; locations and contact cards stay placeholders (AW-051).
 - Everyone with `conversations.view` sees every conversation (AW-052).
 - No "message received" automation trigger; Instagram is not an automation action (AW-053).
 - No inbound email (AW-054).

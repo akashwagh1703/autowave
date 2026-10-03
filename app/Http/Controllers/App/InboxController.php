@@ -18,6 +18,7 @@ use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\AiPresenter;
 use App\Http\Presenters\CrmPresenter;
+use App\Http\Presenters\FilesPresenter;
 use App\Http\Presenters\MessagingPresenter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -54,11 +55,14 @@ class InboxController extends Controller
     public function reply(Request $request, Conversation $conversation, ReplyToConversation $reply): RedirectResponse
     {
         $validated = $request->validate([
-            'body' => ['required', 'string', 'max:'.config('messaging.inbox.reply_max')],
+            'body' => ['nullable', 'required_without:file', 'string', 'max:'.config('messaging.inbox.reply_max')],
+            'file' => ['nullable', 'file'],
             'client_id' => ['nullable', 'uuid'],
+        ], [
+            'body.required_without' => __('Type a message or attach a file.'),
         ]);
 
-        $reply->text($conversation, $validated['body'], $request->user(), $validated['client_id'] ?? null);
+        $reply->text($conversation, (string) ($validated['body'] ?? ''), $request->user(), $validated['client_id'] ?? null, $request->file('file'));
 
         return back();
     }
@@ -179,7 +183,7 @@ class InboxController extends Controller
         $limit = (int) config('messaging.inbox.thread_limit');
 
         $messages = $conversation->messages()
-            ->with(['outbound:id,tenant_id,status,error,simulated,scheduled_for,sent_by_user_id,automation_run_id', 'outbound.sender:id,name'])
+            ->with(['outbound:id,tenant_id,status,error,simulated,scheduled_for,sent_by_user_id,automation_run_id', 'outbound.sender:id,name', 'attachment.uploader:id,name'])
             ->orderByDesc('sent_at')->orderByDesc('id')
             ->limit($limit + 1)
             ->get();
@@ -198,6 +202,7 @@ class InboxController extends Controller
             ],
             'text_blocked' => $this->compliance->textBlockedReason($conversation->channel, $conversation),
             'template_blocked' => $this->compliance->templateBlockedReason($conversation->channel, $conversation),
+            'files' => $canReply && ReplyToConversation::canSendFiles($conversation) ? FilesPresenter::rules('conversation_message') : null,
             'templates' => $canReply && config("messaging.channels.{$conversation->channel}.templates")
                 ? MessageTemplate::query()->approved()->where('channel', $conversation->channel)->orderBy('name')->get()
                     ->map(fn (MessageTemplate $template) => MessagingPresenter::template($template))->all()

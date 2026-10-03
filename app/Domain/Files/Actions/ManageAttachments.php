@@ -39,7 +39,7 @@ class ManageAttachments
     {
         $definition = config("files.owners.{$ownerKey}") ?? throw new InvalidArgumentException("Unknown attachment owner [{$ownerKey}].");
         $visibility = $definition['visibility'] ?? Attachment::PRIVATE;
-        $kinds = array_intersect_key(config('files.kinds'), array_flip($definition['kinds']));
+        $kinds = self::kindsFor($definition);
         $largest = max(array_column($kinds, 'max_kb'));
 
         Validator::make(['file' => $file, 'title' => $title], [
@@ -131,6 +131,25 @@ class ManageAttachments
             ->where('attachable_id', $owner->getKey())
             ->get()
             ->each(fn (Attachment $attachment) => $this->delete($attachment));
+    }
+
+    /**
+     * An owner's kinds in its own order (the first kind listing a content type wins), with the owner's
+     * size limits (`kind_max_kb`) applied.
+     *
+     * @param  array<string, mixed>  $definition  config('files.owners.*')
+     * @return array<string, array{label: string, max_kb: int, types: array<string, string>}>
+     */
+    public static function kindsFor(array $definition): array
+    {
+        $kinds = [];
+
+        foreach ($definition['kinds'] as $key) {
+            $kind = config("files.kinds.{$key}");
+            $kinds[$key] = [...$kind, 'max_kb' => (int) ($definition['kind_max_kb'][$key] ?? $kind['max_kb'])];
+        }
+
+        return $kinds;
     }
 
     /**

@@ -43,7 +43,8 @@ Entries whose `id` is not the connected account are ignored.
 | Meta | AutoWave |
 |---|---|
 | `messaging[].message` with `text` | `InboundMessage` (handle = the sender's Instagram-scoped id) |
-| `message.attachments` without text | `InboundMessage` with a placeholder |
+| `message.attachments` type `image`, `video`, `audio`, `file` | `InboundMessage` with a placeholder (`[Image]`); the signed `payload.url` is downloaded without a token on the `media` queue |
+| other attachment types (share, story mention, …) | `InboundMessage` `[Unsupported message]` |
 | `message.is_echo` (our own reply), `is_deleted` | ignored |
 | `messaging[].read.mid` | `StatusUpdate` read |
 
@@ -53,3 +54,4 @@ Entries whose `id` is not the connected account are ignored.
   window the inbox cannot send.
 - Instagram contacts have no phone number: a new DM creates a lead with a name only.
 - Instagram is not an automation action yet (AW-053).
+- Replies are text only: sending a file needs a public URL, which private inbox files do not have (AW-051).

@@ -25,8 +25,11 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class AttachmentController extends Controller
 {
-    /** Shown in the browser rather than downloaded; Word and Excel files always download. */
-    private const INLINE = ['application/pdf', 'image/jpeg', 'image/png', 'video/mp4', 'video/webm'];
+    /** Shown or played in the browser rather than downloaded; Word and Excel files always download. */
+    private const INLINE = [
+        'application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm',
+        'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'audio/aac',
+    ];
 
     public function __construct(
         private readonly ManageAttachments $attachments,

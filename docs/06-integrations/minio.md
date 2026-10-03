@@ -3,6 +3,7 @@
 - **Status:** ✅ Website and product images can be stored on MinIO (`media` disk). ✅ Customer and student
   documents can be stored in a private bucket (`files` disk). ✅ Product, service and course videos and
   brochures, and the website's Video and Downloads sections, go with the website images (public bucket).
+  ✅ Files sent and received in the inbox go with the documents (private bucket).
 - **Last updated:** 2026-10-06
 
 Uploaded images go to the disk named by `WEBSITE_MEDIA_DISK`: `public` (the server's own disk, served from
@@ -252,5 +253,4 @@ keep the backup encrypted.
 
 ## Not yet
 
-- Inbox attachments.
 - EXIF stripping and resized variants (AW-035).

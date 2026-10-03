@@ -8,6 +8,13 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **Files in the inbox.** Photos, videos, voice notes and documents that contacts send on WhatsApp or
+  Instagram are now saved and shown in the conversation (photos inline, videos and voice notes playable,
+  documents to open or download) instead of "[Image]". They are stored privately and count against the
+  storage allowance; a file that is too large (over 16 MB) or of a type we do not accept keeps its
+  "[Image]" text with the reason. On WhatsApp, staff can attach one photo, video, voice note or document
+  to a reply with the paperclip button, with the text as its caption. Instagram replies stay text-only.
+  Needs a queue worker for the `media` queue.
 - Website sections **Video** (up to three videos played on the page) and **Downloads** (up to ten
   brochures, price lists, menus or forms). Add them from Website → Add section and upload the files on
   the section's page; the section shows once it has a file. Removing the section deletes its files.

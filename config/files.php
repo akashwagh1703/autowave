@@ -3,6 +3,7 @@
 use App\Domain\Commerce\Models\Product;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Education\Models\Course;
+use App\Domain\Messaging\Models\ConversationMessage;
 use App\Domain\Service\Models\Service;
 use App\Domain\Website\Models\WebsiteSection;
 
@@ -11,8 +12,8 @@ use App\Domain\Website\Models\WebsiteSection;
 | Attachments: documents and videos (docs/06-integrations/minio.md)
 |--------------------------------------------------------------------------
 |
-| Files attached to records (customers first; products, courses, the website
-| and the inbox later). Private files are only ever streamed through an
+| Files attached to records: customer documents, catalog and website videos and
+| brochures, and inbox messages. Private files are only ever streamed through an
 | authorised controller; public files live on the media disk and load from
 | its public URL. Images for the website and products stay in config('website.media').
 |
@@ -48,9 +49,33 @@ return [
                 'video/webm' => 'webm',
             ],
         ],
+        // Inbox only: photos, stickers and voice notes sent over WhatsApp and Instagram.
+        'image' => [
+            'label' => 'Image',
+            'max_kb' => 5 * 1024,
+            'types' => [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/webp' => 'webp',
+            ],
+        ],
+        'audio' => [
+            'label' => 'Voice note',
+            'max_kb' => 16 * 1024,
+            'types' => [
+                'audio/ogg' => 'ogg',
+                'audio/mpeg' => 'mp3',
+                'audio/mp4' => 'm4a',
+                'audio/x-m4a' => 'm4a',
+                'audio/aac' => 'aac',
+                'audio/x-hx-aac-adts' => 'aac',
+                'audio/amr' => 'amr',
+            ],
+        ],
     ],
 
-    // What may own attachments: the model, `kinds` allowed (with an optional per-kind limit in `kind_max`),
+    // What may own attachments: the model, `kinds` allowed in order of preference (with optional per-kind file
+    // counts in `kind_max` and sizes in `kind_max_kb`),
     // storage `folder` under tenant/{id}/, `visibility`, the per-record limit, and the permissions needed to see
     // (and download) or upload and delete its files. Public files are shown on the business website.
     // Owners that share a model must share permissions: opening or deleting a file only knows the model.
@@ -112,6 +137,18 @@ return [
             'max' => 10,
             'view' => 'website.view',
             'manage' => 'website.manage',
+        ],
+        // One file per inbox message, sent by the team or received from a contact. WhatsApp takes videos
+        // and voice notes up to 16 MB; images come first so a JPG or PNG is sent as a photo.
+        'conversation_message' => [
+            'model' => ConversationMessage::class,
+            'kinds' => ['image', 'document', 'video', 'audio'],
+            'kind_max_kb' => ['video' => 16 * 1024],
+            'folder' => 'inbox',
+            'visibility' => 'private',
+            'max' => 1,
+            'view' => 'conversations.view',
+            'manage' => 'conversations.reply',
         ],
     ],
 

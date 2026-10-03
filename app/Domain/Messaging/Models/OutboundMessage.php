@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * A message sent (or being sent) through MessagingService. `simulated` messages went to a provider
@@ -69,6 +70,12 @@ class OutboundMessage extends Model
     public function run(): BelongsTo
     {
         return $this->belongsTo(AutomationRun::class, 'automation_run_id');
+    }
+
+    /** The message's line in its conversation, which carries an attached file. */
+    public function entry(): HasOne
+    {
+        return $this->hasOne(ConversationMessage::class, 'outbound_message_id');
     }
 
     /** "+91 ••••• •3210" / "a•••@example.com" — enough to recognise, without exposing the full contact. */

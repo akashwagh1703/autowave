@@ -230,7 +230,9 @@ This document describes what **actually exists** in the repository today. Planne
 - **Webhooks** (`/webhooks/meta/{key}` on the app host): subscription check, `X-Hub-Signature-256`
   verification, size limit and rate limit; verified bodies are stored and processed on the `messaging`
   queue, recovered by `messaging:dispatch-pending` and pruned after 14 days.
-- **Inbound:** text and button replies, media as placeholders; one conversation per contact and channel;
+- **Inbound:** text and button replies; photos, videos, voice notes and documents downloaded on the `media`
+  queue into private storage and shown in the thread (locations and contact cards as placeholders);
+  WhatsApp replies can carry one file; one conversation per contact and channel;
   linked to a customer or open lead with the same phone, or a new lead (source WhatsApp or Instagram);
   timeline entries; STOP/START opt-out; idempotent on Meta's message id.
 - **Inbox** (`/inbox`, `conversations.*`): open, mine, unassigned, closed and all tabs, channel filter,
@@ -354,7 +356,7 @@ This document describes what **actually exists** in the repository today. Planne
   - webhook and payment actions and triggers (AW-026);
   - an Instagram action (AW-053);
   - retention (AW-030).
-- **Messaging gaps:** Embedded Signup (AW-050), media download and sending (AW-051), own-conversations
+- **Messaging gaps:** Embedded Signup (AW-050), files on Instagram replies (AW-051), own-conversations
   visibility (AW-052), inbound email (AW-054).
 
 ## Known technical debt

@@ -2,12 +2,16 @@
 
 namespace App\Domain\Messaging\Meta;
 
+use App\Domain\Messaging\Exceptions\MediaTooLarge;
 use App\Domain\Messaging\Exceptions\MetaApiException;
+use GuzzleHttp\Exception\TransferException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * The only class that talks to Meta's Graph APIs (WhatsApp Cloud API and Instagram API with Instagram
@@ -81,6 +85,111 @@ class MetaGraphClient
             'username' => $response->json('username'),
             'name' => $response->json('name'),
         ];
+    }
+
+    /**
+     * Uploads a file for a WhatsApp message; Meta keeps it for 30 days.
+     *
+     * @return string the media id to send
+     */
+    public function uploadWhatsAppMedia(string $phoneNumberId, string $token, string $contents, string $mimeType, string $filename): string
+    {
+        $response = $this->send(fn (PendingRequest $http) => $http
+            ->timeout((int) config('messaging.meta.media_timeout'))
+            ->attach('file', $contents, $filename, ['Content-Type' => $mimeType])
+            ->post($this->graph("{$phoneNumberId}/media"), ['messaging_product' => 'whatsapp', 'type' => $mimeType]), $token);
+
+        return (string) ($response->json('id') ?? throw new MetaApiException('Meta did not return a media id.', $response->status()));
+    }
+
+    /**
+     * Where to download a file a contact sent on WhatsApp (the URL is valid for a few minutes).
+     *
+     * @return array{url: string, mime_type: ?string, file_size: ?int}
+     */
+    public function whatsAppMedia(string $mediaId, string $token): array
+    {
+        $response = $this->get($this->graph($mediaId), $token);
+        $url = $response->json('url');
+
+        if (! is_string($url) || $url === '') {
+            throw new MetaApiException('Meta did not return a media URL.', $response->status());
+        }
+
+        return [
+            'url' => $url,
+            'mime_type' => is_string($response->json('mime_type')) ? $response->json('mime_type') : null,
+            'file_size' => is_numeric($response->json('file_size')) ? (int) $response->json('file_size') : null,
+        ];
+    }
+
+    /**
+     * Downloads a file from Meta's media servers: HTTPS on config('messaging.meta.media_hosts') only, never
+     * more than $maxBytes. WhatsApp needs the token; Instagram CDN links are signed and need none.
+     *
+     * @throws MediaTooLarge
+     */
+    public function downloadMedia(string $url, ?string $token, int $maxBytes): string
+    {
+        if (! self::isMediaUrl($url)) {
+            throw new MetaApiException('The file is not on a Meta media server.', 400);
+        }
+
+        $http = Http::timeout((int) config('messaging.meta.media_timeout'))->withOptions([
+            'allow_redirects' => [
+                'max' => 3,
+                'protocols' => ['https'],
+                'on_redirect' => function ($request, $response, UriInterface $uri) {
+                    if (! self::isMediaUrl((string) $uri)) {
+                        throw new MetaApiException('The file is not on a Meta media server.', 400);
+                    }
+                },
+            ],
+            'on_headers' => function (ResponseInterface $response) use ($maxBytes) {
+                if ((int) $response->getHeaderLine('Content-Length') > $maxBytes) {
+                    throw new MediaTooLarge;
+                }
+            },
+        ]);
+
+        try {
+            $response = ($token ? $http->withToken($token) : $http)->get($url);
+        } catch (ConnectionException $exception) {
+            throw new MetaApiException('Could not reach Meta: '.Str::limit($exception->getMessage(), 200));
+        } catch (TransferException $exception) {
+            $cause = $exception->getPrevious();
+            throw $cause instanceof MediaTooLarge || $cause instanceof MetaApiException ? $cause : new MetaApiException('Could not download the file: '.Str::limit($exception->getMessage(), 200));
+        }
+
+        if ($response->failed()) {
+            throw new MetaApiException('Meta returned HTTP '.$response->status().' for the file.', $response->status());
+        }
+
+        $body = $response->body();
+
+        if (strlen($body) > $maxBytes) {
+            throw new MediaTooLarge;
+        }
+
+        return $body;
+    }
+
+    public static function isMediaUrl(string $url): bool
+    {
+        $parts = parse_url($url);
+        $host = strtolower((string) ($parts['host'] ?? ''));
+
+        if (($parts['scheme'] ?? null) !== 'https' || $host === '') {
+            return false;
+        }
+
+        foreach ((array) config('messaging.meta.media_hosts') as $allowed) {
+            if ($host === $allowed || str_ends_with($host, '.'.$allowed)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function graph(string $path): string

@@ -144,7 +144,8 @@ Constraints:
   `MessagingCompliance`. A new sender that skips them would break opt-out and quiet hours.
 - Webhook processing is at-least-once. Inbound messages are idempotent by provider id; status updates are
   idempotent because they only move forward.
-- Only text is handled. Media, reactions and interactive messages are shown as a placeholder
-  ("[Image]"), and their content is not downloaded (AW-051).
+- Originally only text was handled and media was a placeholder ("[Image]"). Received files are now
+  downloaded into private storage and WhatsApp replies can carry one file; Instagram replies stay
+  text-only and reactions are ignored (AW-051).
 - Everyone with `conversations.view` sees every conversation. Per-assignee visibility comes later (AW-052).
 - Instagram contacts have no phone number, so Instagram leads carry only a name until staff add one.
