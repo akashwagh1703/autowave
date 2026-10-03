@@ -256,7 +256,7 @@ export default function Index({ courses, showInactive, counts, files }) {
                 <Dialog open onClose={() => setFilesOf(null)} fullWidth maxWidth="sm">
                     <DialogTitle>{filesOf.name}</DialogTitle>
                     <DialogContent>
-                        <AttachmentsCard documents={files[filesOf.id]} timezone={timezone} title="Video and brochures" />
+                        <AttachmentsCard documents={files[filesOf.id]} timezone={timezone} title="Video and brochures" namePlaceholder="e.g. Syllabus, Meet the teacher" />
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={() => setFilesOf(null)} color="inherit">

@@ -354,11 +354,12 @@ Other changes:
 
 | Table | Key columns |
 |---|---|
-| `attachments` | `tenant_id` (cascade), `attachable_type`/`attachable_id` (polymorphic owner, full class name: customers, products, services, courses), `kind` (`document`, `video`), `visibility` (`private`/`public`), `disk`, `path` unique, `title` (150, nullable), `original_name`, `mime_type` (detected from content), `size_bytes`, `uploaded_by_user_id` (null on delete) |
+| `attachments` | `tenant_id` (cascade), `attachable_type`/`attachable_id` (polymorphic owner, full class name: customers, products, services, courses, website sections), `kind` (`document`, `video`), `visibility` (`private`/`public`), `disk`, `path` unique, `title` (150, nullable), `original_name`, `mime_type` (detected from content), `size_bytes`, `uploaded_by_user_id` (null on delete) |
 
-- Customer files are `private`; product, service and course files are `public` (shown on the website).
-- Rows are deleted with their file (`ManageAttachments::delete`), and deleting a product, service or course
-  deletes its files (`deleteAllFor`). Deleting the tenant cascades the rows;
+- Customer files are `private`; product, service, course and website-section files are `public` (shown on
+  the website).
+- Rows are deleted with their file (`ManageAttachments::delete`), and deleting a product, service or course,
+  or removing a website section, deletes its files (`deleteAllFor`). Deleting the tenant cascades the rows;
   the files stay on storage until cleaned up by hand.
 - Tenant setting `storage_quota` (`{"mb": int}`) overrides `FILES_QUOTA_MB` for one business; written only
   from Super Admin.

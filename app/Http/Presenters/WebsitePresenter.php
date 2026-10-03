@@ -38,7 +38,8 @@ class WebsitePresenter
             'available' => $catalog->isAvailable($section->type),
             'removable' => SectionCatalog::isRemovable($section->type),
             'pinned' => SectionCatalog::position($section->type),
-            'editable' => $catalog->fields($section->type) !== [] || isset($definition['media']),
+            'editable' => $catalog->fields($section->type) !== [] || isset($definition['media']) || isset($definition['files']),
+            'has_files' => isset($definition['files']),
             'live' => $live,
             'empty_hint' => $definition['empty_hint'] ?? null,
         ];

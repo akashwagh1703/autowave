@@ -8,6 +8,9 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- Website sections **Video** (up to three videos played on the page) and **Downloads** (up to ten
+  brochures, price lists, menus or forms). Add them from Website → Add section and upload the files on
+  the section's page; the section shows once it has a file. Removing the section deletes its files.
 - **Videos and brochures** for products, services and courses: one MP4 or WebM video (up to 50 MB) and up
   to three PDF, Word, Excel or image files per item, added from the product or service edit page or the
   course's **Files** button. They appear on the business website under the item as a **Watch video**

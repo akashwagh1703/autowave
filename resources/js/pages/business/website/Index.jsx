@@ -290,7 +290,11 @@ export default function Index({ website, sections, addable, checklist, onlineBoo
             <ConfirmDialog
                 open={Boolean(removing)}
                 title={`Remove the ${removing?.label.toLowerCase()} section?`}
-                description="Its text is deleted. You can add the section again later, or hide it instead to keep the text."
+                description={
+                    removing?.has_files
+                        ? 'Its text and uploaded files are deleted for good. Hide it instead to keep them.'
+                        : 'Its text is deleted. You can add the section again later, or hide it instead to keep the text.'
+                }
                 confirmLabel="Remove"
                 destructive
                 onConfirm={remove}

@@ -4,6 +4,7 @@ use App\Domain\Commerce\Models\Product;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Education\Models\Course;
 use App\Domain\Service\Models\Service;
+use App\Domain\Website\Models\WebsiteSection;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,6 +53,7 @@ return [
     // What may own attachments: the model, `kinds` allowed (with an optional per-kind limit in `kind_max`),
     // storage `folder` under tenant/{id}/, `visibility`, the per-record limit, and the permissions needed to see
     // (and download) or upload and delete its files. Public files are shown on the business website.
+    // Owners that share a model must share permissions: opening or deleting a file only knows the model.
     'owners' => [
         'customer' => [
             'model' => Customer::class,
@@ -91,6 +93,25 @@ return [
             'max' => 4,
             'view' => 'courses.view',
             'manage' => 'courses.manage',
+        ],
+        // The website's Video and Downloads sections (config('website.sections.*.files')).
+        'website_video' => [
+            'model' => WebsiteSection::class,
+            'kinds' => ['video'],
+            'folder' => 'website/videos',
+            'visibility' => 'public',
+            'max' => 3,
+            'view' => 'website.view',
+            'manage' => 'website.manage',
+        ],
+        'website_downloads' => [
+            'model' => WebsiteSection::class,
+            'kinds' => ['document'],
+            'folder' => 'website/downloads',
+            'visibility' => 'public',
+            'max' => 10,
+            'view' => 'website.view',
+            'manage' => 'website.manage',
         ],
     ],
 

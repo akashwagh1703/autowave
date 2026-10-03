@@ -283,6 +283,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
                 Route::put('/website/sections/{section}', [WebsiteSectionController::class, 'update'])->name('website.sections.update');
                 Route::patch('/website/sections/{section}/toggle', [WebsiteSectionController::class, 'toggle'])->name('website.sections.toggle');
                 Route::delete('/website/sections/{section}', [WebsiteSectionController::class, 'destroy'])->name('website.sections.destroy');
+                Route::post('/website/sections/{section}/attachments', [AttachmentController::class, 'storeForWebsiteSection'])->middleware('throttle:60,1')->name('website.sections.attachments.store');
 
                 Route::post('/website/media', [WebsiteMediaController::class, 'store'])->middleware('throttle:60,1')->name('website.media.store');
                 Route::put('/website/media/order', [WebsiteMediaController::class, 'reorder'])->name('website.media.reorder');

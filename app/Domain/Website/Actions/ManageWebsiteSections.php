@@ -3,6 +3,7 @@
 namespace App\Domain\Website\Actions;
 
 use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Files\Actions\ManageAttachments;
 use App\Domain\Website\Models\WebsiteSection;
 use App\Domain\Website\Support\SectionCatalog;
 use App\Domain\Website\Support\SectionSchema;
@@ -11,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Edits the current tenant's website sections. The header stays first and the footer last;
- * neither can be removed. Every change is audited.
+ * neither can be removed. Removing a section deletes its uploaded files. Every change is audited.
  */
 class ManageWebsiteSections
 {
@@ -19,6 +20,7 @@ class ManageWebsiteSections
         private readonly SectionCatalog $catalog,
         private readonly SectionSchema $schema,
         private readonly AuditLogger $audit,
+        private readonly ManageAttachments $attachments,
     ) {}
 
     /** @param  array<string, mixed>  $input */
@@ -62,6 +64,7 @@ class ManageWebsiteSections
 
         $section->delete();
         $this->audit->log('website.section_removed', null, ['type' => $section->type, 'section_id' => $section->id]);
+        $this->attachments->deleteAllFor($section);
     }
 
     public function toggle(WebsiteSection $section, bool $enabled): WebsiteSection

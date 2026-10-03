@@ -2,7 +2,7 @@
 
 - **Status:** ✅ Website and product images can be stored on MinIO (`media` disk). ✅ Customer and student
   documents can be stored in a private bucket (`files` disk). ✅ Product, service and course videos and
-  brochures go with the website images (public bucket).
+  brochures, and the website's Video and Downloads sections, go with the website images (public bucket).
 - **Last updated:** 2026-10-06
 
 Uploaded images go to the disk named by `WEBSITE_MEDIA_DISK`: `public` (the server's own disk, served from
@@ -220,7 +220,7 @@ Documents are up to 10 MB, within the current Nginx and PHP upload limits (20 MB
 
 ### 4c. Raise the upload limit for videos
 
-Catalog videos are up to 50 MB. Until the limits below are raised, a video upload over 20 MB is refused by
+Catalog and website videos are up to 50 MB. Until the limits below are raised, a video upload over 20 MB is refused by
 Nginx (413) before it reaches AutoWave:
 
 ```bash
@@ -252,5 +252,5 @@ keep the backup encrypted.
 
 ## Not yet
 
-- Website-level videos and brochures, and inbox attachments.
+- Inbox attachments.
 - EXIF stripping and resized variants (AW-035).

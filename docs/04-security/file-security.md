@@ -13,6 +13,8 @@ tenant/{tenant_id}/documents/customers/    {ulid}.{pdf|docx|xlsx|jpg|png}   (pri
 tenant/{tenant_id}/catalog/products/       {ulid}.{mp4|webm|pdf|docx|xlsx|jpg|png}   (public disk)
 tenant/{tenant_id}/catalog/services/       (same)
 tenant/{tenant_id}/catalog/courses/        (same)
+tenant/{tenant_id}/website/videos/         {ulid}.{mp4|webm}                (public disk)
+tenant/{tenant_id}/website/downloads/      {ulid}.{pdf|docx|xlsx|jpg|png}   (public disk)
 ```
 
 Website images go on `config('website.media.disk')` (env `WEBSITE_MEDIA_DISK`, default `public`):
@@ -79,6 +81,10 @@ stored with `visibility = public` on `config('files.disks.public')` (env `FILES_
   appear on a website even if one were linked to a catalog item.
 - **Deleting** a product, service or course (one at a time or in bulk) deletes its files too.
 
+The website's **Video** section (up to three videos) and **Downloads** section (up to ten documents) work the
+same way: public files owned by the `website_sections` row, uploaded with `website.manage`, opened with
+`website.view`, and deleted when the section is removed.
+
 ## Storage allowance
 
 `App\Domain\Files\Support\StorageAllowance` adds up `media.size_bytes` and `attachments.size_bytes` for the
@@ -89,5 +95,5 @@ per-business value a platform admin sets in Super Admin → Tenants (tenant sett
 ## Still to do
 
 - Strip EXIF metadata and create resized variants on the media queue (AW-035).
-- Website-level videos and brochures, and inbox attachments.
+- Inbox attachments.
 - Malware scanning of uploaded documents (for example ClamAV on the media queue).

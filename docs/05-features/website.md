@@ -58,6 +58,8 @@ business can edit it without help: design, content, images, publishing, the enqu
 | products | Active products by category, optional prices, "Out of stock", **Add to cart** when online ordering is open ([commerce.md](commerce.md)) | commerce engine, at least one active product |
 | packages | Hidden until packages exist | service engine |
 | gallery | Uploaded photos with a lightbox | — |
+| video | Up to three uploaded videos (MP4 or WebM, 50 MB each) played on the page, with optional captions | at least one video; not in any default layout, added from the editor |
+| downloads | Up to ten uploaded files (PDF, Word, Excel, JPG, PNG, 10 MB each) as download cards | at least one file; added from the editor |
 | team | Active staff or resources and what they offer | booking engine |
 | testimonials, offers, faq | Items entered in the editor | — |
 | reviews | Hidden until the Reviews module exists | reviews module |
@@ -71,6 +73,9 @@ business can edit it without help: design, content, images, publishing, the enqu
 - **Hidden sections.** Disabled sections are never rendered. Sections with a data source are hidden while
   they have nothing to show, and so are sections the tenant's engines or modules don't support.
 - **Order.** Header first and footer last; the rest by `sort_order`. There is one section per type.
+- **Section files.** Video and Downloads files belong to the section (`attachments`, public). They are
+  uploaded on the section's edit page with `website.manage`, and removing the section deletes them; hiding
+  it keeps them. Products, services and courses show their own video and brochures inside their sections.
 - **Templates.** Templates change only the look (hero style, font, corner radius). Switching keeps all
   content.
 - **Business data.** Business data is never copied into sections. The site reads services, staff, hours,

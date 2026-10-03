@@ -129,7 +129,7 @@ export default function Edit({ product, categories, defaultLowStock, foodTypes, 
                 </div>
                 <div className="space-y-6">
                     <ImageCard product={product} />
-                    {files ? <AttachmentsCard documents={files} timezone={timezone} title="Video and brochures" /> : null}
+                    {files ? <AttachmentsCard documents={files} timezone={timezone} title="Video and brochures" namePlaceholder="e.g. Spec sheet, How to use" /> : null}
                 </div>
             </div>
 

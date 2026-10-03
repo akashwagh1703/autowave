@@ -65,7 +65,7 @@ export default function Edit({ service, categories, resources, upcomingCount, fi
 
             {files ? (
                 <div className="mt-6 max-w-3xl">
-                    <AttachmentsCard documents={files} timezone={timezone} title="Video and brochures" />
+                    <AttachmentsCard documents={files} timezone={timezone} title="Video and brochures" namePlaceholder="e.g. Package details, Before and after" />
                 </div>
             ) : null}
 

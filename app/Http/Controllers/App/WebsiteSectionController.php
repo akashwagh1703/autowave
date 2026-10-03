@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\App;
 
 use App\Domain\Media\Models\Media;
+use App\Domain\Tenant\Support\TenantContext;
 use App\Domain\Website\Actions\ManageWebsiteSections;
 use App\Domain\Website\Models\WebsiteSection;
 use App\Domain\Website\Support\SectionCatalog;
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\FilesPresenter;
 use App\Http\Presenters\WebsitePresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,12 +26,13 @@ class WebsiteSectionController extends Controller
         return redirect()->route('website.sections.edit', $section)->with('success', __('Section added. It is shown on your website once it has content.'));
     }
 
-    public function edit(Request $request, WebsiteSection $section, SectionCatalog $catalog): Response
+    public function edit(Request $request, WebsiteSection $section, SectionCatalog $catalog, TenantContext $context): Response
     {
         abort_unless($catalog->isAvailable($section->type), 404);
 
         $definition = SectionCatalog::definition($section->type);
         $collection = $definition['media'] ?? null;
+        $files = $definition['files'] ?? null;
 
         return Inertia::render('business/website/SectionEdit', [
             'section' => [
@@ -44,6 +47,9 @@ class WebsiteSectionController extends Controller
                 'rules' => WebsitePresenter::mediaRules($collection),
                 'items' => Media::query()->inCollection($collection)->get()->map(fn (Media $media) => WebsitePresenter::media($media))->all(),
             ] : null,
+            'files' => $files
+                ? FilesPresenter::card($section, $files, route('website.sections.attachments.store', $section), $request->user(), $context->tenant())
+                : null,
             'canManage' => $request->user()->can('website.manage'),
         ]);
     }

@@ -9,6 +9,8 @@ use App\Domain\Education\Models\Course;
 use App\Domain\Files\Actions\ManageAttachments;
 use App\Domain\Files\Models\Attachment;
 use App\Domain\Service\Models\Service;
+use App\Domain\Website\Models\WebsiteSection;
+use App\Domain\Website\Support\SectionCatalog;
 use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -49,6 +51,14 @@ class AttachmentController extends Controller
     public function storeForCourse(Request $request, Course $course): RedirectResponse
     {
         return $this->store($request, $course, 'course');
+    }
+
+    /** Videos of the Video section, documents of the Downloads section (config('website.sections.*.files')). */
+    public function storeForWebsiteSection(Request $request, WebsiteSection $section): RedirectResponse
+    {
+        $ownerKey = SectionCatalog::definition($section->type)['files'] ?? abort(404);
+
+        return $this->store($request, $section, $ownerKey);
     }
 
     public function show(Request $request, Attachment $attachment): Response

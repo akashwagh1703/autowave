@@ -198,7 +198,8 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
     Staff have none.
   - Videos and brochures on catalog items use the item's own permissions, not `documents.*`: upload and
     delete with `products.update`, `services.manage` or `courses.manage`; open with `products.view`,
-    `services.view` or `courses.view`.
+    `services.view` or `courses.view`. Files of the website's Video and Downloads sections use
+    `website.manage` and `website.view`.
 - **New permission groups for existing tenants:** `RbacSeeder` updates the templates, but tenant roles are
   copies. `TenantBackfillSeeder` calls `ProvisionTenantRoles::grantNewPermissionGroups()` for `services`,
   `resources`, `website`, `conversations`, `ai`, `offers`, `courses`, `students`, `fees`,

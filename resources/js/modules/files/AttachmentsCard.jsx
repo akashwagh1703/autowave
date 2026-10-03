@@ -19,7 +19,7 @@ import { formatBytes, formatDate } from '@/utils/format';
  * permissions and checks them again on upload. Private files open through AutoWave, never a storage link;
  * public ones (catalog videos and brochures) load from their public address.
  */
-export default function AttachmentsCard({ documents, timezone, title = 'Documents' }) {
+export default function AttachmentsCard({ documents, timezone, title = 'Documents', namePlaceholder = 'e.g. Aadhaar card, Marksheet' }) {
     const input = useRef(null);
     const form = useForm({ file: null, title: '' });
     const [tooLarge, setTooLarge] = useState(false);
@@ -126,7 +126,7 @@ export default function AttachmentsCard({ documents, timezone, title = 'Document
                                     size="small"
                                     fullWidth
                                     label="Name (optional)"
-                                    placeholder="e.g. Aadhaar card, Marksheet"
+                                    placeholder={namePlaceholder}
                                     value={form.data.title}
                                     disabled={form.processing}
                                     onChange={(event) => form.setData('title', event.target.value)}
@@ -149,7 +149,7 @@ export default function AttachmentsCard({ documents, timezone, title = 'Document
                         )}
                         <p className="mt-1 text-xs text-slate-500">
                             {documents.hint}. {documents.public ? 'Shown on your website. ' : ''}
-                            {full ? `This record already has ${documents.max_files} files.` : ''}
+                            {full ? `The limit of ${documents.max_files} files is reached.` : ''}
                         </p>
                         {error ? (
                             <p className="mt-1 text-sm text-red-600" role="alert">

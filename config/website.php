@@ -15,6 +15,8 @@
 | - data: business records the section displays (services, team, gallery ...).
 |   Sections with a data source are hidden on the site while it has no records;
 | - media: a media collection managed on the section's edit page;
+| - files: an attachment owner (config/files.php) whose public videos or documents
+|   belong to the section and are uploaded on its edit page;
 | - engine / module: required for the section to be offered and rendered;
 | - position: first|last pins the header and footer; removable: false keeps them.
 |
@@ -128,6 +130,17 @@ return [
                 'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Gallery'],
             ],
         ],
+        'video' => [
+            'label' => 'Video',
+            'description' => 'Up to three videos of your work, your place or your team, played on the page.',
+            'data' => 'videos',
+            'files' => 'website_video',
+            'empty_hint' => 'Upload a video to show this section.',
+            'fields' => [
+                'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Take a look'],
+                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300, 'ai' => true],
+            ],
+        ],
         'team' => [
             'label' => 'Team',
             'description' => 'Your staff or bookable resources, straight from the booking setup.',
@@ -190,6 +203,17 @@ return [
                     'question' => ['type' => 'text', 'label' => 'Question', 'max' => 200, 'required' => true],
                     'answer' => ['type' => 'textarea', 'label' => 'Answer', 'max' => 1000, 'required' => true, 'ai' => true],
                 ]],
+            ],
+        ],
+        'downloads' => [
+            'label' => 'Downloads',
+            'description' => 'Brochures, price lists, menus or forms visitors can open and download.',
+            'data' => 'downloads',
+            'files' => 'website_downloads',
+            'empty_hint' => 'Upload a file to show this section.',
+            'fields' => [
+                'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Downloads'],
+                'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300, 'ai' => true],
             ],
         ],
         'contact' => [

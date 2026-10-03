@@ -4,11 +4,14 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PageHeader from '@/components/PageHeader';
+import useTenant from '@/hooks/useTenant';
 import AppLayout from '@/layouts/AppLayout';
+import AttachmentsCard from '@/modules/files/AttachmentsCard';
 import MediaManager from '@/modules/website/MediaManager';
 import SchemaFields from '@/modules/website/SchemaFields';
 
-export default function SectionEdit({ section, fields, media, canManage }) {
+export default function SectionEdit({ section, fields, media, files, canManage }) {
+    const { timezone } = useTenant();
     const form = useForm({ config: section.config });
 
     const submit = (event) => {
@@ -55,6 +58,17 @@ export default function SectionEdit({ section, fields, media, canManage }) {
                             <MediaManager rules={media.rules} items={media.items} canManage={canManage} />
                         </CardContent>
                     </Card>
+                ) : null}
+
+                {files ? (
+                    <div className={fields.length ? 'self-start' : 'lg:col-span-2'}>
+                        <AttachmentsCard
+                            documents={files}
+                            timezone={timezone}
+                            title={files.kinds[0]?.kind === 'video' ? 'Videos' : 'Files'}
+                            namePlaceholder={files.kinds[0]?.kind === 'video' ? 'e.g. A day at our studio' : 'e.g. Price list, Menu'}
+                        />
+                    </div>
                 ) : null}
             </div>
         </AppLayout>

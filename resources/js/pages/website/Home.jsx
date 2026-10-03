@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import BookingSection from '@/modules/website/BookingSection';
 import ContactSection from '@/modules/website/ContactSection';
 import CoursesSection from '@/modules/website/CoursesSection';
+import { Downloads, Videos } from '@/modules/website/FileSections';
 import ReservationSection from '@/modules/website/ReservationSection';
 import { CartDrawer, Products, useCart } from '@/modules/website/ShopSection';
 import { About, Faq, Footer, Gallery, Header, Hero, Offers, Services, Team, Testimonials } from '@/modules/website/sections';
@@ -19,9 +20,11 @@ const RENDERERS = {
     courses: CoursesSection,
     team: Team,
     gallery: Gallery,
+    video: Videos,
     testimonials: Testimonials,
     offers: Offers,
     faq: Faq,
+    downloads: Downloads,
     contact: ContactSection,
     booking: BookingSection,
     reservation: ReservationSection,

@@ -17,6 +17,7 @@ use App\Domain\Website\Models\WebsiteConfig;
 use App\Domain\Website\Models\WebsiteSection;
 use App\Domain\Website\Support\SectionCatalog;
 use App\Support\Phone;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -99,7 +100,7 @@ class WebsiteContent
             }
 
             $config = $this->catalog->resolve($section->type, $section->configuration);
-            $data = $this->data($section->type, $config, $business);
+            $data = $this->data($section, $config, $business);
 
             if ($data === false) {
                 continue;
@@ -117,11 +118,11 @@ class WebsiteContent
      * @param  array<string, mixed>  $config
      * @param  array<string, mixed>  $business
      */
-    private function data(string $type, array $config, array $business): mixed
+    private function data(WebsiteSection $section, array $config, array $business): mixed
     {
-        $source = SectionCatalog::definition($type)['data'] ?? null;
+        $source = SectionCatalog::definition($section->type)['data'] ?? null;
 
-        $data = match ($type) {
+        $data = match ($section->type) {
             'hero' => ['image' => Media::query()->inCollection('hero')->first()?->url()],
             'about' => filled($config['body'] ?? null) || filled($business['description']) ? [] : false,
             'booking' => $this->booking->isOpen() ? [] : false,
@@ -135,6 +136,8 @@ class WebsiteContent
                     ->all(),
                 'items' => $config['items'] ?? [],
                 'products' => $this->products(),
+                'videos' => $this->sectionFiles($section, 'video')->map(fn (Attachment $file) => self::video($file))->all(),
+                'downloads' => $this->sectionFiles($section, 'document')->map(fn (Attachment $file) => self::brochure($file))->all(),
                 // Filled by later phases; until then these sections stay hidden.
                 'packages', 'reviews' => [],
                 default => [],
@@ -248,7 +251,7 @@ class WebsiteContent
      *
      * @param  class-string<Model>  $model
      * @param  list<int>  $ids
-     * @return array<int, array{video: ?array{url: string, type: string, title: ?string}, brochures: list<array{name: string, url: string, extension: string}>}>
+     * @return array<int, array{video: ?array{url: string, type: string, title: ?string}, brochures: list<array{name: string, url: string, extension: string, size_bytes: int}>}>
      */
     private function files(string $model, array $ids): array
     {
@@ -267,15 +270,44 @@ class WebsiteContent
                 $video = $files->firstWhere('kind', 'video');
 
                 return [
-                    'video' => $video ? ['url' => $video->publicUrl(), 'type' => $video->mime_type, 'title' => $video->title] : null,
-                    'brochures' => $files->where('kind', 'document')->map(fn (Attachment $file) => [
-                        'name' => $file->title ?: pathinfo($file->original_name, PATHINFO_FILENAME),
-                        'url' => $file->publicUrl(),
-                        'extension' => Str::upper(pathinfo($file->path, PATHINFO_EXTENSION)),
-                    ])->values()->all(),
+                    'video' => $video ? self::video($video) : null,
+                    'brochures' => $files->where('kind', 'document')->map(fn (Attachment $file) => self::brochure($file))->values()->all(),
                 ];
             })
             ->all();
+    }
+
+    /**
+     * Public files of a Video or Downloads section, oldest first.
+     *
+     * @return Collection<int, Attachment>
+     */
+    private function sectionFiles(WebsiteSection $section, string $kind): Collection
+    {
+        return Attachment::query()
+            ->where('attachable_type', $section->getMorphClass())
+            ->where('attachable_id', $section->id)
+            ->where('visibility', Attachment::PUBLIC)
+            ->where('kind', $kind)
+            ->orderBy('id')
+            ->get();
+    }
+
+    /** @return array{url: string, type: string, title: ?string} */
+    private static function video(Attachment $file): array
+    {
+        return ['url' => $file->publicUrl(), 'type' => $file->mime_type, 'title' => $file->title];
+    }
+
+    /** @return array{name: string, url: string, extension: string, size_bytes: int} */
+    private static function brochure(Attachment $file): array
+    {
+        return [
+            'name' => $file->title ?: pathinfo($file->original_name, PATHINFO_FILENAME),
+            'url' => $file->publicUrl(),
+            'extension' => Str::upper(pathinfo($file->path, PATHINFO_EXTENSION)),
+            'size_bytes' => (int) $file->size_bytes,
+        ];
     }
 
     /** @return list<array<string, mixed>> */
