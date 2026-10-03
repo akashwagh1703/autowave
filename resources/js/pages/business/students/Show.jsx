@@ -22,6 +22,7 @@ import PaymentDialog from '@/modules/payments/PaymentDialog';
 import PaymentsList from '@/modules/payments/PaymentsList';
 import EnrolmentStatusChip from '@/modules/education/EnrolmentStatusChip';
 import InstalmentsEditor from '@/modules/education/InstalmentsEditor';
+import AttachmentsCard from '@/modules/files/AttachmentsCard';
 import useTenant from '@/hooks/useTenant';
 import { formatDay } from '@/utils/booking';
 import { netFee } from '@/utils/education';
@@ -129,7 +130,7 @@ function NotesCard({ enrolment, canEdit }) {
     );
 }
 
-export default function Show({ enrolment, attendance, activities, paymentMethods, maxInstalments }) {
+export default function Show({ enrolment, attendance, activities, paymentMethods, maxInstalments, documents }) {
     const { can, currency, timezone } = useTenant();
     const { errors } = usePage().props;
     const [paying, setPaying] = useState(false);
@@ -360,6 +361,8 @@ export default function Show({ enrolment, attendance, activities, paymentMethods
                     ) : null}
 
                     <NotesCard enrolment={enrolment} canEdit={can('students.update')} />
+
+                    {documents ? <AttachmentsCard documents={documents} timezone={timezone} /> : null}
 
                     {enrolment.creator ? <p className="text-xs text-slate-500">Admitted by {enrolment.creator.name}</p> : null}
                 </div>

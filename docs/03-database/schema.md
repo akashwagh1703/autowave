@@ -350,6 +350,17 @@ Other changes:
 |---|---|
 | `platform_settings` | `key` unique, `value` json. Keys: `require_email_verification` (bool). Missing keys fall back to `config('autowave.platform_settings')`; read through `PlatformSettings` (cached one hour, cleared on change) |
 
+## Attachments (`2026_10_06_100000`)
+
+| Table | Key columns |
+|---|---|
+| `attachments` | `tenant_id` (cascade), `attachable_type`/`attachable_id` (polymorphic owner, full class name; customers for now), `kind` (`document`, later `video`), `visibility` (`private`/`public`), `disk`, `path` unique, `title` (150, nullable), `original_name`, `mime_type` (detected from content), `size_bytes`, `uploaded_by_user_id` (null on delete) |
+
+- Rows are deleted with their file (`ManageAttachments::delete`). Deleting the tenant cascades the rows;
+  the files stay on storage until cleaned up by hand.
+- Tenant setting `storage_quota` (`{"mb": int}`) overrides `FILES_QUOTA_MB` for one business; written only
+  from Super Admin.
+
 ## Deferred platform tables
 
 `feature_flags`, `custom_fields` — added with the first feature that needs them (AW-009).

@@ -78,6 +78,21 @@ return [
             'report' => false,
         ],
 
+        // Private object storage (customer documents). No public URL and no anonymous access: files are
+        // streamed through AttachmentController after a permission check.
+        'files' => [
+            'driver' => 's3',
+            'key' => env('MEDIA_ACCESS_KEY'),
+            'secret' => env('MEDIA_SECRET_KEY'),
+            'region' => env('MEDIA_REGION', 'us-east-1'),
+            'bucket' => env('MEDIA_PRIVATE_BUCKET', 'autowave-private'),
+            'endpoint' => env('MEDIA_ENDPOINT', 'http://127.0.0.1:9000'),
+            'use_path_style_endpoint' => true,
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => false,
+        ],
+
     ],
 
     /*

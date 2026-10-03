@@ -1,14 +1,15 @@
 # File Security
 
-> Status: Phase 6 adds the first uploads: website images (logo, hero image, gallery) through `ManageMedia`.
+> Status: website and product images through `ManageMedia`; customer and student documents through
+> `ManageAttachments` (private disk).
 
 ## Storage layout
 
 ```text
-tenant/{tenant_id}/logo/        logo-{ulid}.{png|jpg|webp}
-tenant/{tenant_id}/website/     hero-{ulid}.*, gallery-{ulid}.*
-tenant/{tenant_id}/products/    (Phase 7)
-tenant/{tenant_id}/documents/   (later, private disk)
+tenant/{tenant_id}/logo/                   logo-{ulid}.{png|jpg|webp}
+tenant/{tenant_id}/website/                hero-{ulid}.*, gallery-{ulid}.*
+tenant/{tenant_id}/products/               product-{ulid}.*
+tenant/{tenant_id}/documents/customers/    {ulid}.{pdf|docx|xlsx|jpg|png}   (private disk)
 ```
 
 Website images go on `config('website.media.disk')` (env `WEBSITE_MEDIA_DISK`, default `public`):
@@ -35,9 +36,41 @@ reported and the row is still removed.
 - **Permissions:** uploading, describing, reordering and deleting images need `website.manage`. Uploads are
   also rate-limited (60 per minute per user).
 - Every upload and deletion is audited (`media.uploaded`, `media.deleted`).
+- Images count against the business's storage allowance (below).
+
+## Documents (implemented in `App\Domain\Files\Actions\ManageAttachments`)
+
+Documents attached to customers (and shown on their student pages) are `attachments` rows
+(`config/files.php`). They are private: stored on `config('files.disks.private')` (env `FILES_PRIVATE_DISK`:
+`local` = `storage/app/private`, or `files` = MinIO bucket `autowave-private`) and never given a storage URL.
+
+- **Type from content:** the type is read from the file's bytes (`finfo`), never from its name or the browser.
+  Word and Excel files are ZIP archives, so their inner layout (`[Content_Types].xml` plus `word/document.xml`
+  or `xl/workbook.xml`) is checked too. Allowed: PDF, DOCX, XLSX, JPG, PNG. Macro-enabled Office files, HTML,
+  SVG, scripts and plain ZIPs are refused. The stored extension comes from the detected type.
+- **Limits:** 10 MB per document, 50 files per customer, and the business's storage allowance.
+- **Names:** the stored name is a ULID; the original name and an optional title (150 chars) are for display.
+  Download names are sanitised and always end with the stored extension.
+- **Opening a file** goes through `GET /attachments/{id}` (`AttachmentController`). It checks the tenant
+  (route model binding is tenant-scoped, so another business gets 404), then the permission the owning record
+  type requires (`documents.view` for customers). Responses send `X-Content-Type-Options: nosniff`,
+  `Cache-Control: private, no-store` and a restrictive `Content-Security-Policy` (`sandbox` for everything but
+  PDFs, which browsers refuse to show in a sandbox). PDFs, images and videos open in the browser; Word and
+  Excel always download.
+- **Permissions:** `documents.view` to see and open, `documents.manage` to upload and delete. Uploads are
+  rate-limited (60 per minute per user).
+- **Audit:** `attachment.uploaded`, `attachment.downloaded`, `attachment.deleted`.
+- If storage is unreachable, an upload fails with a form error and nothing is saved; opening a file returns 404.
+
+## Storage allowance
+
+`App\Domain\Files\Support\StorageAllowance` adds up `media.size_bytes` and `attachments.size_bytes` for the
+business and refuses an upload that would go over the allowance: `FILES_QUOTA_MB` (default 1024 MB), or the
+per-business value a platform admin sets in Super Admin → Tenants (tenant setting `storage_quota`, audited as
+`storage.limit_updated`). Lowering it never deletes files; new uploads are refused until there is room.
 
 ## Still to do
 
 - Strip EXIF metadata and create resized variants on the media queue (AW-035).
-- Private documents on a private bucket, served through authorised controllers or short-lived signed URLs.
-- Videos and documents: direct browser uploads with signed upload links, then a server-side type and size check.
+- Videos, and documents for products, courses, the website and inbox attachments.
+- Malware scanning of uploaded documents (for example ClamAV on the media queue).

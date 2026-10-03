@@ -64,6 +64,11 @@ Settings can be overridden with environment variables: `APP_DIR`, `REPO`, `BRANC
 4. `.env` changes do not need a deploy: edit `shared/.env`, then run
    `cd /var/www/autowave-platform/current && php8.4 artisan optimize && php8.4 artisan queue:restart` as
    `autowave`.
+5. The script does not seed. When a release adds permissions (the CHANGELOG says so, e.g. `documents`),
+   run after the deploy, as `autowave` in `current`:
+   `php8.4 artisan db:seed --class=RbacSeeder --force && php8.4 artisan db:seed --class=TenantBackfillSeeder --force`.
+   Both are safe to repeat. Until `RbacSeeder` runs nobody, not even owners, has the new permissions;
+   until `TenantBackfillSeeder` runs, only owners do.
 
 ## First release (done once, 2026-09-29)
 

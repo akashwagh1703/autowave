@@ -19,10 +19,12 @@ use App\Domain\Education\Models\FeePayment;
 use App\Domain\Education\Support\EducationSettings;
 use App\Domain\Lead\Enums\StageOutcome;
 use App\Domain\Lead\Models\Lead;
+use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\CommercePresenter;
 use App\Http\Presenters\CrmPresenter;
 use App\Http\Presenters\EducationPresenter;
+use App\Http\Presenters\FilesPresenter;
 use App\Support\TenantTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -150,7 +152,7 @@ class StudentController extends Controller
         ]));
     }
 
-    public function show(Enrolment $enrolment): Response
+    public function show(Request $request, Enrolment $enrolment, TenantContext $context): Response
     {
         $enrolment->load(['customer', 'batch.course', 'batch.teacher.user', 'instalments', 'payments.recorder:id,name', 'creator:id,name']);
 
@@ -189,6 +191,9 @@ class StudentController extends Controller
             'paymentMethods' => CommercePresenter::paymentMethods(),
             'statuses' => EducationPresenter::enrolmentStatuses(),
             'maxInstalments' => (int) config('education.max_instalments'),
+            'documents' => $enrolment->customer
+                ? FilesPresenter::card($enrolment->customer, 'customer', route('customers.attachments.store', $enrolment->customer), $request->user(), $context->tenant())
+                : null,
         ]);
     }
 

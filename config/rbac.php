@@ -25,6 +25,10 @@ return [
             'update' => 'Update customers',
             'delete' => 'Delete customers',
         ],
+        'documents' => [
+            'view' => 'View and download customer and student documents',
+            'manage' => 'Upload and delete customer and student documents',
+        ],
         'leads' => [
             'view' => 'View leads',
             'create' => 'Create leads',
@@ -131,7 +135,7 @@ return [
             'name' => 'Manager',
             'description' => 'Runs day-to-day operations.',
             'permissions' => [
-                'customers.*', 'leads.*', 'services.*', 'resources.*', 'appointments.*', 'products.*', 'orders.*',
+                'customers.*', 'documents.*', 'leads.*', 'services.*', 'resources.*', 'appointments.*', 'products.*', 'orders.*',
                 'offers.*', 'courses.*', 'students.*', 'fees.*', 'reservations.*',
                 'conversations.*', 'automation.*', 'website.*', 'ai.*', 'reports.view', 'users.view', 'settings.view',
             ],
@@ -140,7 +144,7 @@ return [
             'name' => 'Receptionist',
             'description' => 'Handles walk-ins, enquiries and bookings.',
             'permissions' => [
-                'customers.view', 'customers.create', 'customers.update',
+                'customers.view', 'customers.create', 'customers.update', 'documents.view', 'documents.manage',
                 'leads.view', 'leads.create', 'leads.update',
                 'services.view', 'resources.view',
                 'appointments.*', 'orders.view', 'orders.create',
@@ -174,7 +178,7 @@ return [
             'name' => 'Accountant',
             'description' => 'Views orders and financial reports.',
             'permissions' => [
-                'customers.view', 'services.view', 'products.view', 'orders.view', 'reports.view',
+                'customers.view', 'documents.view', 'services.view', 'products.view', 'orders.view', 'reports.view',
                 'offers.view', 'courses.view', 'students.view', 'fees.view',
             ],
         ],

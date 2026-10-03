@@ -19,6 +19,7 @@ import StageChip from '@/modules/leads/StageChip';
 import Timeline from '@/modules/crm/Timeline';
 import ActivityComposer from '@/modules/crm/ActivityComposer';
 import SummaryCard from '@/modules/ai/SummaryCard';
+import AttachmentsCard from '@/modules/files/AttachmentsCard';
 import useTenant from '@/hooks/useTenant';
 import { formatDate, formatDateTime, formatMoney, formatPrice } from '@/utils/format';
 
@@ -31,7 +32,7 @@ function Detail({ label, children }) {
     );
 }
 
-export default function Show({ customer, leads, activities, activityTypes, appointments, orders, ai }) {
+export default function Show({ customer, leads, activities, activityTypes, appointments, orders, ai, documents }) {
     const { timezone, currency, can, hasModule } = useTenant();
     const now = Date.now();
     const [confirmDelete, setConfirmDelete] = useState(false);
@@ -139,6 +140,8 @@ export default function Show({ customer, leads, activities, activityTypes, appoi
                             </dl>
                         </CardContent>
                     </Card>
+
+                    {documents ? <AttachmentsCard documents={documents} timezone={timezone} /> : null}
 
                     {appointments ? (
                         <Card variant="outlined">

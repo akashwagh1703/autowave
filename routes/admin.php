@@ -23,6 +23,7 @@ Route::name('admin.')->group(function () {
         Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
         Route::post('/tenants/{tenant}/suspend', [TenantController::class, 'suspend'])->name('tenants.suspend');
         Route::post('/tenants/{tenant}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
+        Route::put('/tenants/{tenant}/storage-limit', [TenantController::class, 'updateStorageLimit'])->name('tenants.storage-limit');
         Route::get('/ai-usage', [AiUsageController::class, 'index'])->name('ai.usage');
         Route::put('/tenants/{tenant}/ai-limit', [AiUsageController::class, 'updateLimit'])->name('tenants.ai-limit');
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings');

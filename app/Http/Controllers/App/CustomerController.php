@@ -17,6 +17,7 @@ use App\Http\Presenters\BookingPresenter;
 use App\Http\Presenters\CommercePresenter;
 use App\Http\Presenters\CrmOptions;
 use App\Http\Presenters\CrmPresenter;
+use App\Http\Presenters\FilesPresenter;
 use App\Http\Requests\Crm\CustomerRequest;
 use App\Http\Requests\Crm\LogActivityRequest;
 use App\Support\TenantTime;
@@ -133,6 +134,7 @@ class CustomerController extends Controller
                 ->get()
                 ->map(fn (Activity $activity) => CrmPresenter::activity($activity)),
             'activityTypes' => $this->options->activityTypes(),
+            'documents' => FilesPresenter::card($customer, 'customer', route('customers.attachments.store', $customer), $request->user(), $this->context->tenant()),
         ]);
     }
 

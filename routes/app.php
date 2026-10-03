@@ -5,6 +5,7 @@ use App\Http\Controllers\App\AiSettingsController;
 use App\Http\Controllers\App\AppointmentActionController;
 use App\Http\Controllers\App\AppointmentController;
 use App\Http\Controllers\App\AssistantController;
+use App\Http\Controllers\App\AttachmentController;
 use App\Http\Controllers\App\AutomationController;
 use App\Http\Controllers\App\AutomationRunController;
 use App\Http\Controllers\App\BatchController;
@@ -92,6 +93,11 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->middleware('can:customers.delete')->name('customers.destroy');
             Route::post('/customers/{customer}/activities', [CustomerController::class, 'activity'])->middleware('can:customers.update')->name('customers.activities.store');
         });
+
+        // Outside the module groups: student pages show their customer's documents too.
+        Route::post('/customers/{customer}/attachments', [AttachmentController::class, 'storeForCustomer'])->middleware(['can:documents.manage', 'throttle:60,1'])->name('customers.attachments.store');
+        Route::get('/attachments/{attachment}', [AttachmentController::class, 'show'])->name('attachments.show');
+        Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
 
         Route::middleware('engine:service')->group(function () {
             Route::get('/services', [ServiceController::class, 'index'])->middleware('can:services.view')->name('services.index');

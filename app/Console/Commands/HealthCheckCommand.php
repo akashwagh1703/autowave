@@ -24,6 +24,7 @@ class HealthCheckCommand extends Command
             'Cache' => fn () => $this->checkCache(),
             'Queue' => fn () => $this->checkQueue(),
             'Media storage' => fn () => $this->checkMediaStorage(),
+            'Private files' => fn () => $this->checkPrivateFiles(),
         ];
 
         $failed = false;
@@ -98,6 +99,34 @@ class HealthCheckCommand extends Command
             throw new \RuntimeException("disk {$disk} has no public URL; set MEDIA_URL");
         }
 
+        $this->roundTrip($disk);
+
+        return sprintf('%s (bucket %s)', $disk, config("filesystems.disks.{$disk}.bucket"));
+    }
+
+    private function checkPrivateFiles(): string
+    {
+        $disk = (string) config('files.disks.private');
+
+        if (config("filesystems.disks.{$disk}.driver") !== 's3') {
+            return "{$disk} (local)";
+        }
+
+        $publicBuckets = collect([config('website.media.disk'), config('files.disks.public'), 'media'])
+            ->map(fn (string $public) => config("filesystems.disks.{$public}.bucket"))
+            ->filter();
+
+        if ($publicBuckets->contains(config("filesystems.disks.{$disk}.bucket"))) {
+            throw new \RuntimeException("disk {$disk} uses the public media bucket; set MEDIA_PRIVATE_BUCKET to a private bucket");
+        }
+
+        $this->roundTrip($disk);
+
+        return sprintf('%s (bucket %s)', $disk, config("filesystems.disks.{$disk}.bucket"));
+    }
+
+    private function roundTrip(string $disk): void
+    {
         $storage = Storage::disk($disk);
         $path = 'health/'.Str::random(16).'.txt';
         $storage->put($path, 'ok');
@@ -105,9 +134,7 @@ class HealthCheckCommand extends Command
         $storage->delete($path);
 
         if ($value !== 'ok') {
-            throw new \RuntimeException('object storage round-trip returned an unexpected value');
+            throw new \RuntimeException("object storage round-trip on {$disk} returned an unexpected value");
         }
-
-        return sprintf('%s (bucket %s)', $disk, config("filesystems.disks.{$disk}.bucket"));
     }
 }

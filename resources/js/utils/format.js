@@ -45,6 +45,16 @@ export function formatRelative(iso, now = Date.now()) {
     return formatter.format(0, 'second');
 }
 
+// File sizes in binary units, as the storage allowance counts them: "820 KB", "4.2 MB", "1 GB".
+export function formatBytes(bytes) {
+    const value = Number(bytes) || 0;
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const exponent = Math.min(units.length - 1, Math.floor(Math.log(Math.max(value, 1)) / Math.log(1024)));
+    const scaled = value / 1024 ** exponent;
+
+    return `${exponent === 0 || scaled >= 10 ? Math.round(scaled) : Math.round(scaled * 10) / 10} ${units[exponent]}`;
+}
+
 export function formatMoney(value, currency) {
     if (value === null || value === undefined || value === '') {
         return '—';

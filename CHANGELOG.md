@@ -8,6 +8,14 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **Documents** on customer and student pages: upload PDF, Word, Excel, JPG or PNG files (up to 10 MB
+  each, an optional name such as "Aadhaar card"), open or download them, and delete them. Files are
+  private: they are opened through AutoWave after a permission check and can be kept in a private MinIO
+  bucket. New permissions **View documents** and **Manage documents** (Manager and Receptionist can
+  upload; Accountant can view).
+- A storage allowance per business (1 GB by default) covering images and documents. The documents card
+  shows how much is used, and Super Admin → Tenants shows each business's usage and can change its
+  allowance.
 - First production deployment at autowave.co.in (marketing, business app, Super Admin and tenant
   websites on `*.autowave.co.in`, HTTPS with a wildcard certificate). `scripts/deploy.sh` builds a new
   release from GitHub and switches to it with no downtime, keeps the last five, and rolls back with

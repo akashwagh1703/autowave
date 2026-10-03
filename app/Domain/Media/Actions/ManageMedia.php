@@ -3,6 +3,7 @@
 namespace App\Domain\Media\Actions;
 
 use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Files\Support\StorageAllowance;
 use App\Domain\Media\Models\Media;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Models\User;
@@ -23,12 +24,14 @@ use League\Flysystem\FilesystemException;
  * - Files are stored under tenant/{tenant_id}/{collection path}/ with a random name; the original
  *   name is kept for display only.
  * - Single-image collections (logo, hero) replace the previous image.
+ * - Images count against the business's storage allowance (StorageAllowance).
  */
 class ManageMedia
 {
     public function __construct(
         private readonly TenantContext $context,
         private readonly AuditLogger $audit,
+        private readonly StorageAllowance $allowance,
     ) {}
 
     /** @return list<string> collections managed in the website editor (not product images) */
@@ -67,6 +70,9 @@ class ManageMedia
         if (! $single && Media::query()->where('collection', $collection)->count() >= $definition['max']) {
             throw ValidationException::withMessages(['file' => __('You can upload up to :max images here. Remove one first.', ['max' => $definition['max']])]);
         }
+
+        $freed = $single ? (int) Media::query()->where('collection', $collection)->sum('size_bytes') : 0;
+        $this->allowance->ensureRoomFor($this->context->tenant(), max(0, (int) $file->getSize() - $freed));
 
         [$width, $height] = getimagesize($file->getRealPath()) ?: [0, 0];
         $disk = $limits['disk'];

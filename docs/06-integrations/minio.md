@@ -1,29 +1,39 @@
 # MinIO (object storage for uploads)
 
-- **Status:** ✅ Website and product images can be stored on MinIO (`media` disk). Videos and documents: not yet.
-- **Last updated:** 2026-10-03
+- **Status:** ✅ Website and product images can be stored on MinIO (`media` disk). ✅ Customer and student
+  documents can be stored in a private bucket (`files` disk). Videos: not yet.
+- **Last updated:** 2026-10-06
 
 Uploaded images go to the disk named by `WEBSITE_MEDIA_DISK`: `public` (the server's own disk, served from
-`/storage`) or `media` (an S3-compatible bucket, MinIO on production). Each `media` row remembers its disk,
-so files can be moved between disks without breaking links.
+`/storage`) or `media` (an S3-compatible bucket, MinIO on production). Documents go to the disk named by
+`FILES_PRIVATE_DISK`: `local` (the server's private `storage/app/private`) or `files` (a private MinIO bucket).
+Each `media` and `attachments` row remembers its disk, so files can be moved between disks without breaking links.
 
 ## How it fits together
 
 ```text
 AutoWave (PHP) ── PutObject / DeleteObject ──► http://127.0.0.1:9000/autowave-public/...   (MinIO, loopback)
 Browser ── GET https://media.autowave.co.in/tenant/... ──► Nginx (read-only) ──► MinIO /autowave-public/...
+
+Browser ── upload / open a document ──► AutoWave (permission check) ──► http://127.0.0.1:9000/autowave-private/...
 ```
 
 - **Bucket `autowave-public`** holds only public files (logos, website images, product images). Anonymous
   read (`GetObject`) is allowed; nothing private may go in it.
-- **AutoWave's own access key** can read, write and delete only that bucket. The MinIO root login is never
+- **Bucket `autowave-private`** holds documents (ID proofs, marksheets, contracts). It has no anonymous access
+  and no public address: files are uploaded through AutoWave and opened through AutoWave after a permission
+  check, so a leaked link is useless to anyone not signed in to that business.
+- **AutoWave's own access key** can read, write and delete only those two buckets. The MinIO root login is never
   used by the app.
+- Uploads pass through PHP rather than going straight from the browser to MinIO. Nginx buffers request bodies
+  anyway, the file's type is checked from its content before it is stored, and MinIO needs no second public
+  address or CORS setup.
 - **`media.autowave.co.in`** is an Nginx site (covered by the wildcard certificate and the `*` DNS record)
   that allows only GET/HEAD, maps `/` to the bucket and hides bucket listings. `media` is a reserved
   subdomain, so no business can take it.
 - Objects are written with `Cache-Control: public, max-age=31536000, immutable` (names are unique).
-- `php artisan autowave:health` writes, reads and deletes a test object when the media disk is S3, and fails
-  when `MEDIA_URL` is missing.
+- `php artisan autowave:health` writes, reads and deletes a test object on each S3 disk in use. It fails when
+  `MEDIA_URL` is missing or when the private disk points at a public bucket.
 
 ## Environment
 
@@ -35,6 +45,9 @@ Browser ── GET https://media.autowave.co.in/tenant/... ──► Nginx (read
 | `MEDIA_ENDPOINT` | `http://127.0.0.1:9000` | Where the app talks to MinIO (loopback; no TLS needed) |
 | `MEDIA_URL` | `https://media.autowave.co.in` | Public base URL for browsers |
 | `MEDIA_REGION` | `us-east-1` | Any value works for MinIO |
+| `FILES_PRIVATE_DISK` | `files` | Disk for documents (`local` until MinIO is ready) |
+| `MEDIA_PRIVATE_BUCKET` | `autowave-private` | Private bucket; same key and endpoint as the media disk |
+| `FILES_QUOTA_MB` | `1024` | Default storage allowance per business (images and documents together); Super Admin → Tenants can change it per business |
 
 ## Production setup (run as root)
 
@@ -63,13 +76,15 @@ The root login is read from the container's own environment, so it is never type
 docker exec minio sh -c 'mc alias set local http://127.0.0.1:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"'
 docker exec minio mc mb --ignore-existing local/autowave-public
 docker exec minio mc anonymous set download local/autowave-public
+docker exec minio mc mb --ignore-existing local/autowave-private
+docker exec minio mc anonymous set none local/autowave-private
 
 docker exec -i minio sh -c 'cat > /tmp/autowave-media.json' <<'EOF'
 {
   "Version": "2012-10-17",
   "Statement": [
-    {"Effect": "Allow", "Action": ["s3:GetBucketLocation", "s3:ListBucket"], "Resource": ["arn:aws:s3:::autowave-public"]},
-    {"Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"], "Resource": ["arn:aws:s3:::autowave-public/*"]}
+    {"Effect": "Allow", "Action": ["s3:GetBucketLocation", "s3:ListBucket"], "Resource": ["arn:aws:s3:::autowave-public", "arn:aws:s3:::autowave-private"]},
+    {"Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"], "Resource": ["arn:aws:s3:::autowave-public/*", "arn:aws:s3:::autowave-private/*"]}
   ]
 }
 EOF
@@ -169,6 +184,40 @@ sudo -u autowave rm -rf /var/www/autowave-platform/shared/storage/app/public/ten
 
 To go back: set `WEBSITE_MEDIA_DISK=public`, `optimize`, then `autowave:media-move public`.
 
+### 4b. Documents in the private bucket
+
+If step 2 was done before the private bucket existed, add it to the policy (the key and user stay the same):
+
+```bash
+docker exec minio sh -c 'mc alias set local http://127.0.0.1:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"'
+docker exec minio mc mb --ignore-existing local/autowave-private
+docker exec minio mc anonymous set none local/autowave-private
+# Re-create /tmp/autowave-media.json with both buckets as in step 2, then:
+docker exec minio mc admin policy remove local autowave-media || true
+docker exec minio mc admin policy create local autowave-media /tmp/autowave-media.json
+docker exec minio mc admin policy attach local autowave-media --user autowave-app
+```
+
+Then point documents at it, add the new `documents` permissions to existing businesses, and check:
+
+```bash
+ENV=/var/www/autowave-platform/shared/.env
+sed -i -E '/^(FILES_PRIVATE_DISK|MEDIA_PRIVATE_BUCKET)=/d' "$ENV"
+printf 'FILES_PRIVATE_DISK=files\nMEDIA_PRIVATE_BUCKET=autowave-private\n' >> "$ENV"
+
+cd /var/www/autowave-platform/current
+sudo -u autowave php8.4 artisan db:seed --class=RbacSeeder --force
+sudo -u autowave php8.4 artisan db:seed --class=TenantBackfillSeeder --force
+sudo -u autowave php8.4 artisan optimize
+sudo -u autowave php8.4 artisan queue:restart
+sudo -u autowave php8.4 artisan autowave:health          # "Private files ... files (bucket autowave-private)"
+curl -s -o /dev/null -w 'anonymous: %{http_code}\n' http://127.0.0.1:9000/autowave-private/   # 403
+```
+
+Documents are up to 10 MB, within the current Nginx and PHP upload limits (20 MB). Videos (50 MB, a later
+phase) will need `client_max_body_size 60m` in Nginx and `upload_max_filesize = 60M`, `post_max_size = 64M` in
+PHP-FPM.
+
 ### 5. Close MinIO's public ports (after checking the other projects)
 
 MinIO's API (9000) and console (9001) are published on all interfaces, and Docker bypasses UFW (AW-067).
@@ -179,11 +228,11 @@ first whether those projects log in with the root user.
 
 ## Backups
 
-The bucket is not backed up yet (AW-066). Include `/mnt/minio-data` (or `mc mirror local/autowave-public`) in the
-nightly backup together with the database.
+The buckets are not backed up yet (AW-066). Include `/mnt/minio-data` (or `mc mirror` of `local/autowave-public`
+and `local/autowave-private`) in the nightly backup together with the database. Documents are personal data:
+keep the backup encrypted.
 
 ## Not yet
 
-- Videos and documents: planned as direct browser-to-MinIO uploads with short-lived signed upload links, a
-  private bucket for documents, and a storage allowance per business.
+- Videos (catalog, website) and documents for products, courses, the website and inbox attachments.
 - EXIF stripping and resized variants (AW-035).

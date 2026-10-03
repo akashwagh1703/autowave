@@ -19,6 +19,7 @@ Source of truth: `config/rbac.php` (synced by `RbacSeeder`). Keys are `{group}.{
 
 ```text
 customers.view  customers.create  customers.update  customers.delete
+documents.view  documents.manage
 leads.view  leads.create  leads.update  leads.assign  leads.delete
 services.view  services.manage
 resources.view  resources.manage
@@ -189,10 +190,16 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
     courses, students, fees and offers.
   - Settings → Coaching and Settings → Reservations: view with `settings.view`, save with
     `settings.update`.
+- **Documents:**
+  - `documents.view` to see a customer's (and student's) documents and open them; `documents.manage` to
+    upload and delete. `GET`/`DELETE /attachments/{id}` check the permission of the record type the file
+    belongs to (`config('files.owners.*')`), after the tenant-scoped route binding (another business: 404).
+  - Default roles: Manager has both; Receptionist has both; Accountant has `view`; Sales Executive and
+    Staff have none.
 - **New permission groups for existing tenants:** `RbacSeeder` updates the templates, but tenant roles are
   copies. `TenantBackfillSeeder` calls `ProvisionTenantRoles::grantNewPermissionGroups()` for `services`,
-  `resources`, `website`, `conversations`, `ai`, `offers`, `courses`, `students`, `fees` and
-  `reservations`:
+  `resources`, `website`, `conversations`, `ai`, `offers`, `courses`, `students`, `fees`,
+  `reservations` and `documents`:
   - it gives each tenant role its template's permissions in those groups;
   - it runs once per tenant and group (recorded in the `rbac_backfilled_groups` setting);
   - it skips roles that already hold any permission of the group.
@@ -204,4 +211,5 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
 
 `is_platform_admin` + `platform.admin` middleware on the admin host. Platform-level roles/permissions for
 admin staff are deferred until more admin features exist. Super Admin → AI usage (`/ai-usage`) and the
-per-business AI allowance (`PUT /tenants/{tenant}/ai-limit`) are admin-only and audit-logged.
+per-business AI allowance (`PUT /tenants/{tenant}/ai-limit`) are admin-only and audit-logged, as is the
+per-business storage allowance (`PUT /tenants/{tenant}/storage-limit`).

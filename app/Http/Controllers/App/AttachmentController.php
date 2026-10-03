@@ -1,0 +1,81 @@
+<?php
+
+namespace App\Http\Controllers\App;
+
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Customer\Models\Customer;
+use App\Domain\Files\Actions\ManageAttachments;
+use App\Domain\Files\Models\Attachment;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use League\Flysystem\FilesystemException;
+use Symfony\Component\HttpFoundation\Response;
+
+/**
+ * Uploads, opens and deletes record attachments. Private files are only ever streamed from here, after the
+ * permission the owning record type requires (config('files.owners.*.view|manage')).
+ */
+class AttachmentController extends Controller
+{
+    /** Shown in the browser rather than downloaded; Word and Excel files always download. */
+    private const INLINE = ['application/pdf', 'image/jpeg', 'image/png', 'video/mp4', 'video/webm'];
+
+    public function __construct(
+        private readonly ManageAttachments $attachments,
+        private readonly AuditLogger $audit,
+    ) {}
+
+    public function storeForCustomer(Request $request, Customer $customer): RedirectResponse
+    {
+        $this->attachments->upload($customer, 'customer', $request->file('file'), $request->user(), $request->input('title'));
+
+        return back()->with('success', __('Document uploaded.'));
+    }
+
+    public function show(Request $request, Attachment $attachment): Response
+    {
+        $this->authorizeFor($request, $attachment, 'view');
+        $disk = Storage::disk($attachment->disk);
+
+        if (! $attachment->isPrivate()) {
+            return redirect()->away($disk->url($attachment->path));
+        }
+
+        $inline = in_array($attachment->mime_type, self::INLINE, true) && ! $request->boolean('download');
+        $headers = [
+            'Content-Type' => $attachment->mime_type,
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+            // Browsers refuse to show a PDF in a sandboxed page, so PDFs only get the resource restrictions.
+            'Content-Security-Policy' => ($attachment->mime_type === 'application/pdf' ? '' : 'sandbox; ')."default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'",
+        ];
+
+        try {
+            $response = $disk->response($attachment->path, $attachment->downloadName(), $headers, $inline ? 'inline' : 'attachment');
+        } catch (FilesystemException $exception) {
+            report($exception);
+            abort(404, __('This file is not available right now.'));
+        }
+
+        $this->audit->log('attachment.downloaded', $attachment, ['inline' => $inline]);
+
+        return $response;
+    }
+
+    public function destroy(Request $request, Attachment $attachment): RedirectResponse
+    {
+        $this->authorizeFor($request, $attachment, 'manage');
+        $this->attachments->delete($attachment);
+
+        return back()->with('success', __('File deleted.'));
+    }
+
+    private function authorizeFor(Request $request, Attachment $attachment, string $ability): void
+    {
+        $owner = collect(config('files.owners'))->first(fn (array $definition) => $definition['model'] === $attachment->attachable_type);
+
+        abort_unless($owner && $request->user()->can($owner[$ability]), 403);
+    }
+}

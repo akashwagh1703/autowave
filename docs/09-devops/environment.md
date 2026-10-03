@@ -41,6 +41,9 @@ Template: `.env.example`. Never commit `.env`. Production secrets live only on t
 | `WEBSITE_MEDIA_DISK` | `public` | `public`, then `media` once MinIO is set up | Disk for uploaded images. `public` needs `storage:link` (the deploy script runs it); `media` is MinIO ([minio.md](../06-integrations/minio.md)) |
 | `MEDIA_ACCESS_KEY` / `MEDIA_SECRET_KEY` | empty | AutoWave's own MinIO key | Secret; never the MinIO root login |
 | `MEDIA_BUCKET` / `MEDIA_ENDPOINT` / `MEDIA_URL` | `autowave-public` / `http://127.0.0.1:9000` / empty | same / same / `https://media.autowave.co.in` | Bucket, where the app writes, public base URL |
+| `FILES_PRIVATE_DISK` | `local` | `files` once the private bucket exists | Disk for customer and student documents. `local` is `storage/app/private`; `files` is MinIO ([minio.md](../06-integrations/minio.md)) |
+| `MEDIA_PRIVATE_BUCKET` | `autowave-private` | same | Private bucket for documents; never readable anonymously |
+| `FILES_QUOTA_MB` | `1024` | `1024` | Default storage allowance per business (images and documents together); Super Admin → Tenants overrides it per business |
 | `QUEUE_CONNECTION` | `redis` | `redis` | Queue backend (ADR-004) |
 | `CACHE_STORE` | `redis` | `redis` | Cache backend |
 | `CACHE_PREFIX` | `autowave_cache_` | `awp_cache_` | Cache key prefix |

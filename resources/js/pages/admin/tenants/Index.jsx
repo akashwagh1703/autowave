@@ -2,6 +2,10 @@ import { router } from '@inertiajs/react';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 import MenuItem from '@mui/material/MenuItem';
 import Pagination from '@mui/material/Pagination';
 import Table from '@mui/material/Table';
@@ -16,10 +20,65 @@ import AdminLayout from '@/layouts/AdminLayout';
 import EmptyState from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
 import StatusChip from '@/components/StatusChip';
+import { formatBytes } from '@/utils/format';
 
-export default function Index({ tenants, filters }) {
+function StorageDialog({ tenant, defaultMb, onClose }) {
+    const [value, setValue] = useState(tenant.storage.custom ? String(tenant.storage.cap_mb) : '');
+    const [processing, setProcessing] = useState(false);
+    const [error, setError] = useState(null);
+
+    const save = (mb) =>
+        router.put(
+            `/tenants/${tenant.id}/storage-limit`,
+            { mb },
+            {
+                preserveScroll: true,
+                onStart: () => setProcessing(true),
+                onFinish: () => setProcessing(false),
+                onSuccess: onClose,
+                onError: (errors) => setError(errors.mb ?? 'Could not save the allowance.'),
+            },
+        );
+
+    return (
+        <Dialog open onClose={onClose} fullWidth maxWidth="xs">
+            <DialogTitle>Storage for {tenant.name}</DialogTitle>
+            <DialogContent>
+                <p className="mb-2 text-sm text-slate-600">Using {formatBytes(tenant.storage.used_bytes)} for images, documents and videos.</p>
+                <TextField
+                    label="Allowance in MB"
+                    type="number"
+                    fullWidth
+                    autoFocus
+                    margin="dense"
+                    value={value}
+                    onChange={(event) => setValue(event.target.value)}
+                    error={Boolean(error)}
+                    helperText={error ?? `Leave empty for the default (${defaultMb} MB, 1024 MB = 1 GB). Existing files are kept if you lower it; new uploads are refused while over.`}
+                    slotProps={{ htmlInput: { min: 0, step: 256 } }}
+                />
+            </DialogContent>
+            <DialogActions>
+                {tenant.storage.custom ? (
+                    <Button color="inherit" disabled={processing} onClick={() => save(null)}>
+                        Use default
+                    </Button>
+                ) : null}
+                <Button onClick={onClose} color="inherit">
+                    Cancel
+                </Button>
+                <Button variant="contained" disabled={processing} onClick={() => save(value === '' ? null : Number(value))}>
+                    Save
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
+
+export default function Index({ tenants, filters, defaultStorageMb }) {
     const [search, setSearch] = useState(filters.search);
     const [status, setStatus] = useState(filters.status);
+    const [editingStorage, setEditingStorage] = useState(null);
 
     const applyFilters = (overrides = {}) => {
         const query = { search, status, ...overrides };
@@ -87,6 +146,7 @@ export default function Index({ tenants, filters }) {
                                     <TableCell>Type</TableCell>
                                     <TableCell>Domain</TableCell>
                                     <TableCell align="right">Members</TableCell>
+                                    <TableCell>Storage</TableCell>
                                     <TableCell>Status</TableCell>
                                     <TableCell>Created</TableCell>
                                     <TableCell align="right">Actions</TableCell>
@@ -105,6 +165,17 @@ export default function Index({ tenants, filters }) {
                                         <TableCell>{tenant.business_type ?? '—'}</TableCell>
                                         <TableCell className="text-xs">{tenant.domain ?? '—'}</TableCell>
                                         <TableCell align="right">{tenant.members}</TableCell>
+                                        <TableCell>
+                                            <button
+                                                type="button"
+                                                className="text-left text-xs text-slate-700 hover:text-brand-700"
+                                                onClick={() => setEditingStorage(tenant)}
+                                                aria-label={`Change storage allowance for ${tenant.name}`}
+                                            >
+                                                {formatBytes(tenant.storage.used_bytes)} / {formatBytes(tenant.storage.cap_mb * 1024 * 1024)}
+                                                {tenant.storage.custom ? <span className="ml-1 text-slate-400">(custom)</span> : null}
+                                            </button>
+                                        </TableCell>
                                         <TableCell>
                                             <StatusChip status={tenant.status} />
                                         </TableCell>
@@ -143,6 +214,8 @@ export default function Index({ tenants, filters }) {
                     />
                 </div>
             ) : null}
+
+            {editingStorage ? <StorageDialog tenant={editingStorage} defaultMb={defaultStorageMb} onClose={() => setEditingStorage(null)} /> : null}
         </AdminLayout>
     );
 }
