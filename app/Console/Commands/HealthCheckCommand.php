@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -13,7 +14,7 @@ class HealthCheckCommand extends Command
 {
     protected $signature = 'autowave:health';
 
-    protected $description = 'Verify connectivity to PostgreSQL, Redis and the cache store';
+    protected $description = 'Verify connectivity to PostgreSQL, Redis, the cache store and media storage';
 
     public function handle(): int
     {
@@ -22,6 +23,7 @@ class HealthCheckCommand extends Command
             'Redis' => fn () => $this->checkRedis(),
             'Cache' => fn () => $this->checkCache(),
             'Queue' => fn () => $this->checkQueue(),
+            'Media storage' => fn () => $this->checkMediaStorage(),
         ];
 
         $failed = false;
@@ -81,5 +83,31 @@ class HealthCheckCommand extends Command
         }
 
         return sprintf('%s, job timeout %ds', $connection, $jobTimeout);
+    }
+
+    /** Uploads fail, or images break, if object storage is unreachable or has no public URL. */
+    private function checkMediaStorage(): string
+    {
+        $disk = (string) config('website.media.disk');
+
+        if (config("filesystems.disks.{$disk}.driver") !== 's3') {
+            return "{$disk} (local)";
+        }
+
+        if (blank(config("filesystems.disks.{$disk}.url"))) {
+            throw new \RuntimeException("disk {$disk} has no public URL; set MEDIA_URL");
+        }
+
+        $storage = Storage::disk($disk);
+        $path = 'health/'.Str::random(16).'.txt';
+        $storage->put($path, 'ok');
+        $value = $storage->get($path);
+        $storage->delete($path);
+
+        if ($value !== 'ok') {
+            throw new \RuntimeException('object storage round-trip returned an unexpected value');
+        }
+
+        return sprintf('%s (bucket %s)', $disk, config("filesystems.disks.{$disk}.bucket"));
     }
 }

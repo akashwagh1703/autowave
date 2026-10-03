@@ -38,7 +38,9 @@ Template: `.env.example`. Never commit `.env`. Production secrets live only on t
 | `SESSION_SECURE_COOKIE` | `false` | **`true`** | Cookies only over HTTPS |
 | `BROADCAST_CONNECTION` | `log` | `log` | Broadcasting (unused) |
 | `FILESYSTEM_DISK` | `local` | `local` (later S3-compatible Spaces) | Default disk |
-| `WEBSITE_MEDIA_DISK` | `public` | `public` | Disk for website images; needs `storage:link` (the deploy script runs it) |
+| `WEBSITE_MEDIA_DISK` | `public` | `public`, then `media` once MinIO is set up | Disk for uploaded images. `public` needs `storage:link` (the deploy script runs it); `media` is MinIO ([minio.md](../06-integrations/minio.md)) |
+| `MEDIA_ACCESS_KEY` / `MEDIA_SECRET_KEY` | empty | AutoWave's own MinIO key | Secret; never the MinIO root login |
+| `MEDIA_BUCKET` / `MEDIA_ENDPOINT` / `MEDIA_URL` | `autowave-public` / `http://127.0.0.1:9000` / empty | same / same / `https://media.autowave.co.in` | Bucket, where the app writes, public base URL |
 | `QUEUE_CONNECTION` | `redis` | `redis` | Queue backend (ADR-004) |
 | `CACHE_STORE` | `redis` | `redis` | Cache backend |
 | `CACHE_PREFIX` | `autowave_cache_` | `awp_cache_` | Cache key prefix |

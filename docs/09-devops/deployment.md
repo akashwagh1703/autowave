@@ -42,7 +42,7 @@ with a read-only deploy key (`/home/autowave/.ssh/id_ed25519`).
 4. `composer install --no-dev --optimize-autoloader`.
 5. `npm ci && npm run build` (Node heap capped at 1536 MB for the 2 GB server), then deletes `node_modules`.
 6. `php artisan migrate --force` — against the live database, **before** the switch (see rules below).
-7. `storage:link`, `optimize` (config, routes, views, events), `autowave:health` (database, Redis, cache).
+7. `storage:link`, `optimize` (config, routes, views, events), `autowave:health` (database, Redis, cache, queue settings, media storage).
 8. Switches `current` atomically, then `queue:restart` (the systemd worker restarts on the new code) and
    reloads PHP-FPM if the deploy user may (`sudo -n`; optional — `$realpath_root` already makes new
    requests use the new path).

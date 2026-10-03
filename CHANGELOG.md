@@ -12,6 +12,10 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
   websites on `*.autowave.co.in`, HTTPS with a wildcard certificate). `scripts/deploy.sh` builds a new
   release from GitHub and switches to it with no downtime, keeps the last five, and rolls back with
   `deploy.sh rollback`. Runbook for turning on email, AI and WhatsApp/Instagram in production.
+- Uploaded images can be stored on MinIO (S3-compatible object storage) and served from
+  `media.autowave.co.in`. `php artisan autowave:media-move` copies existing images across, and the health
+  check covers object storage. An upload during a storage outage shows "could not be saved" instead of an
+  error page.
 - Super Admin → Settings with **Require email confirmation for new accounts**. When switched off, new
   sign-ups can use the app straight away without a confirmation email (for testing, or while email is not
   set up). `php artisan autowave:admin-password` sets a new password for a platform admin.

@@ -11,8 +11,15 @@ tenant/{tenant_id}/products/    (Phase 7)
 tenant/{tenant_id}/documents/   (later, private disk)
 ```
 
-Website images go on `config('website.media.disk')` (env `WEBSITE_MEDIA_DISK`, default `public`). They are
-served from `/storage/...` on each tenant's own host, which needs `php artisan storage:link`.
+Website images go on `config('website.media.disk')` (env `WEBSITE_MEDIA_DISK`, default `public`):
+
+- `public`: served from `/storage/...` on each tenant's own host, which needs `php artisan storage:link`.
+- `media`: MinIO bucket `autowave-public`, served read-only from `MEDIA_URL` (`https://media.autowave.co.in`).
+  The bucket allows anonymous reads, so it must only ever hold public files. The app uses its own access key
+  limited to that bucket ([minio.md](../06-integrations/minio.md)).
+
+If storage is unreachable, an upload fails with a form error and nothing is saved; a failed file delete is
+reported and the row is still removed.
 
 ## Rules (implemented in `App\Domain\Media\Actions\ManageMedia`)
 
@@ -32,4 +39,5 @@ served from `/storage/...` on each tenant's own host, which needs `php artisan s
 ## Still to do
 
 - Strip EXIF metadata and create resized variants on the media queue (AW-035).
-- Private documents on a private disk, served through authorised controllers or short-lived signed URLs.
+- Private documents on a private bucket, served through authorised controllers or short-lived signed URLs.
+- Videos and documents: direct browser uploads with signed upload links, then a server-side type and size check.

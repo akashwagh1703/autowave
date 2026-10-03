@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use League\Flysystem\FilesystemException;
 
 /**
  * Uploads and manages the current tenant's images (config('website.media')).
@@ -74,11 +75,20 @@ class ManageMedia
             'image/webp' => 'webp',
             default => 'jpg',
         };
-        $path = $file->storeAs(
-            'tenant/'.$this->context->tenant()->id.'/'.$definition['path'],
-            $collection.'-'.Str::lower((string) Str::ulid()).'.'.$extension,
-            ['disk' => $disk],
-        );
+        try {
+            $path = $file->storeAs(
+                'tenant/'.$this->context->tenant()->id.'/'.$definition['path'],
+                $collection.'-'.Str::lower((string) Str::ulid()).'.'.$extension,
+                ['disk' => $disk],
+            );
+        } catch (FilesystemException $exception) {
+            report($exception);
+            $path = false;
+        }
+
+        if ($path === false) {
+            throw ValidationException::withMessages(['file' => __('The image could not be saved. Please try again in a minute.')]);
+        }
 
         $replaced = $single ? Media::query()->where('collection', $collection)->get() : collect();
 
@@ -100,7 +110,7 @@ class ManageMedia
             ]);
         });
 
-        $replaced->each(fn (Media $old) => Storage::disk($old->disk)->delete($old->path));
+        $replaced->each(fn (Media $old) => $this->deleteFile($old));
         $this->audit->log('media.uploaded', $media, ['collection' => $collection]);
 
         return $media;
@@ -109,8 +119,18 @@ class ManageMedia
     public function delete(Media $media): void
     {
         $media->delete();
-        Storage::disk($media->disk)->delete($media->path);
+        $this->deleteFile($media);
         $this->audit->log('media.deleted', null, ['collection' => $media->collection, 'media_id' => $media->id]);
+    }
+
+    /** The row is already gone; a file left behind by a storage outage is only wasted space. */
+    private function deleteFile(Media $media): void
+    {
+        try {
+            Storage::disk($media->disk)->delete($media->path);
+        } catch (FilesystemException $exception) {
+            report($exception);
+        }
     }
 
     public function updateAlt(Media $media, ?string $alt): Media

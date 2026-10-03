@@ -60,6 +60,24 @@ return [
             'report' => false,
         ],
 
+        // S3-compatible object storage (MinIO on production) for uploads. The app writes to
+        // MEDIA_ENDPOINT (loopback on the server); browsers load MEDIA_URL (HTTPS, read-only proxy).
+        // The bucket must allow anonymous GetObject; it holds only public files.
+        'media' => [
+            'driver' => 's3',
+            'key' => env('MEDIA_ACCESS_KEY'),
+            'secret' => env('MEDIA_SECRET_KEY'),
+            'region' => env('MEDIA_REGION', 'us-east-1'),
+            'bucket' => env('MEDIA_BUCKET', 'autowave-public'),
+            'endpoint' => env('MEDIA_ENDPOINT', 'http://127.0.0.1:9000'),
+            'url' => env('MEDIA_URL'),
+            'use_path_style_endpoint' => true,
+            // File names are unique (ULID), so browsers may cache them for a year.
+            'options' => ['CacheControl' => 'public, max-age=31536000, immutable'],
+            'throw' => true,
+            'report' => false,
+        ],
+
     ],
 
     /*

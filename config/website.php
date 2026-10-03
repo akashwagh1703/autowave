@@ -225,8 +225,9 @@ return [
     ],
 
     /*
-    | Uploaded images. Stored on `disk` under tenant/{tenant_id}/{path}/ (master prompt §61)
-    | and served from /storage (run `php artisan storage:link`). SVG is not accepted.
+    | Uploaded images. Stored on `disk` under tenant/{tenant_id}/{path}/ (master prompt §61).
+    | `public`: served from /storage (run `php artisan storage:link`). `media`: object storage
+    | (MinIO), served from MEDIA_URL. SVG is not accepted.
     */
     'media' => [
         'disk' => env('WEBSITE_MEDIA_DISK', 'public'),

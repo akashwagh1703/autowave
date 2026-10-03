@@ -757,7 +757,10 @@ with the date and commit/PR reference; do not delete it.
 - **Impact:** Larger attack surface; any local process can read or write AutoWave's Redis queues.
 - **Status:** Open — enable UFW (22, 80, 443) keeping SSH open; restrict MinIO after checking how the
   other projects use it (Docker bypasses UFW for published ports); set `requirepass` and update all
-  projects' Redis settings together.
+  projects' Redis settings together. AutoWave's image storage on MinIO uses only `127.0.0.1:9000` and
+  `https://media.autowave.co.in`, so it does not need the public ports
+  ([minio.md](../06-integrations/minio.md#5-close-minios-public-ports-after-checking-the-other-projects)).
+  The MinIO root password was shared in a chat on 2026-10-03 and must be changed.
 - **Affected:** Production server
 - **Created:** 2026-09-30
 
