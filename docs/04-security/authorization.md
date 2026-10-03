@@ -196,6 +196,9 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
     belongs to (`config('files.owners.*')`), after the tenant-scoped route binding (another business: 404).
   - Default roles: Manager has both; Receptionist has both; Accountant has `view`; Sales Executive and
     Staff have none.
+  - Videos and brochures on catalog items use the item's own permissions, not `documents.*`: upload and
+    delete with `products.update`, `services.manage` or `courses.manage`; open with `products.view`,
+    `services.view` or `courses.view`.
 - **New permission groups for existing tenants:** `RbacSeeder` updates the templates, but tenant roles are
   copies. `TenantBackfillSeeder` calls `ProvisionTenantRoles::grantNewPermissionGroups()` for `services`,
   `resources`, `website`, `conversations`, `ai`, `offers`, `courses`, `students`, `fees`,

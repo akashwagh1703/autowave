@@ -11,9 +11,11 @@ use App\Domain\Commerce\Models\Order;
 use App\Domain\Commerce\Models\Product;
 use App\Domain\Commerce\Models\ProductCategory;
 use App\Domain\Commerce\Models\StockMovement;
+use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\CommercePresenter;
 use App\Http\Presenters\CrmPresenter;
+use App\Http\Presenters\FilesPresenter;
 use App\Http\Requests\Commerce\ProductRequest;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -124,7 +126,7 @@ class ProductController extends Controller
         return to_route('products.index')->with('success', __(':name added.', ['name' => $product->name]));
     }
 
-    public function edit(Product $product): Response
+    public function edit(Request $request, Product $product, TenantContext $context): Response
     {
         $product->load(['category', 'image']);
 
@@ -144,6 +146,7 @@ class ProductController extends Controller
             'openOrdersCount' => Order::query()->open()
                 ->whereHas('items', fn (Builder $item) => $item->where('product_id', $product->id))
                 ->count(),
+            'files' => FilesPresenter::card($product, 'product', route('products.attachments.store', $product), $request->user(), $context->tenant()),
         ]);
     }
 

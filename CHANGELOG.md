@@ -8,6 +8,10 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **Videos and brochures** for products, services and courses: one MP4 or WebM video (up to 50 MB) and up
+  to three PDF, Word, Excel or image files per item, added from the product or service edit page or the
+  course's **Files** button. They appear on the business website under the item as a **Watch video**
+  button and download links, and are deleted together with the item.
 - **Documents** on customer and student pages: upload PDF, Word, Excel, JPG or PNG files (up to 10 MB
   each, an optional name such as "Aadhaar card"), open or download them, and delete them. Files are
   private: they are opened through AutoWave after a permission check and can be kept in a private MinIO

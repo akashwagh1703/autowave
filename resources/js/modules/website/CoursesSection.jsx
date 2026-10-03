@@ -2,6 +2,7 @@ import EventIcon from '@mui/icons-material/Event';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import { formatDay } from '@/utils/booking';
 import { formatMoney } from '@/utils/format';
+import ItemFiles from './ItemFiles';
 import { ActionButton, Card, Section, SectionHeading, scrollToSection, useSite } from './site';
 
 export default function CoursesSection({ config, data }) {
@@ -24,6 +25,7 @@ export default function CoursesSection({ config, data }) {
                             ) : null}
                         </div>
                         {course.description ? <p className="mt-2 text-sm text-slate-600">{course.description}</p> : null}
+                        <ItemFiles item={course} className="mt-3" />
                         {config.show_batches && course.batches.length > 0 ? (
                             <ul className="mt-4 space-y-2 border-t border-slate-100 pt-4">
                                 {course.batches.map((batch) => (

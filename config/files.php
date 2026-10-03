@@ -1,6 +1,9 @@
 <?php
 
+use App\Domain\Commerce\Models\Product;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Education\Models\Course;
+use App\Domain\Service\Models\Service;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,16 +49,48 @@ return [
         ],
     ],
 
-    // What may own attachments: the model, `kinds` allowed, storage `folder` under tenant/{id}/, the per-record
-    // limit, and the permissions needed to see (and download) or upload and delete its files.
+    // What may own attachments: the model, `kinds` allowed (with an optional per-kind limit in `kind_max`),
+    // storage `folder` under tenant/{id}/, `visibility`, the per-record limit, and the permissions needed to see
+    // (and download) or upload and delete its files. Public files are shown on the business website.
     'owners' => [
         'customer' => [
             'model' => Customer::class,
             'kinds' => ['document'],
             'folder' => 'documents/customers',
+            'visibility' => 'private',
             'max' => 50,
             'view' => 'documents.view',
             'manage' => 'documents.manage',
+        ],
+        'product' => [
+            'model' => Product::class,
+            'kinds' => ['video', 'document'],
+            'kind_max' => ['video' => 1, 'document' => 3],
+            'folder' => 'catalog/products',
+            'visibility' => 'public',
+            'max' => 4,
+            'view' => 'products.view',
+            'manage' => 'products.update',
+        ],
+        'service' => [
+            'model' => Service::class,
+            'kinds' => ['video', 'document'],
+            'kind_max' => ['video' => 1, 'document' => 3],
+            'folder' => 'catalog/services',
+            'visibility' => 'public',
+            'max' => 4,
+            'view' => 'services.view',
+            'manage' => 'services.manage',
+        ],
+        'course' => [
+            'model' => Course::class,
+            'kinds' => ['video', 'document'],
+            'kind_max' => ['video' => 1, 'document' => 3],
+            'folder' => 'catalog/courses',
+            'visibility' => 'public',
+            'max' => 4,
+            'view' => 'courses.view',
+            'manage' => 'courses.manage',
         ],
     ],
 

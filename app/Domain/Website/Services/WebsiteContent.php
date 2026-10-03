@@ -9,6 +9,7 @@ use App\Domain\Commerce\Models\Product;
 use App\Domain\Education\Models\Batch;
 use App\Domain\Education\Models\Course;
 use App\Domain\Education\Support\BatchSchedule;
+use App\Domain\Files\Models\Attachment;
 use App\Domain\Media\Models\Media;
 use App\Domain\Service\Models\Service;
 use App\Domain\Tenant\Support\TenantContext;
@@ -16,6 +17,8 @@ use App\Domain\Website\Models\WebsiteConfig;
 use App\Domain\Website\Models\WebsiteSection;
 use App\Domain\Website\Support\SectionCatalog;
 use App\Support\Phone;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 /**
  * Everything the public website renders, read from the tenant's own records at request time
@@ -27,6 +30,8 @@ use App\Support\Phone;
  */
 class WebsiteContent
 {
+    private const NO_FILES = ['video' => null, 'brochures' => []];
+
     public function __construct(
         private readonly TenantContext $context,
         private readonly SectionCatalog $catalog,
@@ -143,8 +148,10 @@ class WebsiteContent
     private function services(): array
     {
         $bookable = $this->booking->isOpen() ? $this->booking->services()->pluck('id')->all() : [];
+        $services = Service::query()->active()->with('category')->get();
+        $files = $this->files(Service::class, $services->modelKeys());
 
-        return Service::query()->active()->with('category')->get()
+        return $services
             ->sortBy(fn (Service $service) => [$service->category === null ? 1 : 0, $service->category?->sort_order ?? 0, $service->category?->name ?? '', $service->sort_order, $service->name])
             ->groupBy(fn (Service $service) => $service->category?->name ?? '')
             ->map(fn ($services, string $category) => [
@@ -156,6 +163,7 @@ class WebsiteContent
                     'duration_minutes' => $service->duration_minutes,
                     'price' => $service->price !== null ? (float) $service->price : null,
                     'bookable' => in_array($service->id, $bookable, true),
+                    ...($files[$service->id] ?? self::NO_FILES),
                 ])->values()->all(),
             ])
             ->values()
@@ -175,8 +183,10 @@ class WebsiteContent
         }
 
         $max = (int) config('commerce.limits.max_quantity');
+        $products = Product::query()->active()->with(['category', 'image'])->get();
+        $files = $this->files(Product::class, $products->modelKeys());
 
-        return Product::query()->active()->with(['category', 'image'])->get()
+        return $products
             ->sortBy(fn (Product $product) => [$product->category === null ? 1 : 0, $product->category?->sort_order ?? 0, $product->category?->name ?? '', $product->sort_order, $product->name])
             ->groupBy(fn (Product $product) => $product->category?->name ?? '')
             ->map(fn ($products, string $category) => [
@@ -191,6 +201,7 @@ class WebsiteContent
                     'in_stock' => $product->isInStock() && $product->is_available,
                     'max_quantity' => $product->track_stock ? min($product->available(), $max) : $max,
                     'food_type' => $product->food_type,
+                    ...($files[$product->id] ?? self::NO_FILES),
                 ])->values()->all(),
             ])
             ->values()
@@ -208,9 +219,12 @@ class WebsiteContent
             return [];
         }
 
-        return Course::query()->active()->ordered()
+        $courses = Course::query()->active()->ordered()
             ->with(['batches' => fn ($query) => $query->active()->orderBy('name')])
-            ->get()
+            ->get();
+        $files = $this->files(Course::class, $courses->modelKeys());
+
+        return $courses
             ->map(fn (Course $course) => [
                 'id' => $course->id,
                 'name' => $course->name,
@@ -223,7 +237,44 @@ class WebsiteContent
                     'starts_on' => $batch->starts_on?->toDateString(),
                     'fee' => $batch->fee !== null ? (string) $batch->fee : null,
                 ])->values()->all(),
+                ...($files[$course->id] ?? self::NO_FILES),
             ])
+            ->all();
+    }
+
+    /**
+     * Public videos and brochures of the listed records, keyed by record id. Only files marked public
+     * (catalog uploads) are read; private documents never reach the website.
+     *
+     * @param  class-string<Model>  $model
+     * @param  list<int>  $ids
+     * @return array<int, array{video: ?array{url: string, type: string, title: ?string}, brochures: list<array{name: string, url: string, extension: string}>}>
+     */
+    private function files(string $model, array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return Attachment::query()
+            ->where('attachable_type', (new $model)->getMorphClass())
+            ->whereIn('attachable_id', $ids)
+            ->where('visibility', Attachment::PUBLIC)
+            ->orderBy('id')
+            ->get()
+            ->groupBy('attachable_id')
+            ->map(function ($files) {
+                $video = $files->firstWhere('kind', 'video');
+
+                return [
+                    'video' => $video ? ['url' => $video->publicUrl(), 'type' => $video->mime_type, 'title' => $video->title] : null,
+                    'brochures' => $files->where('kind', 'document')->map(fn (Attachment $file) => [
+                        'name' => $file->title ?: pathinfo($file->original_name, PATHINFO_FILENAME),
+                        'url' => $file->publicUrl(),
+                        'extension' => Str::upper(pathinfo($file->path, PATHINFO_EXTENSION)),
+                    ])->values()->all(),
+                ];
+            })
             ->all();
     }
 

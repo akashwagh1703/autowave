@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { formatDuration } from '@/utils/booking';
 import { formatMoney } from '@/utils/format';
 import { CartButton } from './ShopSection';
+import ItemFiles from './ItemFiles';
 import { ActionButton, Card, Section, SectionHeading, useSite } from './site';
 
 const NAV = [
@@ -145,6 +146,7 @@ export function Services({ config, data }) {
                                         ) : null}
                                     </div>
                                     {service.description ? <p className="mt-2 text-sm text-slate-600">{service.description}</p> : null}
+                                    <ItemFiles item={service} className="mt-3" />
                                     <div className="mt-auto flex items-center justify-between gap-3 pt-4">
                                         {config.show_duration && service.duration_minutes ? (
                                             <span className="inline-flex items-center gap-1 text-sm text-slate-500">

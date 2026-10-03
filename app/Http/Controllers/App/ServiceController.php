@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Presenters\BookingOptions;
 use App\Http\Presenters\BookingPresenter;
 use App\Http\Presenters\CrmPresenter;
+use App\Http\Presenters\FilesPresenter;
 use App\Http\Requests\Booking\ServiceRequest;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -106,7 +107,7 @@ class ServiceController extends Controller
         return to_route('services.index')->with('success', __(':name added.', ['name' => $service->name]));
     }
 
-    public function edit(Service $service): Response
+    public function edit(Request $request, Service $service): Response
     {
         $service->load(['category', 'resources:id']);
 
@@ -115,6 +116,7 @@ class ServiceController extends Controller
             'categories' => $this->options->categories(),
             'resources' => $this->bookingResources(),
             'upcomingCount' => $service->appointments()->whereIn('status', ['pending', 'confirmed'])->where('starts_at', '>', now())->count(),
+            'files' => FilesPresenter::card($service, 'service', route('services.attachments.store', $service), $request->user(), $this->context->tenant()),
         ]);
     }
 

@@ -8,6 +8,7 @@ import TextField from '@mui/material/TextField';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import DownloadIcon from '@mui/icons-material/Download';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFileOutlined';
+import MovieIcon from '@mui/icons-material/MovieOutlined';
 import UploadIcon from '@mui/icons-material/Upload';
 import { useRef, useState } from 'react';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -15,7 +16,8 @@ import { formatBytes, formatDate } from '@/utils/format';
 
 /**
  * Files attached to a record (FilesPresenter::card). The server decides the allowed types, sizes and
- * permissions and checks them again on upload; files open through AutoWave, never a storage link.
+ * permissions and checks them again on upload. Private files open through AutoWave, never a storage link;
+ * public ones (catalog videos and brochures) load from their public address.
  */
 export default function AttachmentsCard({ documents, timezone, title = 'Documents' }) {
     const input = useRef(null);
@@ -34,8 +36,12 @@ export default function AttachmentsCard({ documents, timezone, title = 'Document
             return;
         }
 
+        const extension = (file.name.split('.').pop() ?? '').toLowerCase();
+        const kind = documents.kinds?.find((candidate) => candidate.extensions.includes(extension === 'jpeg' ? 'jpg' : extension));
+        const limit = kind?.max_bytes ?? documents.max_bytes;
+
         form.clearErrors();
-        setTooLarge(file.size > documents.max_bytes);
+        setTooLarge(file.size > limit ? limit : false);
         form.setData({ file, title: '' });
     };
 
@@ -50,6 +56,7 @@ export default function AttachmentsCard({ documents, timezone, title = 'Document
         form.post(documents.upload_url, {
             forceFormData: true,
             preserveScroll: true,
+            preserveState: true,
             onSuccess: () => form.reset(),
         });
     };
@@ -57,6 +64,7 @@ export default function AttachmentsCard({ documents, timezone, title = 'Document
     const remove = () => {
         router.delete(`/attachments/${removing.id}`, {
             preserveScroll: true,
+            preserveState: true,
             onStart: () => setDeleting(true),
             onFinish: () => {
                 setDeleting(false);
@@ -65,7 +73,7 @@ export default function AttachmentsCard({ documents, timezone, title = 'Document
         });
     };
 
-    const error = tooLarge ? `This file is ${formatBytes(form.data.file?.size)}. The limit is ${formatBytes(documents.max_bytes)}.` : form.errors.file || form.errors.title;
+    const error = tooLarge ? `This file is ${formatBytes(form.data.file?.size)}. The limit is ${formatBytes(tooLarge)}.` : form.errors.file || form.errors.title;
 
     return (
         <Card variant="outlined">
@@ -80,7 +88,11 @@ export default function AttachmentsCard({ documents, timezone, title = 'Document
                     <ul className="mt-3 divide-y divide-slate-100">
                         {items.map((item) => (
                             <li key={item.id} className="flex items-center gap-2 py-2">
-                                <InsertDriveFileIcon fontSize="small" className="shrink-0 text-slate-400" />
+                                {item.kind === 'video' ? (
+                                    <MovieIcon fontSize="small" className="shrink-0 text-slate-400" />
+                                ) : (
+                                    <InsertDriveFileIcon fontSize="small" className="shrink-0 text-slate-400" />
+                                )}
                                 <div className="min-w-0 flex-1">
                                     <a href={item.url} target="_blank" rel="noopener" className="block truncate text-sm font-medium text-slate-900 hover:text-brand-700" title={item.original_name}>
                                         {item.name}
@@ -136,7 +148,8 @@ export default function AttachmentsCard({ documents, timezone, title = 'Document
                             </Button>
                         )}
                         <p className="mt-1 text-xs text-slate-500">
-                            {documents.hint}. {full ? `This record already has ${documents.max_files} files.` : ''}
+                            {documents.hint}. {documents.public ? 'Shown on your website. ' : ''}
+                            {full ? `This record already has ${documents.max_files} files.` : ''}
                         </p>
                         {error ? (
                             <p className="mt-1 text-sm text-red-600" role="alert">

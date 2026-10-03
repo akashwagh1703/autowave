@@ -23,7 +23,8 @@ use ZipArchive;
  *
  * - The type comes from the file's content (finfo), never its name or the browser's claim. Word and Excel
  *   files are ZIP containers, so their inner layout is checked too. Anything not listed is refused.
- * - Files are stored under tenant/{tenant_id}/{owner folder}/ with a random name.
+ * - Files are stored under tenant/{tenant_id}/{owner folder}/ with a random name, on the private or the
+ *   public disk as the owner type says (customer documents are private; catalog videos and brochures public).
  * - Every upload counts against the business's storage allowance.
  */
 class ManageAttachments
@@ -34,9 +35,10 @@ class ManageAttachments
         private readonly StorageAllowance $allowance,
     ) {}
 
-    public function upload(Model $owner, string $ownerKey, mixed $file, ?User $actor = null, ?string $title = null, string $visibility = Attachment::PRIVATE): Attachment
+    public function upload(Model $owner, string $ownerKey, mixed $file, ?User $actor = null, ?string $title = null): Attachment
     {
         $definition = config("files.owners.{$ownerKey}") ?? throw new InvalidArgumentException("Unknown attachment owner [{$ownerKey}].");
+        $visibility = $definition['visibility'] ?? Attachment::PRIVATE;
         $kinds = array_intersect_key(config('files.kinds'), array_flip($definition['kinds']));
         $largest = max(array_column($kinds, 'max_kb'));
 
@@ -54,8 +56,19 @@ class ManageAttachments
             throw ValidationException::withMessages(['file' => __(':kind files can be up to :max MB.', ['kind' => $kinds[$kind]['label'], 'max' => round($kinds[$kind]['max_kb'] / 1024)])]);
         }
 
-        if ($owner->morphMany(Attachment::class, 'attachable')->count() >= $definition['max']) {
+        $existing = $owner->morphMany(Attachment::class, 'attachable');
+
+        if ((clone $existing)->count() >= $definition['max']) {
             throw ValidationException::withMessages(['file' => __('Up to :max files can be attached here. Delete one first.', ['max' => $definition['max']])]);
+        }
+
+        $kindMax = $definition['kind_max'][$kind] ?? null;
+
+        if ($kindMax !== null && (clone $existing)->where('kind', $kind)->count() >= $kindMax) {
+            throw ValidationException::withMessages(['file' => trans_choice('{1} Only one :kind can be added here. Delete the current one first.|[2,*] Up to :max :kind files can be added here. Delete one first.', $kindMax, [
+                'kind' => Str::lower($kinds[$kind]['label']),
+                'max' => $kindMax,
+            ])]);
         }
 
         $tenant = $this->context->tenant();
@@ -108,6 +121,16 @@ class ManageAttachments
         }
 
         $this->audit->log('attachment.deleted', null, ['attachment_id' => $attachment->id, 'kind' => $attachment->kind, 'name' => $attachment->original_name]);
+    }
+
+    /** Removes every file of a record that is being deleted, so it stops counting against the allowance. */
+    public function deleteAllFor(Model $owner): void
+    {
+        Attachment::query()
+            ->where('attachable_type', $owner->getMorphClass())
+            ->where('attachable_id', $owner->getKey())
+            ->get()
+            ->each(fn (Attachment $attachment) => $this->delete($attachment));
     }
 
     /**

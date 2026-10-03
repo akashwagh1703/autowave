@@ -13,6 +13,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import AddIcon from '@mui/icons-material/Add';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditIcon from '@mui/icons-material/Edit';
 import SchoolIcon from '@mui/icons-material/SchoolOutlined';
@@ -21,6 +22,7 @@ import AppLayout from '@/layouts/AppLayout';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import AttachmentsCard from '@/modules/files/AttachmentsCard';
 import useTenant from '@/hooks/useTenant';
 import { formatPrice } from '@/utils/format';
 
@@ -137,11 +139,12 @@ function BatchRow({ batch }) {
     );
 }
 
-export default function Index({ courses, showInactive, counts }) {
-    const { can, currency } = useTenant();
+export default function Index({ courses, showInactive, counts, files }) {
+    const { can, currency, timezone } = useTenant();
     const { errors } = usePage().props;
     const canManage = can('courses.manage');
     const [editing, setEditing] = useState(null);
+    const [filesOf, setFilesOf] = useState(null);
     const [deleting, setDeleting] = useState(null);
     const [processing, setProcessing] = useState(false);
 
@@ -214,6 +217,11 @@ export default function Index({ courses, showInactive, counts }) {
                                     </p>
                                     {course.description ? <p className="mt-1 line-clamp-2 text-sm text-slate-500">{course.description}</p> : null}
                                 </div>
+                                {files?.[course.id] && (canManage || files[course.id].items.length > 0) ? (
+                                    <Button size="small" color="inherit" startIcon={<AttachFileIcon />} onClick={() => setFilesOf(course)}>
+                                        Files ({files[course.id].items.length})
+                                    </Button>
+                                ) : null}
                                 {canManage ? (
                                     <div className="flex items-center gap-1">
                                         <Button size="small" component={Link} href={`/batches/create?course=${course.id}`} startIcon={<AddIcon />}>
@@ -243,6 +251,20 @@ export default function Index({ courses, showInactive, counts }) {
             )}
 
             {editing ? <CourseDialog key={editing.id ?? 'new'} course={editing.id ? editing : null} open onClose={() => setEditing(null)} /> : null}
+
+            {filesOf && files?.[filesOf.id] ? (
+                <Dialog open onClose={() => setFilesOf(null)} fullWidth maxWidth="sm">
+                    <DialogTitle>{filesOf.name}</DialogTitle>
+                    <DialogContent>
+                        <AttachmentsCard documents={files[filesOf.id]} timezone={timezone} title="Video and brochures" />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setFilesOf(null)} color="inherit">
+                            Close
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            ) : null}
 
             <ConfirmDialog
                 open={deleting !== null}

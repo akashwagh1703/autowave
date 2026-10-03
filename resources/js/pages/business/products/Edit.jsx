@@ -10,6 +10,7 @@ import PageHeader from '@/components/PageHeader';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import ProductForm from '@/modules/products/ProductForm';
 import StockCard from '@/modules/products/StockCard';
+import AttachmentsCard from '@/modules/files/AttachmentsCard';
 import useTenant from '@/hooks/useTenant';
 
 function ImageCard({ product }) {
@@ -63,8 +64,8 @@ function ImageCard({ product }) {
     );
 }
 
-export default function Edit({ product, categories, defaultLowStock, foodTypes, movements, stockReasons, openOrdersCount }) {
-    const { can } = useTenant();
+export default function Edit({ product, categories, defaultLowStock, foodTypes, movements, stockReasons, openOrdersCount, files }) {
+    const { can, timezone } = useTenant();
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const form = useForm({
@@ -126,8 +127,9 @@ export default function Edit({ product, categories, defaultLowStock, foodTypes, 
                     </Card>
                     {product.track_stock ? <StockCard product={product} movements={movements} reasons={stockReasons} /> : null}
                 </div>
-                <div>
+                <div className="space-y-6">
                     <ImageCard product={product} />
+                    {files ? <AttachmentsCard documents={files} timezone={timezone} title="Video and brochures" /> : null}
                 </div>
             </div>
 

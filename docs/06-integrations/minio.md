@@ -1,7 +1,8 @@
 # MinIO (object storage for uploads)
 
 - **Status:** ✅ Website and product images can be stored on MinIO (`media` disk). ✅ Customer and student
-  documents can be stored in a private bucket (`files` disk). Videos: not yet.
+  documents can be stored in a private bucket (`files` disk). ✅ Product, service and course videos and
+  brochures go with the website images (public bucket).
 - **Last updated:** 2026-10-06
 
 Uploaded images go to the disk named by `WEBSITE_MEDIA_DISK`: `public` (the server's own disk, served from
@@ -47,6 +48,7 @@ Browser ── upload / open a document ──► AutoWave (permission check) �
 | `MEDIA_REGION` | `us-east-1` | Any value works for MinIO |
 | `FILES_PRIVATE_DISK` | `files` | Disk for documents (`local` until MinIO is ready) |
 | `MEDIA_PRIVATE_BUCKET` | `autowave-private` | Private bucket; same key and endpoint as the media disk |
+| `FILES_PUBLIC_DISK` | unset | Disk for catalog videos and brochures; when unset it follows `WEBSITE_MEDIA_DISK` |
 | `FILES_QUOTA_MB` | `1024` | Default storage allowance per business (images and documents together); Super Admin → Tenants can change it per business |
 
 ## Production setup (run as root)
@@ -214,9 +216,25 @@ sudo -u autowave php8.4 artisan autowave:health          # "Private files ... fi
 curl -s -o /dev/null -w 'anonymous: %{http_code}\n' http://127.0.0.1:9000/autowave-private/   # 403
 ```
 
-Documents are up to 10 MB, within the current Nginx and PHP upload limits (20 MB). Videos (50 MB, a later
-phase) will need `client_max_body_size 60m` in Nginx and `upload_max_filesize = 60M`, `post_max_size = 64M` in
-PHP-FPM.
+Documents are up to 10 MB, within the current Nginx and PHP upload limits (20 MB).
+
+### 4c. Raise the upload limit for videos
+
+Catalog videos are up to 50 MB. Until the limits below are raised, a video upload over 20 MB is refused by
+Nginx (413) before it reaches AutoWave:
+
+```bash
+# Nginx: in the AutoWave server blocks (or http {}), then test and reload
+sudo grep -rn client_max_body_size /etc/nginx/sites-enabled/
+#   client_max_body_size 60m;
+sudo nginx -t && sudo systemctl reload nginx
+
+# PHP-FPM: find the pool's php.ini and set the two values
+php8.4 --ini | grep "Loaded Configuration"     # the CLI file; the FPM one is /etc/php/8.4/fpm/php.ini
+#   upload_max_filesize = 60M
+#   post_max_size = 64M
+sudo systemctl reload php8.4-fpm
+```
 
 ### 5. Close MinIO's public ports (after checking the other projects)
 
@@ -234,5 +252,5 @@ keep the backup encrypted.
 
 ## Not yet
 
-- Videos (catalog, website) and documents for products, courses, the website and inbox attachments.
+- Website-level videos and brochures, and inbox attachments.
 - EXIF stripping and resized variants (AW-035).

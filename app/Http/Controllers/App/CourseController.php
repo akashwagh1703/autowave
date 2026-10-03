@@ -6,8 +6,10 @@ use App\Domain\Education\Actions\DeleteCourse;
 use App\Domain\Education\Actions\SaveCourse;
 use App\Domain\Education\Models\Batch;
 use App\Domain\Education\Models\Course;
+use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\EducationPresenter;
+use App\Http\Presenters\FilesPresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -17,7 +19,7 @@ use Inertia\Response;
 /** Courses and their batches on one page; courses are edited in dialogs. */
 class CourseController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, TenantContext $context): Response
     {
         $showInactive = $request->boolean('inactive');
 
@@ -41,6 +43,7 @@ class CourseController extends Controller
                 'courses' => Course::query()->active()->count(),
                 'batches' => Batch::query()->active()->count(),
             ],
+            'files' => FilesPresenter::cards($courses, 'course', fn (Course $course) => route('courses.attachments.store', $course), $request->user(), $context->tenant()),
         ]);
     }
 

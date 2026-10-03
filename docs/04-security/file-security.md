@@ -1,7 +1,7 @@
 # File Security
 
-> Status: website and product images through `ManageMedia`; customer and student documents through
-> `ManageAttachments` (private disk).
+> Status: website and product images through `ManageMedia`; customer and student documents (private disk)
+> and product, service and course videos and brochures (public disk) through `ManageAttachments`.
 
 ## Storage layout
 
@@ -10,6 +10,9 @@ tenant/{tenant_id}/logo/                   logo-{ulid}.{png|jpg|webp}
 tenant/{tenant_id}/website/                hero-{ulid}.*, gallery-{ulid}.*
 tenant/{tenant_id}/products/               product-{ulid}.*
 tenant/{tenant_id}/documents/customers/    {ulid}.{pdf|docx|xlsx|jpg|png}   (private disk)
+tenant/{tenant_id}/catalog/products/       {ulid}.{mp4|webm|pdf|docx|xlsx|jpg|png}   (public disk)
+tenant/{tenant_id}/catalog/services/       (same)
+tenant/{tenant_id}/catalog/courses/        (same)
 ```
 
 Website images go on `config('website.media.disk')` (env `WEBSITE_MEDIA_DISK`, default `public`):
@@ -62,6 +65,20 @@ Documents attached to customers (and shown on their student pages) are `attachme
 - **Audit:** `attachment.uploaded`, `attachment.downloaded`, `attachment.deleted`.
 - If storage is unreachable, an upload fails with a form error and nothing is saved; opening a file returns 404.
 
+## Catalog videos and brochures
+
+Products, services and courses can each have one video (MP4 or WebM, up to 50 MB, type read from the bytes)
+and up to three documents (same rules as above). These files are meant for the public website, so they are
+stored with `visibility = public` on `config('files.disks.public')` (env `FILES_PUBLIC_DISK`, falling back to
+`WEBSITE_MEDIA_DISK`) and the website links to them directly. Never put anything private on a catalog item.
+
+- **Permissions:** uploading and deleting need `products.update`, `services.manage` or `courses.manage`;
+  `GET /attachments/{id}` redirects to the public URL (or downloads with `?download=1`) for anyone who can
+  view the item in the app.
+- **Website:** `WebsiteContent` only reads `public` attachments, so private customer documents can never
+  appear on a website even if one were linked to a catalog item.
+- **Deleting** a product, service or course (one at a time or in bulk) deletes its files too.
+
 ## Storage allowance
 
 `App\Domain\Files\Support\StorageAllowance` adds up `media.size_bytes` and `attachments.size_bytes` for the
@@ -72,5 +89,5 @@ per-business value a platform admin sets in Super Admin → Tenants (tenant sett
 ## Still to do
 
 - Strip EXIF metadata and create resized variants on the media queue (AW-035).
-- Videos, and documents for products, courses, the website and inbox attachments.
+- Website-level videos and brochures, and inbox attachments.
 - Malware scanning of uploaded documents (for example ClamAV on the media queue).

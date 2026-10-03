@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\App;
 
 use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Commerce\Models\Product;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Education\Models\Course;
 use App\Domain\Files\Actions\ManageAttachments;
 use App\Domain\Files\Models\Attachment;
+use App\Domain\Service\Models\Service;
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -29,9 +33,22 @@ class AttachmentController extends Controller
 
     public function storeForCustomer(Request $request, Customer $customer): RedirectResponse
     {
-        $this->attachments->upload($customer, 'customer', $request->file('file'), $request->user(), $request->input('title'));
+        return $this->store($request, $customer, 'customer');
+    }
 
-        return back()->with('success', __('Document uploaded.'));
+    public function storeForProduct(Request $request, Product $product): RedirectResponse
+    {
+        return $this->store($request, $product, 'product');
+    }
+
+    public function storeForService(Request $request, Service $service): RedirectResponse
+    {
+        return $this->store($request, $service, 'service');
+    }
+
+    public function storeForCourse(Request $request, Course $course): RedirectResponse
+    {
+        return $this->store($request, $course, 'course');
     }
 
     public function show(Request $request, Attachment $attachment): Response
@@ -39,8 +56,8 @@ class AttachmentController extends Controller
         $this->authorizeFor($request, $attachment, 'view');
         $disk = Storage::disk($attachment->disk);
 
-        if (! $attachment->isPrivate()) {
-            return redirect()->away($disk->url($attachment->path));
+        if (! $attachment->isPrivate() && ! $request->boolean('download')) {
+            return redirect()->away($attachment->publicUrl());
         }
 
         $inline = in_array($attachment->mime_type, self::INLINE, true) && ! $request->boolean('download');
@@ -70,6 +87,13 @@ class AttachmentController extends Controller
         $this->attachments->delete($attachment);
 
         return back()->with('success', __('File deleted.'));
+    }
+
+    private function store(Request $request, Model $owner, string $ownerKey): RedirectResponse
+    {
+        $this->attachments->upload($owner, $ownerKey, $request->file('file'), $request->user(), $request->input('title'));
+
+        return back()->with('success', __('File uploaded.'));
     }
 
     private function authorizeFor(Request $request, Attachment $attachment, string $ability): void

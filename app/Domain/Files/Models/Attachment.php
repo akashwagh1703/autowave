@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * A document or video attached to a record (config('files')). `private` files sit on the private disk and
@@ -42,6 +43,14 @@ class Attachment extends Model
     public function isPrivate(): bool
     {
         return $this->visibility === self::PRIVATE;
+    }
+
+    /** Where a browser loads a public file; host-relative on the local public disk, like Media::url(). */
+    public function publicUrl(): string
+    {
+        return $this->disk === 'public'
+            ? '/storage/'.ltrim($this->path, '/')
+            : Storage::disk($this->disk)->url($this->path);
     }
 
     /** A name for the download that keeps the stored extension, whatever the original name was. */

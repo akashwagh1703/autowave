@@ -7,6 +7,7 @@ import ShoppingBagIcon from '@mui/icons-material/ShoppingBagOutlined';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { postJson } from '@/utils/booking';
 import { formatPrice } from '@/utils/format';
+import ItemFiles from './ItemFiles';
 import { ActionButton, Card, Field, Honeypot, Section, SectionHeading, inputClass, useSite } from './site';
 
 const FULFILMENT_LABELS = { pickup: 'Pick up', delivery: 'Delivery' };
@@ -173,6 +174,7 @@ export function Products({ config, data }) {
                                                 ) : null}
                                             </div>
                                             {product.description ? <p className="mt-2 text-sm whitespace-pre-line text-slate-600">{product.description}</p> : null}
+                                            <ItemFiles item={product} className="mt-3" />
                                             <div className="mt-auto flex items-center justify-end gap-3 pt-4">
                                                 {!product.in_stock ? (
                                                     <span className="text-sm font-medium text-slate-500">Out of stock</span>

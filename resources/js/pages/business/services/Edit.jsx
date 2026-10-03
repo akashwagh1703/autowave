@@ -8,8 +8,11 @@ import AppLayout from '@/layouts/AppLayout';
 import PageHeader from '@/components/PageHeader';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import ServiceForm from '@/modules/services/ServiceForm';
+import AttachmentsCard from '@/modules/files/AttachmentsCard';
+import useTenant from '@/hooks/useTenant';
 
-export default function Edit({ service, categories, resources, upcomingCount }) {
+export default function Edit({ service, categories, resources, upcomingCount, files }) {
+    const { timezone } = useTenant();
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const form = useForm({
@@ -59,6 +62,12 @@ export default function Edit({ service, categories, resources, upcomingCount }) 
                     />
                 </CardContent>
             </Card>
+
+            {files ? (
+                <div className="mt-6 max-w-3xl">
+                    <AttachmentsCard documents={files} timezone={timezone} title="Video and brochures" />
+                </div>
+            ) : null}
 
             <ConfirmDialog
                 open={confirmDelete}
