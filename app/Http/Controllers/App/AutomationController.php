@@ -15,6 +15,7 @@ use App\Http\Presenters\CrmPresenter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -124,7 +125,11 @@ class AutomationController extends Controller
             return back()->with('error', __('This automation’s trigger is not available for your business.'));
         }
 
-        $toggle->handle($automation, (bool) $validated['is_active']);
+        try {
+            $toggle->handle($automation, (bool) $validated['is_active']);
+        } catch (ValidationException $exception) {
+            return back()->with('error', collect($exception->errors())->flatten()->first());
+        }
 
         return back()->with('success', $automation->is_active ? __(':name is on.', ['name' => $automation->name]) : __(':name is paused.', ['name' => $automation->name]));
     }

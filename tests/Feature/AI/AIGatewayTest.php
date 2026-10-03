@@ -163,9 +163,9 @@ class AIGatewayTest extends TestCase
         $this->assertTrue($meter->exceeded($tenant));
 
         $meter->setCap($tenant, null);
-        $this->assertSame(300000, $meter->cap($tenant));
+        $this->assertSame(200000, $meter->cap($tenant), 'Back to the trial plan allowance.');
         $this->assertFalse($meter->hasCustomCap($tenant));
-        $this->assertSame(['used' => 1000, 'cap' => 300000, 'requests' => 1, 'percent' => 0], array_intersect_key($meter->summary($tenant), array_flip(['used', 'cap', 'requests', 'percent'])));
+        $this->assertSame(['used' => 1000, 'cap' => 200000, 'requests' => 1, 'percent' => 0], array_intersect_key($meter->summary($tenant), array_flip(['used', 'cap', 'requests', 'percent'])));
     }
 
     public function test_usage_of_one_business_does_not_count_against_another(): void

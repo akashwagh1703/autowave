@@ -21,6 +21,7 @@ Do not document planned features as if they exist.
 | Automation | [automation.md](automation.md) | ✅ Phase 5 |
 | Messaging | [messaging.md](messaging.md) | ✅ Phase 8 (outbound pipeline in Phase 5) |
 | AI | [ai.md](ai.md) | ✅ Phase 9 |
+| Billing | [billing.md](billing.md) | ✅ Phase A (plans, trial, manual payments, GST switch, enforcement); Razorpay in Phase B |
 
 ## Template
 

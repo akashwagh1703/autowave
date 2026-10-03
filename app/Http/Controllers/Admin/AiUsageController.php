@@ -51,10 +51,12 @@ class AiUsageController extends Controller
             ->whereIn('tenant_id', $tenants->getCollection()->modelKeys())
             ->pluck('value', 'tenant_id');
         $default = (int) config('ai.limits.monthly_tokens');
+        $meter = app(AIUsageMeter::class);
 
-        $tenants->through(function (Tenant $tenant) use ($caps, $default, $current) {
+        $tenants->through(function (Tenant $tenant) use ($caps, $meter, $current) {
             $custom = $caps->get($tenant->id);
-            $cap = is_array($custom) && isset($custom['monthly_tokens']) ? (int) $custom['monthly_tokens'] : $default;
+            $planCap = $meter->defaultCap($tenant);
+            $cap = is_array($custom) && isset($custom['monthly_tokens']) ? (int) $custom['monthly_tokens'] : $planCap;
             $tokens = (int) $tenant->getAttribute('tokens');
 
             return [
@@ -66,6 +68,7 @@ class AiUsageController extends Controller
                 'tokens' => $tokens,
                 'cost' => round((float) $tenant->getAttribute('cost'), 4),
                 'cap' => $cap,
+                'default_cap' => $planCap,
                 'custom_cap' => $custom !== null,
                 'percent' => $current ? ($cap > 0 ? min(100, (int) floor($tokens * 100 / $cap)) : 100) : null,
             ];

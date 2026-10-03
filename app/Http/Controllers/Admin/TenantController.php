@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Billing\Models\BillingPayment;
+use App\Domain\Billing\Models\Plan;
+use App\Domain\Billing\Support\Entitlements;
 use App\Domain\Domain\Services\DomainResolver;
 use App\Domain\Files\Models\Attachment;
 use App\Domain\Files\Support\StorageAllowance;
@@ -11,8 +14,10 @@ use App\Domain\Tenant\Enums\TenantStatus;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Tenant\Models\TenantSetting;
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\BillingPresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,7 +29,7 @@ class TenantController extends Controller
         private readonly DomainResolver $domains,
     ) {}
 
-    public function index(Request $request): Response
+    public function index(Request $request, StorageAllowance $allowance, Entitlements $entitlements): Response
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
@@ -48,6 +53,8 @@ class TenantController extends Controller
         $attachmentBytes = $used(Attachment::class);
         $caps = TenantSetting::withoutTenantScope()->whereIn('tenant_id', $ids)->where('key', StorageAllowance::QUOTA_KEY)->pluck('value', 'tenant_id');
 
+        $pending = BillingPayment::withoutTenantScope()->whereIn('tenant_id', $ids)->where('status', BillingPayment::PENDING)->pluck('tenant_id')->flip();
+
         $tenants->through(fn (Tenant $tenant) => [
             'id' => $tenant->id,
             'name' => $tenant->name,
@@ -60,9 +67,12 @@ class TenantController extends Controller
             'created_at' => $tenant->created_at?->toDateString(),
             'storage' => [
                 'used_bytes' => (int) ($mediaBytes[$tenant->id] ?? 0) + (int) ($attachmentBytes[$tenant->id] ?? 0),
-                'cap_mb' => is_array($caps[$tenant->id] ?? null) && isset($caps[$tenant->id]['mb']) ? (int) $caps[$tenant->id]['mb'] : (int) config('files.quota_mb'),
+                'cap_mb' => is_array($caps[$tenant->id] ?? null) && isset($caps[$tenant->id]['mb']) ? (int) $caps[$tenant->id]['mb'] : $allowance->defaultMb($tenant),
+                'default_mb' => $allowance->defaultMb($tenant),
                 'custom' => isset($caps[$tenant->id]),
             ],
+            'subscription' => Arr::only(BillingPresenter::subscription($tenant, $entitlements), ['state', 'label', 'plan', 'period', 'is_trial', 'ends_at', 'next_plan', 'plan_changes_at', 'unlimited']),
+            'payment_pending' => isset($pending[$tenant->id]),
         ]);
 
         return Inertia::render('admin/tenants/Index', [
@@ -71,7 +81,15 @@ class TenantController extends Controller
                 'search' => $filters['search'] ?? '',
                 'status' => $filters['status'] ?? '',
             ],
-            'defaultStorageMb' => (int) config('files.quota_mb'),
+            'plans' => Plan::query()->where('is_active', true)->orderBy('sort_order')->get()->map(fn (Plan $plan) => [
+                'code' => $plan->code,
+                'name' => $plan->name,
+                'price_monthly' => $plan->price_monthly,
+                'price_yearly' => $plan->price_yearly,
+                'is_trial' => $plan->isTrial(),
+            ]),
+            'periods' => collect(config('billing.periods'))->map(fn (array $period, string $key) => ['value' => $key, 'label' => $period['label']])->values(),
+            'methods' => collect(config('billing.methods'))->except('online')->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])->values(),
         ]);
     }
 

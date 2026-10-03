@@ -18,6 +18,7 @@ class SaveAutomation
     public function __construct(
         private readonly DefinitionValidator $validator,
         private readonly AuditLogger $audit,
+        private readonly ToggleAutomation $toggle,
     ) {}
 
     /**
@@ -31,6 +32,10 @@ class SaveAutomation
 
         if (! $automation && Automation::query()->count() >= (int) config('automation.limits.automations')) {
             throw ValidationException::withMessages(['name' => __('This business already has the maximum of :max automations.', ['max' => config('automation.limits.automations')])]);
+        }
+
+        if ($definition['is_active'] && ! $automation?->is_active) {
+            $this->toggle->ensureCanActivate($automation);
         }
 
         return DB::transaction(function () use ($definition, $automation, $actor, $templateKey) {

@@ -3,6 +3,7 @@
 namespace App\Domain\Tenant\Actions;
 
 use App\Domain\Automation\Actions\ProvisionAutomations;
+use App\Domain\Billing\Actions\SubscriptionLifecycle;
 use App\Domain\Business\Models\BusinessType;
 use App\Domain\Domain\Actions\AssignDefaultDomain;
 use App\Domain\Engine\Services\EngineManager;
@@ -29,7 +30,7 @@ use InvalidArgumentException;
 /**
  * Creates a fully provisioned tenant from a business type preset (ADR-005):
  * owner membership, roles, modules, engines, default settings, website, CRM pipeline, service
- * categories, default automations and subdomain.
+ * categories, default automations, subdomain and the free trial.
  * All or nothing; TenantCreated fires after commit.
  */
 class CreateTenant
@@ -50,6 +51,7 @@ class CreateTenant
         private readonly ProvisionCrm $provisionCrm,
         private readonly ProvisionServiceCatalog $provisionServiceCatalog,
         private readonly ProvisionAutomations $provisionAutomations,
+        private readonly SubscriptionLifecycle $subscriptions,
     ) {}
 
     /**
@@ -116,6 +118,7 @@ class CreateTenant
                 $this->provisionServiceCatalog->handle($tenant, $type);
                 $this->provisionAutomations->handle($tenant, $type);
                 $this->assignDomain->handle($tenant);
+                $this->subscriptions->startTrial($tenant);
             });
 
             return $tenant;

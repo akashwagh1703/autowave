@@ -39,6 +39,7 @@ reports.view
 users.view  users.manage
 roles.manage
 settings.view  settings.update
+billing.view  billing.manage
 ```
 
 Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::expand()`.
@@ -201,6 +202,13 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
     delete with `products.update`, `services.manage` or `courses.manage`; open with `products.view`,
     `services.view` or `courses.view`. Files of the website's Video and Downloads sections use
     `website.manage` and `website.view`.
+- **Billing:**
+  - `billing.view` opens Settings → Plan and billing and invoices; `billing.manage` gets quotes, reports
+    and withdraws payments (5 reports per hour per user). Only the Owner role has them (it holds every
+    permission once `RbacSeeder` has added the keys); no other default role gets them.
+  - `EnsureSubscriptionAllows` (alias `subscription`) runs on every app route after `tenant.member`:
+    read-only businesses can't write, locked ones only reach `billing.*` routes. It skips the internal
+    business and does nothing while enforcement is off.
 - **New permission groups for existing tenants:** `RbacSeeder` updates the templates, but tenant roles are
   copies. `TenantBackfillSeeder` calls `ProvisionTenantRoles::grantNewPermissionGroups()` for `services`,
   `resources`, `website`, `conversations`, `ai`, `offers`, `courses`, `students`, `fees`,
@@ -217,4 +225,6 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
 `is_platform_admin` + `platform.admin` middleware on the admin host. Platform-level roles/permissions for
 admin staff are deferred until more admin features exist. Super Admin → AI usage (`/ai-usage`) and the
 per-business AI allowance (`PUT /tenants/{tenant}/ai-limit`) are admin-only and audit-logged, as is the
-per-business storage allowance (`PUT /tenants/{tenant}/storage-limit`).
+per-business storage allowance (`PUT /tenants/{tenant}/storage-limit`). Billing (payments review, proof
+screenshots, invoices, plans, recording payments, changing a business's plan, Settings → Billing and the
+UPI QR) is admin-only and audit-logged too; changes to the UPI or bank details email every Super Admin.

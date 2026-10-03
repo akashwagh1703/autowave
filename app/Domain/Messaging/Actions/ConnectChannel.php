@@ -3,6 +3,7 @@
 namespace App\Domain\Messaging\Actions;
 
 use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Billing\Support\Entitlements;
 use App\Domain\Messaging\Enums\ChannelStatus;
 use App\Domain\Messaging\Exceptions\MetaApiException;
 use App\Domain\Messaging\Meta\MetaGraphClient;
@@ -22,6 +23,7 @@ class ConnectChannel
         private readonly MetaGraphClient $client,
         private readonly AuditLogger $audit,
         private readonly TenantContext $context,
+        private readonly Entitlements $entitlements,
     ) {}
 
     /** The channel's row, created with a webhook key and verify token on first use. */
@@ -60,6 +62,10 @@ class ConnectChannel
     /** @param  array{account_id?: ?string, access_token?: ?string, app_secret?: ?string}  $data */
     public function instagram(array $data, User $actor): MessagingChannel
     {
+        if ($this->entitlements->limit($this->context->tenant(), 'instagram', true) === false) {
+            throw ValidationException::withMessages(['access_token' => __('Instagram is not included in your plan. Upgrade your plan in Billing to connect it.')]);
+        }
+
         $row = self::ensure('instagram');
         [$token, $secret] = $this->secrets($row, $data);
 

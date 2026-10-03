@@ -69,6 +69,11 @@ Settings can be overridden with environment variables: `APP_DIR`, `REPO`, `BRANC
    `php8.4 artisan db:seed --class=RbacSeeder --force && php8.4 artisan db:seed --class=TenantBackfillSeeder --force`.
    Both are safe to repeat. Until `RbacSeeder` runs nobody, not even owners, has the new permissions;
    until `TenantBackfillSeeder` runs, only owners do.
+6. Billing release (2026-10-07): run both seeders. `TenantBackfillSeeder` also seeds the plans and gives
+   every business without a subscription a 14-day trial; until it runs, those businesses have no plan and
+   no limits.
+   Then fill in Super Admin → Settings → Billing (UPI ID or bank details, QR image) and switch on
+   **Enforce plans** only when ready. `billing:sweep` runs from the existing scheduler cron.
 
 ## First release (done once, 2026-09-29)
 

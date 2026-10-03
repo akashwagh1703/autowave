@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureEmailIsVerifiedWhenRequired;
 use App\Http\Middleware\EnsureEngineEnabled;
 use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsurePlatformAdmin;
+use App\Http\Middleware\EnsureSubscriptionAllows;
 use App\Http\Middleware\EnsureWebsiteIsLive;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ResolveTenantFromDomain;
@@ -61,6 +62,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => EnsureAccountIsActive::class,
             'platform.admin' => EnsurePlatformAdmin::class,
             'verified' => EnsureEmailIsVerifiedWhenRequired::class,
+            'subscription' => EnsureSubscriptionAllows::class,
         ]);
 
         // Route model binding (in the web group) must run after the tenant is resolved, or

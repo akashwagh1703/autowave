@@ -7,8 +7,9 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import AdminLayout from '@/layouts/AdminLayout';
 import PageHeader from '@/components/PageHeader';
+import BillingSettingsCard from '@/modules/billing/admin/BillingSettingsCard';
 
-export default function SettingsIndex({ settings, unverifiedUsers }) {
+export default function SettingsIndex({ settings, unverifiedUsers, billing }) {
     const [saving, setSaving] = useState(false);
     const required = settings.require_email_verification;
 
@@ -48,6 +49,8 @@ export default function SettingsIndex({ settings, unverifiedUsers }) {
                     ) : null}
                 </CardContent>
             </Card>
+
+            <BillingSettingsCard billing={billing} />
         </AdminLayout>
     );
 }

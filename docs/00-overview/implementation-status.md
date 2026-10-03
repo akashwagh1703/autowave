@@ -1,6 +1,6 @@
 # Implementation Status
 
-_Last updated: 2026-09-30 (production deployment)_
+_Last updated: 2026-10-07 (billing phase A)_
 
 Legend: ✅ done · 🚧 in progress · ⏳ not started
 
@@ -26,6 +26,6 @@ Legend: ✅ done · 🚧 in progress · ⏳ not started
 | AI | ✅ | 9 | ADR-019; OpenRouter behind `AIService`/`AIGateway` (fake provider for tests), inbox reply suggestions and automation drafts (never sent automatically), conversation/lead/customer summaries (cached), lead details from messages (fills empty fields, suggestions for the rest; automatic after messages), business assistant with read-only permission-aware tools, writing help (website, automation, marketing), `message.received` trigger and three AI actions, Settings → AI, per-business token metering with a monthly cap and Super Admin → AI usage; no redaction, streaming or saved chats (AW-055–058) |
 | Additional verticals (Turf, Coaching, Cafe, Local Commerce) | ✅ | 10 | ADR-020; education engine (courses, batches, admissions from leads, fee instalments and payments, hourly fee reminders, attendance, demo classes, courses website section), food engine on commerce (food types and availability, tables, reservations with no double booking, website reservations, dine-in orders, kitchen screen), turf hourly/peak/weekend rates with prices on bookings and advances, Local Commerce rename, coupon codes and widgets; demo tenants ABC Coaching, ABC Cafe, ABC Store (AW-059–064) |
 | Super Admin | 🚧 | 1+ | Login, dashboard, tenant list/suspend done; more with each phase |
-| Billing / plans | ⏳ | later | Architecture only until needed |
+| Billing / plans | ✅ | Billing A | [billing.md](../05-features/billing.md); 14-day trial, Starter/Growth/Business monthly or yearly, manual UPI/bank payments approved by Super Admin, gapless invoices, GST and online-payment switches (off), plan limits, optional enforcement (read-only, then locked), hourly `billing:sweep` reminders; Razorpay in Phase B, PDF invoices and coupons in Phase C |
 | Horizon | ⏳ | production setup | See AW-001 |
 | Production deployment | ✅ | ops | Live at autowave.co.in since 2026-09-29 on a shared DigitalOcean droplet: atomic releases with `scripts/deploy.sh` (deploy, rollback), wildcard TLS, systemd worker, cron scheduler. Backups, firewall and a bigger server pending (AW-065–067) |

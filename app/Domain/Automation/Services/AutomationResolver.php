@@ -6,6 +6,7 @@ use App\Domain\Automation\Enums\RunStatus;
 use App\Domain\Automation\Models\Automation;
 use App\Domain\Automation\Models\AutomationRun;
 use App\Domain\Automation\Support\AutomationCatalog;
+use App\Domain\Billing\Support\Entitlements;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Tenant\Support\TenantContext;
 use Illuminate\Database\Eloquent\Model;
@@ -57,7 +58,10 @@ class AutomationResolver
      */
     private function startInTenant(string $trigger, Model $subject, ?string $eventKey, array $payload): Collection
     {
-        if (! $this->context->tenant()->isActive() || ! $this->context->hasModule('automation') || ! app(AutomationCatalog::class)->trigger($trigger)) {
+        if (! $this->context->tenant()->isActive()
+            || ! app(Entitlements::class)->canOperate($this->context->tenant())
+            || ! $this->context->hasModule('automation')
+            || ! app(AutomationCatalog::class)->trigger($trigger)) {
             return collect();
         }
 

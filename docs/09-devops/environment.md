@@ -44,7 +44,7 @@ Template: `.env.example`. Never commit `.env`. Production secrets live only on t
 | `FILES_PRIVATE_DISK` | `local` | `files` once the private bucket exists | Disk for customer and student documents. `local` is `storage/app/private`; `files` is MinIO ([minio.md](../06-integrations/minio.md)) |
 | `MEDIA_PRIVATE_BUCKET` | `autowave-private` | same | Private bucket for documents; never readable anonymously |
 | `FILES_PUBLIC_DISK` | unset (uses `WEBSITE_MEDIA_DISK`) | unset | Disk for catalog videos and brochures shown on websites |
-| `FILES_QUOTA_MB` | `1024` | `1024` | Default storage allowance per business (images and documents together); Super Admin → Tenants overrides it per business |
+| `FILES_QUOTA_MB` | `1024` | `1024` | Storage allowance (images and documents together) for a business without a plan; otherwise the plan's `storage_mb` applies. Super Admin → Tenants overrides it per business |
 | `QUEUE_CONNECTION` | `redis` | `redis` | Queue backend (ADR-004) |
 | `CACHE_STORE` | `redis` | `redis` | Cache backend |
 | `CACHE_PREFIX` | `autowave_cache_` | `awp_cache_` | Cache key prefix |
@@ -61,7 +61,10 @@ Template: `.env.example`. Never commit `.env`. Production secrets live only on t
 | `OPENROUTER_API_KEY` / `OPENROUTER_MODEL` | empty / `openai/gpt-4o-mini` | secret / same | OpenRouter key (server only) and default model |
 | `OPENROUTER_TIMEOUT` / `OPENROUTER_REASONING` | `30` / empty | same | Seconds to wait; `off`/`low`/`medium`/`high`. Above 30 s see [openrouter.md](../06-integrations/openrouter.md#slow-and-free-models) |
 | `REDIS_QUEUE_RETRY_AFTER` | `90` | `90`, or more than `OPENROUTER_TIMEOUT` + 30 | Must exceed the AI job timeout (`autowave:health` checks) |
-| `AI_MONTHLY_TOKENS` / `AI_AUTO_EXTRACT` / `AI_QUEUE` | `300000` / `true` / `ai` | same | AI cap per business, automatic lead extraction, queue |
+| `AI_MONTHLY_TOKENS` / `AI_AUTO_EXTRACT` / `AI_QUEUE` | `300000` / `true` / `ai` | same | AI cap for a business without a plan (otherwise the plan's `ai_tokens`), automatic lead extraction, queue |
+| `BILLING_TRIAL_DAYS` / `BILLING_INVOICE_PREFIX` | `14` / `AW` | same | Free trial length for new businesses; invoice number prefix (`AW/2026-27/0001`) |
+| `BILLING_GATEWAY` | `none` | `none` until a Razorpay account exists | Online payment gateway (`none` or `razorpay`); Super Admin can only switch online payments on when it is configured ([billing.md](../05-features/billing.md)) |
+| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` | empty | secret | Razorpay keys (server only, never sent to the browser) |
 | `AWS_*` | empty | DigitalOcean Spaces (future) | S3-compatible storage |
 | `VITE_APP_NAME` | `${APP_NAME}` | same | App name available to frontend at build time |
 

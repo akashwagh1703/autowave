@@ -117,6 +117,10 @@ return [
             'view' => 'View business settings',
             'update' => 'Update business settings',
         ],
+        'billing' => [
+            'view' => 'View the plan, usage, payments and invoices',
+            'manage' => 'Choose a plan and pay for AutoWave',
+        ],
     ],
 
     /*

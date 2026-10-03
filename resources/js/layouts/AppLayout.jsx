@@ -7,9 +7,11 @@ import MenuItem from '@mui/material/MenuItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Divider from '@mui/material/Divider';
 import LogoutIcon from '@mui/icons-material/Logout';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import { useState } from 'react';
 import FlashMessages from '@/components/FlashMessages';
+import BillingBanner from '@/modules/billing/BillingBanner';
 
 const navigation = [
     { label: 'Dashboard', href: '/dashboard' },
@@ -53,7 +55,9 @@ export default function AppLayout({ title, children }) {
         <div className="min-h-screen bg-slate-50">
             <Head title={title} />
 
-            <header className="border-b border-slate-200 bg-white">
+            <BillingBanner />
+
+            <header className="border-b border-slate-200 bg-white print:hidden">
                 <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6">
                     <Link href="/dashboard" className="text-lg font-bold text-brand-700">
                         {app.name}
@@ -107,6 +111,14 @@ export default function AppLayout({ title, children }) {
                                 </ListItemIcon>
                                 Switch business
                             </MenuItem>
+                            {permissions.includes('billing.view') ? (
+                                <MenuItem component={Link} href="/settings/billing" onClick={() => setAnchor(null)}>
+                                    <ListItemIcon>
+                                        <ReceiptLongIcon fontSize="small" />
+                                    </ListItemIcon>
+                                    Plan and billing
+                                </MenuItem>
+                            ) : null}
                             <MenuItem onClick={() => router.post('/logout')}>
                                 <ListItemIcon>
                                     <LogoutIcon fontSize="small" />

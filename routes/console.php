@@ -15,3 +15,5 @@ Schedule::command('messaging:dispatch-pending')->everyMinute()->withoutOverlappi
 Schedule::command('messaging:prune-webhooks')->dailyAt('03:15')->withoutOverlapping()->onOneServer();
 // Fee due-soon / overdue automation triggers (ADR-020); hourly so each tenant's day follows its timezone.
 Schedule::command('education:fee-reminders')->hourly()->withoutOverlapping()->onOneServer();
+// Subscription reminder emails and scheduled plan changes (docs/05-features/billing.md).
+Schedule::command('billing:sweep')->hourly()->withoutOverlapping()->onOneServer();

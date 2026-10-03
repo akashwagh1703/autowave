@@ -134,7 +134,7 @@ Automation messages may use only the placeholders of the chosen trigger; the mod
 | `openrouter.reasoning` (`OPENROUTER_REASONING`) | — | `off`, `low`, `medium`, `high`; empty = model default |
 | `job_timeout` | `OPENROUTER_TIMEOUT` + 30, at least 60 | Timeout of queued jobs that call AI; must be below the queue's `retry_after` |
 | `features.*` | — | Per feature: label, `max_tokens`, `temperature`, optional `model` |
-| `limits.monthly_tokens` (`AI_MONTHLY_TOKENS`) | 300000 | Default monthly allowance per business |
+| `limits.monthly_tokens` (`AI_MONTHLY_TOKENS`) | 300000 | Monthly allowance for a business without a plan; with a plan its `ai_tokens` limit applies ([billing.md](billing.md)) |
 | `limits.per_minute` | 20 | AI requests per user per minute (`throttle:ai`) |
 | `context.*` | — | How much history, timeline and data is sent |
 | `extraction.*` | 120 s, 5 runs, 15 chars | Automatic extraction |

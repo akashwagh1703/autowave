@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Website;
 
+use App\Domain\Billing\Support\Entitlements;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Domain\Website\Models\WebsiteConfig;
 use App\Domain\Website\Services\WebsiteContent;
@@ -13,11 +14,12 @@ use Inertia\Response;
 
 /**
  * Public tenant website: the chosen template renders the tenant's enabled sections (ADR-012,
- * ADR-016). Unpublished websites are only shown through a signed preview link.
+ * ADR-016). Unpublished websites are only shown through a signed preview link; a business locked for
+ * an unpaid plan shows 503.
  */
 class HomeController extends Controller
 {
-    public function __invoke(Request $request, TenantContext $context, WebsiteContent $content): Response
+    public function __invoke(Request $request, TenantContext $context, WebsiteContent $content, Entitlements $entitlements): Response
     {
         abort_unless($context->hasModule('website'), 404);
 
@@ -27,6 +29,7 @@ class HomeController extends Controller
         $previewing = $request->routeIs('tenant.preview');
         abort_if($previewing && ! WebsitePreview::isValid($request, $context->tenant()), 404);
         abort_unless($config->isPublished() || $previewing, 404);
+        abort_unless($entitlements->websiteOnline($context->tenant()), 503);
 
         return Inertia::render('website/Home', [
             ...$content->page($config),

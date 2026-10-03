@@ -3,12 +3,17 @@
 namespace App\Http\Middleware;
 
 use App\Domain\AI\Services\AIGateway;
+use App\Domain\Billing\Models\BillingPayment;
+use App\Domain\Billing\Support\BillingSettings;
+use App\Domain\Billing\Support\Entitlements;
 use App\Domain\Booking\Support\BookingSettings;
 use App\Domain\Messaging\Enums\ConversationStatus;
 use App\Domain\Messaging\Models\Conversation;
 use App\Domain\RBAC\Support\PermissionResolver;
 use App\Domain\Tenant\Support\TenantContext;
+use App\Http\Presenters\BillingPresenter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -98,6 +103,25 @@ class HandleInertiaRequests extends Middleware
                 }
 
                 return app(AIGateway::class)->status();
+            },
+            // The plan banner: trial or plan ending, payment due, read-only or locked.
+            'billing' => function () use ($request) {
+                $tenant = app(TenantContext::class)->get();
+
+                if (! $request->user() || ! $tenant || $tenant->is_internal || $request->getHost() !== config('autowave.hosts.app')) {
+                    return null;
+                }
+
+                $entitlements = app(Entitlements::class);
+                $subscription = BillingPresenter::subscription($tenant, $entitlements);
+
+                return [
+                    ...Arr::only($subscription, ['state', 'label', 'access', 'is_trial', 'ends_at', 'days_left', 'read_only_at', 'locks_at', 'unlimited']),
+                    'plan' => $subscription['plan']['name'] ?? null,
+                    'enforced' => app(BillingSettings::class)->enforced(),
+                    'pending' => BillingPayment::query()->where('status', BillingPayment::PENDING)->exists(),
+                    'can_manage' => $request->user()->can('billing.manage'),
+                ];
             },
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

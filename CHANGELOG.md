@@ -8,6 +8,18 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **Plans and billing.** Every business starts a 14-day free trial, then picks Starter (₹499/month),
+  Growth (₹1,499) or Business (₹3,999), monthly or yearly (two months free). Owners open **Settings →
+  Plan and billing** to see their plan, usage and invoices, and pay by UPI (ID and QR code) or bank
+  transfer, then enter the UTR; Super Admin approves it in **Payments** and the owner gets an invoice
+  numbered `AW/2026-27/0001`. Upgrades start straight away with credit for the unused days; renewals and
+  downgrades start when the current period ends. Reminders go out 7, 3 and 1 days before the end.
+  Super Admin edits plans, records cash or cheque payments, gives free periods, changes a business's plan,
+  and sets the payment details, GST and the payment methods in **Settings → Billing**. GST (Tax Invoice
+  with CGST/SGST or IGST) and online payments are switches, off for now.
+- Plan limits: storage, AI usage, active automations and Instagram follow the plan. With **Enforce plans**
+  switched on (off by default), a business that hasn't paid 7 days after its end date becomes read-only,
+  and after 30 days only Billing opens and its website goes offline.
 - **Files in the inbox.** Photos, videos, voice notes and documents that contacts send on WhatsApp or
   Instagram are now saved and shown in the conversation (photos inline, videos and voice notes playable,
   documents to open or download) instead of "[Image]". They are stored privately and count against the

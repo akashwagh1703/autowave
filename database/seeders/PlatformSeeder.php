@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 
 /**
- * Reference data every environment needs (catalogue + RBAC templates). Also used by tests.
+ * Reference data every environment needs (catalogue, RBAC templates, plans). Also used by tests.
  */
 class PlatformSeeder extends Seeder
 {
@@ -14,6 +14,7 @@ class PlatformSeeder extends Seeder
         $this->call([
             CatalogSeeder::class,
             RbacSeeder::class,
+            PlanSeeder::class,
         ]);
     }
 }

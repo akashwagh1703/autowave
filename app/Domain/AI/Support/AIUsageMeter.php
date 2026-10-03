@@ -3,21 +3,24 @@
 namespace App\Domain\AI\Support;
 
 use App\Domain\AI\Models\AIUsage;
+use App\Domain\Billing\Support\Entitlements;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Tenant\Models\TenantSetting;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Tokens used per business per calendar month (UTC) against its cap. The cap is
- * config('ai.limits.monthly_tokens') unless a platform admin set `ai_quota.monthly_tokens` for the
- * business (a tenant setting no business screen can write).
+ * Tokens used per business per calendar month (UTC) against its cap. The cap is `ai_quota.monthly_tokens`
+ * when a platform admin set it for the business (a tenant setting no business screen can write), otherwise
+ * the plan's `ai_tokens`, otherwise config('ai.limits.monthly_tokens').
  */
 class AIUsageMeter
 {
     public const QUOTA_KEY = 'ai_quota';
 
     private const CACHE_SECONDS = 60;
+
+    public function __construct(private readonly Entitlements $entitlements) {}
 
     public function cap(Tenant $tenant): int
     {
@@ -28,7 +31,13 @@ class AIUsageMeter
 
         return is_array($quota) && isset($quota['monthly_tokens']) && is_numeric($quota['monthly_tokens'])
             ? max(0, (int) $quota['monthly_tokens'])
-            : (int) config('ai.limits.monthly_tokens');
+            : $this->defaultCap($tenant);
+    }
+
+    /** The cap without an override: the plan's, or the platform default. */
+    public function defaultCap(Tenant $tenant): int
+    {
+        return (int) ($this->entitlements->limit($tenant, 'ai_tokens') ?? config('ai.limits.monthly_tokens'));
     }
 
     /** Whether the cap is the platform default (no override for this business). */

@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Admin\AiUsageController;
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\TenantController;
 use Illuminate\Support\Facades\Route;
@@ -28,5 +30,20 @@ Route::name('admin.')->group(function () {
         Route::put('/tenants/{tenant}/ai-limit', [AiUsageController::class, 'updateLimit'])->name('tenants.ai-limit');
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
         Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
+        // Billing (docs/05-features/billing.md). Payments are found across tenants by id.
+        Route::put('/settings/billing', [SettingsController::class, 'updateBilling'])->name('settings.billing');
+        Route::get('/settings/billing/qr', [SettingsController::class, 'qr'])->name('settings.billing.qr');
+        Route::post('/settings/billing/qr', [SettingsController::class, 'uploadQr'])->middleware('throttle:20,1')->name('settings.billing.qr.store');
+        Route::delete('/settings/billing/qr', [SettingsController::class, 'destroyQr'])->name('settings.billing.qr.destroy');
+        Route::get('/billing/payments', [BillingController::class, 'index'])->name('billing.payments');
+        Route::post('/billing/payments/{paymentId}/approve', [BillingController::class, 'approve'])->whereNumber('paymentId')->name('billing.payments.approve');
+        Route::post('/billing/payments/{paymentId}/reject', [BillingController::class, 'reject'])->whereNumber('paymentId')->name('billing.payments.reject');
+        Route::get('/billing/payments/{paymentId}/proof', [BillingController::class, 'proof'])->whereNumber('paymentId')->name('billing.payments.proof');
+        Route::get('/billing/invoices/{invoiceId}', [BillingController::class, 'invoice'])->whereNumber('invoiceId')->name('billing.invoices.show');
+        Route::post('/tenants/{tenant}/payments', [BillingController::class, 'record'])->name('tenants.payments.store');
+        Route::put('/tenants/{tenant}/subscription', [BillingController::class, 'adjust'])->name('tenants.subscription');
+        Route::get('/billing/plans', [PlanController::class, 'index'])->name('billing.plans');
+        Route::put('/billing/plans/{plan}', [PlanController::class, 'update'])->name('billing.plans.update');
     });
 });

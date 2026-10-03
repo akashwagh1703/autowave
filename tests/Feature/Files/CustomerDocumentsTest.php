@@ -237,7 +237,7 @@ class CustomerDocumentsTest extends TestCase
             ->where('tenants.data.0.storage.used_bytes', $size)
             ->where('tenants.data.0.storage.cap_mb', 1024)
             ->where('tenants.data.0.storage.custom', false)
-            ->where('defaultStorageMb', 1024));
+            ->where('tenants.data.0.storage.default_mb', 1024));
 
         $this->put($this->adminUrl("/tenants/{$tenant->id}/storage-limit"), ['mb' => 2048])->assertSessionHas('success');
         $this->assertSame(2048, app(StorageAllowance::class)->capMb($tenant));

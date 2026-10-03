@@ -317,6 +317,23 @@ This document describes what **actually exists** in the repository today. Planne
   `Commerce/CouponTest` (7), `Booking/TurfPricingTest` (9), `Tenancy/VerticalProvisioningTest` (5),
   `AI/VerticalAssistantToolsTest` (3) and a cafe automation provisioning test.
 
+### Billing phase A ([billing.md](../05-features/billing.md))
+
+- **Plans:** 14-day trial for every business (backfilled for existing ones), then Starter, Growth or
+  Business, monthly or yearly; limits for storage, AI tokens, active automations and Instagram.
+- **Manual payments:** owners pay by UPI (ID, generated or uploaded QR, app link) or bank transfer and
+  report the UTR with an optional screenshot; one pending payment per business; Super Admin approves or
+  rejects, records offline payments and free periods, and changes plans with a reason.
+- **Invoices:** gapless `AW/{FY}/0001` numbers with frozen seller and buyer details; "Invoice" without GST,
+  "Tax Invoice" with CGST/SGST or IGST when the GST switch is on.
+- **Switches** (Super Admin → Settings → Billing): enforcement (off), manual and online payments (at least
+  one on; online needs `BILLING_GATEWAY`), GST. UPI or bank detail changes email every Super Admin.
+- **Enforcement:** 7 days' grace, read-only until day 30, then locked (only Billing; website 503); a
+  pending payment keeps access for 3 days; the internal business is exempt.
+- **Scheduler:** `billing:sweep` hourly settles plan changes and sends 7/3/1-day, ended, read-only and
+  locked emails once each.
+- **Tests:** `tests/Feature/Billing` (40).
+
 ### Production (2026-09-29)
 
 - **Live:** <https://autowave.co.in>, <https://app.autowave.co.in>, <https://admin.autowave.co.in> and
@@ -337,7 +354,8 @@ This document describes what **actually exists** in the repository today. Planne
 ## Not implemented
 
 - **Platform:** invitations and member management, role editor, logo upload during onboarding, custom
-  domain UI, feature flags, custom fields, analytics, billing.
+  domain UI, feature flags, custom fields, analytics, online subscription payments (Razorpay, billing
+  phase B), PDF invoices and coupons for subscriptions (phase C).
 - **AI gaps:** redaction of customer text (AW-055), plan-based allowances and INR cost (AW-056), streaming
   and saved assistant chats (AW-057).
 - **Vertical gaps:** website sections not added to existing sites (AW-059), discounts not recomputed when

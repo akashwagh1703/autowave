@@ -28,6 +28,11 @@ export default function Settings({ business, branding, profile, website, domains
                 description={canUpdate ? 'Business name, contact details and branding are edited under Website.' : 'You have view-only access.'}
                 actions={
                     <>
+                        {can('billing.view') ? (
+                            <Button component={Link} href="/settings/billing" variant="outlined">
+                                Billing
+                            </Button>
+                        ) : null}
                         {hasModule('website') && can('website.view') ? (
                             <Button component={Link} href="/website/details" variant="outlined">
                                 Business details

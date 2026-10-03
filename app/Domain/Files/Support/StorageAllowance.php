@@ -2,6 +2,7 @@
 
 namespace App\Domain\Files\Support;
 
+use App\Domain\Billing\Support\Entitlements;
 use App\Domain\Files\Models\Attachment;
 use App\Domain\Media\Models\Media;
 use App\Domain\Tenant\Models\Tenant;
@@ -10,8 +11,8 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Storage used by a business (images, documents and videos together) against its allowance. The allowance
- * is config('files.quota_mb') unless a platform admin set `storage_quota.mb` for the business (a tenant
- * setting no business screen can write).
+ * is `storage_quota.mb` when a platform admin set it for the business (a tenant setting no business screen
+ * can write), otherwise the plan's `storage_mb`, otherwise config('files.quota_mb').
  */
 class StorageAllowance
 {
@@ -19,13 +20,21 @@ class StorageAllowance
 
     private const MB = 1024 * 1024;
 
+    public function __construct(private readonly Entitlements $entitlements) {}
+
     public function capMb(Tenant $tenant): int
     {
         $quota = $this->setting($tenant)->value('value');
 
         return is_array($quota) && isset($quota['mb']) && is_numeric($quota['mb'])
             ? max(0, (int) $quota['mb'])
-            : (int) config('files.quota_mb');
+            : $this->defaultMb($tenant);
+    }
+
+    /** The allowance without an override: the plan's, or the platform default. */
+    public function defaultMb(Tenant $tenant): int
+    {
+        return (int) ($this->entitlements->limit($tenant, 'storage_mb') ?? config('files.quota_mb'));
     }
 
     public function hasCustomCap(Tenant $tenant): bool

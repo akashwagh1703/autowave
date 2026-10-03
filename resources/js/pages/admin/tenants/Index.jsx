@@ -20,9 +20,12 @@ import AdminLayout from '@/layouts/AdminLayout';
 import EmptyState from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
 import StatusChip from '@/components/StatusChip';
-import { formatBytes } from '@/utils/format';
+import { AdjustSubscriptionDialog, RecordPaymentDialog } from '@/modules/billing/admin/TenantBillingDialogs';
+import { STATE_COLORS } from '@/utils/billing';
+import { formatBytes, formatDate } from '@/utils/format';
 
-function StorageDialog({ tenant, defaultMb, onClose }) {
+function StorageDialog({ tenant, onClose }) {
+    const defaultMb = tenant.storage.default_mb;
     const [value, setValue] = useState(tenant.storage.custom ? String(tenant.storage.cap_mb) : '');
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState(null);
@@ -54,7 +57,7 @@ function StorageDialog({ tenant, defaultMb, onClose }) {
                     value={value}
                     onChange={(event) => setValue(event.target.value)}
                     error={Boolean(error)}
-                    helperText={error ?? `Leave empty for the default (${defaultMb} MB, 1024 MB = 1 GB). Existing files are kept if you lower it; new uploads are refused while over.`}
+                    helperText={error ?? `Leave empty for the plan's allowance (${defaultMb} MB, 1024 MB = 1 GB). Existing files are kept if you lower it; new uploads are refused while over.`}
                     slotProps={{ htmlInput: { min: 0, step: 256 } }}
                 />
             </DialogContent>
@@ -75,10 +78,12 @@ function StorageDialog({ tenant, defaultMb, onClose }) {
     );
 }
 
-export default function Index({ tenants, filters, defaultStorageMb }) {
+export default function Index({ tenants, filters, plans, periods, methods }) {
     const [search, setSearch] = useState(filters.search);
     const [status, setStatus] = useState(filters.status);
     const [editingStorage, setEditingStorage] = useState(null);
+    const [recording, setRecording] = useState(null);
+    const [adjusting, setAdjusting] = useState(null);
 
     const applyFilters = (overrides = {}) => {
         const query = { search, status, ...overrides };
@@ -146,6 +151,7 @@ export default function Index({ tenants, filters, defaultStorageMb }) {
                                     <TableCell>Type</TableCell>
                                     <TableCell>Domain</TableCell>
                                     <TableCell align="right">Members</TableCell>
+                                    <TableCell>Plan</TableCell>
                                     <TableCell>Storage</TableCell>
                                     <TableCell>Status</TableCell>
                                     <TableCell>Created</TableCell>
@@ -166,6 +172,17 @@ export default function Index({ tenants, filters, defaultStorageMb }) {
                                         <TableCell className="text-xs">{tenant.domain ?? '—'}</TableCell>
                                         <TableCell align="right">{tenant.members}</TableCell>
                                         <TableCell>
+                                            <div className="flex flex-wrap items-center gap-1">
+                                                <span className="text-sm text-slate-900">{tenant.subscription.plan?.name ?? '—'}</span>
+                                                <Chip size="small" variant="outlined" color={STATE_COLORS[tenant.subscription.state] ?? 'default'} label={tenant.subscription.label} />
+                                                {tenant.payment_pending ? <Chip size="small" color="warning" label="Payment to check" /> : null}
+                                            </div>
+                                            <span className="text-xs text-slate-500">
+                                                {tenant.subscription.unlimited ? 'Never ends' : `Until ${formatDate(tenant.subscription.ends_at, 'Asia/Kolkata')}`}
+                                                {tenant.subscription.next_plan ? ` · then ${tenant.subscription.next_plan.name}` : ''}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
                                             <button
                                                 type="button"
                                                 className="text-left text-xs text-slate-700 hover:text-brand-700"
@@ -180,7 +197,13 @@ export default function Index({ tenants, filters, defaultStorageMb }) {
                                             <StatusChip status={tenant.status} />
                                         </TableCell>
                                         <TableCell>{tenant.created_at}</TableCell>
-                                        <TableCell align="right">
+                                        <TableCell align="right" className="whitespace-nowrap">
+                                            <Button size="small" disabled={tenant.is_internal} onClick={() => setRecording(tenant)}>
+                                                Record payment
+                                            </Button>
+                                            <Button size="small" onClick={() => setAdjusting(tenant)}>
+                                                Change plan
+                                            </Button>
                                             {tenant.status === 'active' ? (
                                                 <Button
                                                     size="small"
@@ -215,7 +238,9 @@ export default function Index({ tenants, filters, defaultStorageMb }) {
                 </div>
             ) : null}
 
-            {editingStorage ? <StorageDialog tenant={editingStorage} defaultMb={defaultStorageMb} onClose={() => setEditingStorage(null)} /> : null}
+            {editingStorage ? <StorageDialog tenant={editingStorage} onClose={() => setEditingStorage(null)} /> : null}
+            {recording ? <RecordPaymentDialog tenant={recording} plans={plans} periods={periods} methods={methods} onClose={() => setRecording(null)} /> : null}
+            {adjusting ? <AdjustSubscriptionDialog tenant={adjusting} plans={plans} periods={periods} onClose={() => setAdjusting(null)} /> : null}
         </AdminLayout>
     );
 }

@@ -30,17 +30,18 @@ minute.
 | `automation:dispatch-due` | Dispatches `pending` steps whose `run_at` has passed (waits). Re-queues steps stuck in `queued` for over 10 minutes (lost from Redis) or in `running` for over 15 minutes (crashed worker); a stuck step that has used all its tries fails the run. |
 | `messaging:dispatch-pending` | Re-dispatches messages stuck in `queued` (10 min) or `sending` (15 min). |
 | `education:fee-reminders` (**hourly**, Phase 10) | For every tenant with the education engine, fires `fee.due_soon` and `fee.overdue` once per unpaid instalment of an active student (claimed timestamps on `fee_instalments`, so re-runs and overlaps are safe). |
+| `billing:sweep` (**hourly**, billing A) | Settles plan changes whose start date has passed and emails owners the 7/3/1-day, ended, read-only and locked reminders once each (sent keys on `subscriptions.reminders`). Reminder emails go through the `notifications` queue. |
 
 The thresholds are `stuck_queued_minutes` / `stuck_running_minutes` in `config/automation.php` and
 `config/messaging.php`. A due wait starts at most about a minute late (AW-028).
 
 ## Local
 
-`composer dev` starts the server, a queue listener on `automation,messaging,ai,default`, `schedule:work`,
-logs and Vite. To run them separately:
+`composer dev` starts the server, a queue listener on `automation,messaging,notifications,ai,media,default`,
+`schedule:work`, logs and Vite. To run them separately:
 
 ```bash
-php artisan queue:work redis --queue=automation,messaging,ai,default
+php artisan queue:work redis --queue=automation,messaging,notifications,ai,media,default
 php artisan schedule:work
 ```
 

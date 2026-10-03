@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Domain\AI\Listeners\QueueLeadExtraction;
 use App\Domain\Automation\Listeners\RetimeAppointmentWaits;
 use App\Domain\Automation\Listeners\StartAutomations;
+use App\Domain\Billing\Support\Entitlements;
 use App\Domain\Booking\Events\AppointmentRescheduled;
 use App\Domain\Messaging\Events\ConversationMessageReceived;
 use App\Domain\RBAC\Support\PermissionCatalog;
@@ -29,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
         // Scoped: a fresh instance per request and per queued job, so tenant state never leaks.
         $this->app->scoped(TenantContext::class);
         $this->app->scoped(PermissionResolver::class);
+        $this->app->scoped(Entitlements::class);
     }
 
     /**
@@ -66,6 +68,9 @@ class AppServiceProvider extends ServiceProvider
             'payment' => '[0-9]+',
             'conversation' => '[0-9]+',
             'draft' => '[0-9]+',
+            'billingPayment' => '[0-9]+',
+            'plan' => '[0-9]+',
+            'invoice' => '[0-9]+',
         ]);
 
         // Business creation attempts (including validation failures) per user.
@@ -90,5 +95,8 @@ class AppServiceProvider extends ServiceProvider
 
         // AI requests per signed-in user (each one can cost money); the monthly cap is enforced separately.
         RateLimiter::for('ai', fn (Request $request) => Limit::perMinute((int) config('ai.limits.per_minute'))->by('ai|'.($request->user()?->getKey() ?? $request->ip())));
+
+        // Manual payment submissions per user (each one emails every platform admin).
+        RateLimiter::for('billing-pay', fn (Request $request) => Limit::perHour(5)->by('billing-pay|'.($request->user()?->getKey() ?? $request->ip())));
     }
 }

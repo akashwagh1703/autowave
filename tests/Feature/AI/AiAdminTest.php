@@ -41,7 +41,7 @@ class AiAdminTest extends TestCase
             ->where('status.available', true)
             ->where('usage.used', 1500)
             ->where('usage.requests', 2)
-            ->where('usage.cap', 300000)
+            ->where('usage.cap', 200000)
             ->where('usage.features.0.feature', 'reply')
             ->where('usage.features.0.tokens', 1200)
             ->has('tones', 3));
@@ -88,7 +88,8 @@ class AiAdminTest extends TestCase
             ->where('tenants.data.0.id', $first->id)
             ->where('tenants.data.0.tokens', 5000)
             ->where('tenants.data.0.failed', 1)
-            ->where('tenants.data.0.cap', 300000)
+            ->where('tenants.data.0.cap', 200000)
+            ->where('tenants.data.0.default_cap', 200000)
             ->where('tenants.data.0.custom_cap', false)
             ->where('current', true)
             ->where('provider.configured', true));

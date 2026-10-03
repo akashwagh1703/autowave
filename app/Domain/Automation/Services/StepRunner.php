@@ -12,6 +12,7 @@ use App\Domain\Automation\Support\AutomationCatalog;
 use App\Domain\Automation\Support\ConditionEvaluator;
 use App\Domain\Automation\Support\SubjectContext;
 use App\Domain\Automation\Support\WaitCalculator;
+use App\Domain\Billing\Support\Entitlements;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Support\TenantTime;
@@ -257,6 +258,7 @@ class StepRunner
 
         return match (true) {
             ! $this->context->tenant()->isActive() => 'The business is not active.',
+            ! app(Entitlements::class)->canOperate($this->context->tenant()) => 'The business’s plan has ended.',
             ! $this->context->hasModule('automation') => 'Automations are turned off for this business.',
             ! $automation || $automation->trashed() => 'The automation was deleted.',
             ! $automation->is_active => 'The automation was turned off.',

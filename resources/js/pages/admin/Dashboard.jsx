@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -35,6 +36,20 @@ export default function Dashboard({ stats, ai, businessTypes }) {
                     </Card>
                 ))}
             </section>
+
+            {stats.pending_payments > 0 ? (
+                <Alert
+                    severity="warning"
+                    sx={{ mt: 2 }}
+                    action={
+                        <Button component={Link} href="/billing/payments" color="inherit" size="small">
+                            Review
+                        </Button>
+                    }
+                >
+                    {stats.pending_payments} {stats.pending_payments === 1 ? 'payment is' : 'payments are'} waiting to be checked.
+                </Alert>
+            ) : null}
 
             {ai ? (
                 <Card variant="outlined" className="mt-4">

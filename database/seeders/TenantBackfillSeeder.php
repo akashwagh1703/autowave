@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Domain\Automation\Actions\ProvisionAutomations;
+use App\Domain\Billing\Actions\SubscriptionLifecycle;
 use App\Domain\Lead\Actions\ProvisionCrm;
 use App\Domain\Module\Actions\BackfillTenantModules;
 use App\Domain\RBAC\Actions\ProvisionTenantRoles;
@@ -14,8 +15,8 @@ use Illuminate\Database\Seeder;
 
 /**
  * Gives tenants created before a feature existed that feature's defaults (settings, website, CRM
- * pipeline, service categories, default automations, new permission groups, new modules). Idempotent;
- * safe to run on every deploy.
+ * pipeline, service categories, default automations, new permission groups, new modules, and a free trial
+ * when the business has no subscription yet). Idempotent; safe to run on every deploy.
  */
 class TenantBackfillSeeder extends Seeder
 {
@@ -33,8 +34,11 @@ class TenantBackfillSeeder extends Seeder
         ProvisionAutomations $provisionAutomations,
         ProvisionTenantRoles $provisionRoles,
         BackfillTenantModules $backfillModules,
+        SubscriptionLifecycle $subscriptions,
     ): void {
-        Tenant::query()->with('businessType')->orderBy('id')->each(function (Tenant $tenant) use ($backfillSettings, $provisionWebsite, $provisionCrm, $provisionServiceCatalog, $provisionAutomations, $provisionRoles, $backfillModules) {
+        $this->call(PlanSeeder::class);
+
+        Tenant::query()->with('businessType')->orderBy('id')->each(function (Tenant $tenant) use ($backfillSettings, $provisionWebsite, $provisionCrm, $provisionServiceCatalog, $provisionAutomations, $provisionRoles, $backfillModules, $subscriptions) {
             $backfillSettings->handle($tenant);
             $backfillModules->handle($tenant, self::NEW_MODULES);
             $provisionWebsite->ensureFor($tenant);
@@ -42,6 +46,7 @@ class TenantBackfillSeeder extends Seeder
             $provisionServiceCatalog->ensureFor($tenant);
             $provisionAutomations->ensureFor($tenant);
             $provisionRoles->grantNewPermissionGroups($tenant, self::NEW_PERMISSION_GROUPS);
+            $subscriptions->startTrial($tenant);
         });
     }
 }

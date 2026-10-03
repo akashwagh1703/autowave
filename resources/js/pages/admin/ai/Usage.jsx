@@ -54,7 +54,7 @@ function LimitDialog({ tenant, defaultCap, onClose }) {
                     value={value}
                     onChange={(event) => setValue(event.target.value)}
                     error={Boolean(error)}
-                    helperText={error ?? `Leave empty for the default (${number(defaultCap)}). 0 turns AI off for this business.`}
+                    helperText={error ?? `Leave empty for the plan's allowance (${number(tenant.default_cap ?? defaultCap)}). 0 turns AI off for this business.`}
                     slotProps={{ htmlInput: { min: 0, step: 1000 } }}
                 />
             </DialogContent>
@@ -96,7 +96,7 @@ export default function Usage({ tenants, totals, features, filters, current, def
         <AdminLayout title="AI usage">
             <PageHeader
                 title="AI usage"
-                description={`${provider.name}${provider.model ? ` · ${provider.model}` : ''} · default allowance ${number(defaultCap)} tokens per business per month`}
+                description={`${provider.name}${provider.model ? ` · ${provider.model}` : ''} · allowance per business per month comes from its plan (${number(defaultCap)} tokens without one)`}
             />
 
             {!provider.configured ? (

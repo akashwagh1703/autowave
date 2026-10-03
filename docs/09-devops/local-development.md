@@ -122,7 +122,7 @@ then `docker compose up -d`. (The primary dev machine uses 5433 for this reason.
 | Everything (server, queue, scheduler, logs, Vite) | `composer dev` |
 | Web server only | `php artisan serve` → http://app.autowave.localhost:8000 |
 | Vite dev server (HMR) | `npm run dev` |
-| Queue worker | `php artisan queue:work redis --queue=automation,messaging,default` |
+| Queue worker | `php artisan queue:work redis --queue=automation,messaging,notifications,ai,media,default` |
 | Scheduler (automation waits, recovery, hourly fee reminders) | `php artisan schedule:work` |
 | Logs | `php artisan pail` or `storage/logs/laravel-YYYY-MM-DD.log` |
 

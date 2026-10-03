@@ -364,6 +364,22 @@ Other changes:
 - Tenant setting `storage_quota` (`{"mb": int}`) overrides `FILES_QUOTA_MB` for one business; written only
   from Super Admin.
 
+## Billing (`2026_10_07_100000`) — [billing.md](../05-features/billing.md)
+
+Amounts are in paise.
+
+| Table | Key columns |
+|---|---|
+| `plans` (not tenant-owned) | `code` unique, `name`, `description`, `price_monthly`, `price_yearly`, `limits` jsonb (`members`, `storage_mb`, `ai_tokens`, `automations`, `instagram`; null = unlimited), `is_public`, `is_active`, `sort_order` |
+| `subscriptions` | `tenant_id` unique (cascade), `plan_id`, `period` (`monthly`/`yearly`, null for the trial), `is_trial`, `starts_at`, `ends_at` (null = never ends), `next_plan_id`/`next_period`/`plan_changes_at` (a plan waiting to start), `reminders` jsonb (keys already emailed for the current period) |
+| `billing_payments` | `tenant_id` (cascade), `plan_id`, `period`, `kind` (`now`/`renewal`/`upgrade`), `credit`, `amount`, `tax_amount`, `total`, `tax` jsonb, `method`, `status` (`pending`/`approved`/`rejected`/`cancelled`), `reference` (UTR), `paid_on`, `proof_disk`/`proof_path`/`proof_mime`, `buyer_gstin`, `note`, `submitted_by_user_id`/`reviewed_by_user_id` (null on delete), `reviewed_at`, `rejection_reason`, `covers_from`/`covers_until`, `gateway`, `gateway_payment_id` unique |
+| `billing_invoices` | `tenant_id` (cascade), `billing_payment_id` unique (composite FK with `tenant_id`), `number` unique, `financial_year` + `sequence` unique, `type` (`invoice`/`tax_invoice`), `issued_at`, `seller`/`buyer`/`lines`/`tax` jsonb snapshots, `subtotal`, `tax_amount`, `total` |
+
+- Partial unique indexes: one `pending` payment per tenant; a `reference` used once across pending and
+  approved payments.
+- Platform setting `billing`: enforcement, payment method switches, seller, GST, UPI, bank, instructions and
+  the QR image path (defaults in `config('billing.settings')`).
+
 ## Deferred platform tables
 
 `feature_flags`, `custom_fields` — added with the first feature that needs them (AW-009).

@@ -9,6 +9,7 @@ use App\Http\Controllers\App\AttachmentController;
 use App\Http\Controllers\App\AutomationController;
 use App\Http\Controllers\App\AutomationRunController;
 use App\Http\Controllers\App\BatchController;
+use App\Http\Controllers\App\BillingController;
 use App\Http\Controllers\App\BookingResourceController;
 use App\Http\Controllers\App\BookingSettingsController;
 use App\Http\Controllers\App\CommerceSettingsController;
@@ -58,9 +59,21 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
     Route::get('/onboarding/slug', [OnboardingController::class, 'slug'])->middleware('throttle:60,1')->name('onboarding.slug');
     Route::post('/onboarding', [OnboardingController::class, 'store'])->middleware('throttle:onboarding')->name('onboarding.store');
 
-    Route::middleware('tenant.member')->group(function () {
+    Route::middleware(['tenant.member', 'subscription'])->group(function () {
         Route::get('/dashboard', DashboardController::class)->name('dashboard');
         Route::get('/settings', SettingsController::class)->middleware('can:settings.view')->name('settings');
+
+        // Billing (docs/05-features/billing.md): always reachable, even while read-only or locked.
+        Route::middleware('can:billing.view')->group(function () {
+            Route::get('/settings/billing', [BillingController::class, 'show'])->name('billing.show');
+            Route::get('/settings/billing/invoices/{invoice}', [BillingController::class, 'invoice'])->name('billing.invoices.show');
+        });
+        Route::middleware('can:billing.manage')->group(function () {
+            Route::get('/settings/billing/quote', [BillingController::class, 'quote'])->middleware('throttle:60,1')->name('billing.quote');
+            Route::get('/settings/billing/qr', [BillingController::class, 'qr'])->middleware('throttle:60,1')->name('billing.qr');
+            Route::post('/settings/billing/payments', [BillingController::class, 'pay'])->middleware('throttle:billing-pay')->name('billing.pay');
+            Route::post('/settings/billing/payments/{billingPayment}/cancel', [BillingController::class, 'cancel'])->name('billing.cancel');
+        });
 
         Route::middleware('module:leads')->group(function () {
             Route::get('/leads', [LeadController::class, 'index'])->middleware('can:leads.view')->name('leads.index');

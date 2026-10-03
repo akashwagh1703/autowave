@@ -6,6 +6,8 @@ import FlashMessages from '@/components/FlashMessages';
 const navigation = [
     { label: 'Dashboard', href: '/' },
     { label: 'Tenants', href: '/tenants' },
+    { label: 'Payments', href: '/billing/payments' },
+    { label: 'Plans', href: '/billing/plans' },
     { label: 'AI usage', href: '/ai-usage' },
     { label: 'Settings', href: '/settings' },
 ];
@@ -18,7 +20,7 @@ export default function AdminLayout({ title, children }) {
         <div className="min-h-screen bg-slate-50">
             <Head title={title} />
 
-            <header className="bg-slate-900 text-white">
+            <header className="bg-slate-900 text-white print:hidden">
                 <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6">
                     <Link href="/" className="flex items-center gap-2 text-lg font-bold">
                         {app.name}
