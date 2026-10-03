@@ -74,6 +74,11 @@ Settings can be overridden with environment variables: `APP_DIR`, `REPO`, `BRANC
    no limits.
    Then fill in Super Admin → Settings → Billing (UPI ID or bank details, QR image) and switch on
    **Enforce plans** only when ready. `billing:sweep` runs from the existing scheduler cron.
+7. Billing B/C release (2026-10-08): only the migration (run by the script); no seeders. Online payments
+   stay off until Razorpay is set up: add `BILLING_GATEWAY=razorpay` and the three `RAZORPAY_*` keys to
+   `shared/.env`, run `optimize` and `queue:restart` (step 4), add the webhook
+   `https://app.autowave.co.in/webhooks/billing/razorpay` in the Razorpay dashboard, then switch on
+   **Online payments** in Super Admin → Settings → Billing ([billing.md](../05-features/billing.md#turning-on-razorpay)).
 
 ## First release (done once, 2026-09-29)
 

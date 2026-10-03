@@ -125,6 +125,12 @@ export default function BillingSettingsCard({ billing }) {
                             control={<Switch checked={form.data.online_enabled} disabled={!billing.gateway.configured && !form.data.online_enabled} onChange={(event) => form.setData('online_enabled', event.target.checked)} />}
                             label={`Online payment · ${billing.gateway.name}`}
                         />
+                        {billing.gateway.webhook_url ? (
+                            <p className="text-xs text-slate-500">
+                                Webhook URL for the gateway dashboard (events payment.captured, payment.authorized, payment.failed, order.paid):{' '}
+                                <span className="font-mono break-all text-slate-700">{billing.gateway.webhook_url}</span>
+                            </p>
+                        ) : null}
                         {form.errors.manual_enabled ? <Alert severity="error">{form.errors.manual_enabled}</Alert> : null}
                         {form.errors.online_enabled ? <Alert severity="error">{form.errors.online_enabled}</Alert> : null}
                     </Section>

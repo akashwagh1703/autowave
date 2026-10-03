@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AiUsageController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\BillingController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\SettingsController;
@@ -41,6 +42,11 @@ Route::name('admin.')->group(function () {
         Route::post('/billing/payments/{paymentId}/reject', [BillingController::class, 'reject'])->whereNumber('paymentId')->name('billing.payments.reject');
         Route::get('/billing/payments/{paymentId}/proof', [BillingController::class, 'proof'])->whereNumber('paymentId')->name('billing.payments.proof');
         Route::get('/billing/invoices/{invoiceId}', [BillingController::class, 'invoice'])->whereNumber('invoiceId')->name('billing.invoices.show');
+        Route::get('/billing/invoices/{invoiceId}/pdf', [BillingController::class, 'invoicePdf'])->whereNumber('invoiceId')->name('billing.invoices.pdf');
+        Route::get('/billing/coupons', [CouponController::class, 'index'])->name('billing.coupons');
+        Route::post('/billing/coupons', [CouponController::class, 'store'])->name('billing.coupons.store');
+        Route::put('/billing/coupons/{coupon}', [CouponController::class, 'update'])->whereNumber('coupon')->name('billing.coupons.update');
+        Route::delete('/billing/coupons/{coupon}', [CouponController::class, 'destroy'])->whereNumber('coupon')->name('billing.coupons.destroy');
         Route::post('/tenants/{tenant}/payments', [BillingController::class, 'record'])->name('tenants.payments.store');
         Route::put('/tenants/{tenant}/subscription', [BillingController::class, 'adjust'])->name('tenants.subscription');
         Route::get('/billing/plans', [PlanController::class, 'index'])->name('billing.plans');

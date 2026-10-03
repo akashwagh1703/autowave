@@ -20,7 +20,7 @@ import PageHeader from '@/components/PageHeader';
 import useTenant from '@/hooks/useTenant';
 import PayDialog from '@/modules/billing/PayDialog';
 import { formatBytes, formatDate } from '@/utils/format';
-import { LIMIT_ORDER, PAYMENT_COLORS, STATE_COLORS, limitLabel, rupees } from '@/utils/billing';
+import { LIMIT_ORDER, PAYMENT_COLORS, PAYMENT_STATUS_LABELS, STATE_COLORS, limitLabel, rupees } from '@/utils/billing';
 
 function UsageBar({ label, used, limit, format = (value) => value }) {
     const unlimited = limit === null || limit === undefined;
@@ -254,20 +254,32 @@ export default function BillingIndex({ subscription, plans, periods, usage, meth
                                                 <TableCell>
                                                     {payment.plan} <span className="text-slate-500">({payment.period})</span>
                                                 </TableCell>
-                                                <TableCell align="right">{rupees(payment.total)}</TableCell>
+                                                <TableCell align="right">
+                                                    {rupees(payment.total)}
+                                                    {payment.discount > 0 ? (
+                                                        <span className="block text-xs text-slate-500">
+                                                            {payment.coupon_code} −{rupees(payment.discount)}
+                                                        </span>
+                                                    ) : null}
+                                                </TableCell>
                                                 <TableCell>
                                                     {payment.method_label}
                                                     {payment.reference ? <span className="block font-mono text-xs text-slate-500">{payment.reference}</span> : null}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Chip size="small" variant="outlined" color={PAYMENT_COLORS[payment.status] ?? 'default'} label={payment.status} className="capitalize" />
+                                                    <Chip size="small" variant="outlined" color={PAYMENT_COLORS[payment.status] ?? 'default'} label={PAYMENT_STATUS_LABELS[payment.status] ?? payment.status} />
                                                     {payment.rejection_reason ? <span className="mt-1 block text-xs text-red-700">{payment.rejection_reason}</span> : null}
                                                 </TableCell>
                                                 <TableCell>
                                                     {payment.invoice ? (
-                                                        <Link href={`/settings/billing/invoices/${payment.invoice.id}`} className="text-brand-700 hover:underline">
-                                                            {payment.invoice.number}
-                                                        </Link>
+                                                        <>
+                                                            <Link href={`/settings/billing/invoices/${payment.invoice.id}`} className="text-brand-700 hover:underline">
+                                                                {payment.invoice.number}
+                                                            </Link>
+                                                            <a href={`/settings/billing/invoices/${payment.invoice.id}/pdf`} className="block text-xs text-slate-500 hover:underline">
+                                                                PDF
+                                                            </a>
+                                                        </>
                                                     ) : (
                                                         '—'
                                                     )}

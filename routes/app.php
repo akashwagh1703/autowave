@@ -67,12 +67,16 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::middleware('can:billing.view')->group(function () {
             Route::get('/settings/billing', [BillingController::class, 'show'])->name('billing.show');
             Route::get('/settings/billing/invoices/{invoice}', [BillingController::class, 'invoice'])->name('billing.invoices.show');
+            Route::get('/settings/billing/invoices/{invoice}/pdf', [BillingController::class, 'invoicePdf'])->middleware('throttle:30,1')->name('billing.invoices.pdf');
         });
         Route::middleware('can:billing.manage')->group(function () {
             Route::get('/settings/billing/quote', [BillingController::class, 'quote'])->middleware('throttle:60,1')->name('billing.quote');
             Route::get('/settings/billing/qr', [BillingController::class, 'qr'])->middleware('throttle:60,1')->name('billing.qr');
             Route::post('/settings/billing/payments', [BillingController::class, 'pay'])->middleware('throttle:billing-pay')->name('billing.pay');
             Route::post('/settings/billing/payments/{billingPayment}/cancel', [BillingController::class, 'cancel'])->name('billing.cancel');
+            Route::post('/settings/billing/checkout', [BillingController::class, 'checkout'])->middleware('throttle:billing-checkout')->name('billing.checkout');
+            Route::post('/settings/billing/checkout/{billingPayment}/confirm', [BillingController::class, 'confirm'])->middleware('throttle:30,1')->name('billing.checkout.confirm');
+            Route::post('/settings/billing/activate', [BillingController::class, 'activate'])->middleware('throttle:billing-pay')->name('billing.activate');
         });
 
         Route::middleware('module:leads')->group(function () {

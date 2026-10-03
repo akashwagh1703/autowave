@@ -37,15 +37,23 @@ return [
         'yearly' => ['label' => 'Yearly', 'months' => 12, 'days' => 365],
     ],
 
-    // Online payments: `none` until a gateway account exists. Keys stay in .env, never in the browser.
+    // Online payments: `none` until a gateway account exists. The secret and webhook secret stay in .env;
+    // only the Razorpay key id (public by design, needed by Checkout) reaches the browser.
     'gateway' => env('BILLING_GATEWAY', 'none'),
     'gateways' => [
         'razorpay' => [
             'key_id' => env('RAZORPAY_KEY_ID'),
             'key_secret' => env('RAZORPAY_KEY_SECRET'),
             'webhook_secret' => env('RAZORPAY_WEBHOOK_SECRET'),
+            'api_url' => 'https://api.razorpay.com/v1',
+            'timeout' => 15,
         ],
     ],
+
+    // An online checkout not paid within this many hours is marked expired (a late payment still counts).
+    'checkout_expiry_hours' => 24,
+    // Gateways refuse smaller payments (paise); below this, pay by UPI or bank transfer.
+    'online_minimum' => 100,
 
     'gst' => [
         'rate' => 18,
@@ -72,6 +80,7 @@ return [
         'cash' => 'Cash',
         'cheque' => 'Cheque',
         'online' => 'Online',
+        'coupon' => 'Coupon',
         'complimentary' => 'Complimentary',
     ],
 

@@ -8,7 +8,11 @@ export async function getJson(url, params = {}) {
     });
 
     if (!response.ok) {
-        throw new Error(`Request failed (${response.status})`);
+        const data = await response.json().catch(() => ({}));
+        const error = new Error(`Request failed (${response.status})`);
+        error.status = response.status;
+        error.errors = data.errors ?? {};
+        throw error;
     }
 
     return response.json();

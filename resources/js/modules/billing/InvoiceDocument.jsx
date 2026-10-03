@@ -1,4 +1,5 @@
 import Button from '@mui/material/Button';
+import DownloadIcon from '@mui/icons-material/Download';
 import PrintIcon from '@mui/icons-material/Print';
 import { formatDate } from '@/utils/format';
 import { rupees } from '@/utils/billing';
@@ -18,13 +19,18 @@ function Party({ title, party }) {
 }
 
 /** An AutoWave invoice as issued (BillingPresenter::invoice); everything shown was copied in at issue time. */
-export default function InvoiceDocument({ invoice }) {
+export default function InvoiceDocument({ invoice, pdfUrl }) {
     return (
         <div className="mx-auto max-w-3xl">
-            <div className="mb-4 flex justify-end print:hidden">
+            <div className="mb-4 flex flex-wrap justify-end gap-2 print:hidden">
                 <Button variant="outlined" startIcon={<PrintIcon />} onClick={() => window.print()}>
-                    Print or save as PDF
+                    Print
                 </Button>
+                {pdfUrl ? (
+                    <Button variant="contained" startIcon={<DownloadIcon />} component="a" href={pdfUrl}>
+                        Download PDF
+                    </Button>
+                ) : null}
             </div>
 
             <article className="rounded-lg border border-slate-200 bg-white p-8 print:border-0 print:p-0">

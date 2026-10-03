@@ -4,6 +4,7 @@ namespace App\Domain\Billing\Notifications;
 
 use App\Domain\Billing\Models\BillingInvoice;
 use App\Domain\Billing\Models\BillingPayment;
+use App\Domain\Billing\Support\InvoicePdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -39,14 +40,31 @@ class PaymentReviewed extends Notification implements ShouldQueue
                 ->action(__('Open Billing'), route('billing.show'));
         }
 
+        $until = $payment->covers_until?->timezone('Asia/Kolkata')->format('j M Y');
+
+        if ($payment->total === 0) {
+            return (new MailMessage)
+                ->subject(__('Your :plan plan is active', ['plan' => $payment->plan->name]))
+                ->line($payment->coupon_code
+                    ? __('Coupon :code was applied to the :plan plan.', ['code' => $payment->coupon_code, 'plan' => $payment->plan->name])
+                    : __('The :plan plan was added to your business.', ['plan' => $payment->plan->name]))
+                ->line(__('Active until :date.', ['date' => $until]))
+                ->action(__('Open Billing'), route('billing.show'));
+        }
+
         $invoice = BillingInvoice::withoutTenantScope()->where('billing_payment_id', $payment->id)->first();
         $message = (new MailMessage)
             ->subject(__('Payment received: :plan plan', ['plan' => $payment->plan->name]))
             ->line(__('Thank you. We received :amount for the :plan plan.', ['amount' => $amount, 'plan' => $payment->plan->name]))
-            ->line(__('Paid until :date.', ['date' => $payment->covers_until?->timezone('Asia/Kolkata')->format('j M Y')]));
+            ->line(__('Paid until :date.', ['date' => $until]));
 
-        return $invoice
-            ? $message->line(__('Invoice :number', ['number' => $invoice->number]))->action(__('View invoice'), route('billing.invoices.show', $invoice->id))
-            : $message->action(__('Open Billing'), route('billing.show'));
+        if (! $invoice) {
+            return $message->action(__('Open Billing'), route('billing.show'));
+        }
+
+        return $message
+            ->line(__('Invoice :number is attached.', ['number' => $invoice->number]))
+            ->action(__('View invoice'), route('billing.invoices.show', $invoice->id))
+            ->attachData(app(InvoicePdf::class)->render($invoice), InvoicePdf::filename($invoice), ['mime' => 'application/pdf']);
     }
 }

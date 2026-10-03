@@ -16,11 +16,18 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 #[Fillable([
     'tenant_id', 'plan_id', 'period', 'kind', 'credit', 'amount', 'tax_amount', 'total', 'tax', 'method', 'status', 'reference',
     'paid_on', 'proof_disk', 'proof_path', 'proof_mime', 'buyer_gstin', 'note', 'submitted_by_user_id', 'reviewed_by_user_id',
-    'reviewed_at', 'rejection_reason', 'covers_from', 'covers_until', 'gateway', 'gateway_payment_id',
+    'reviewed_at', 'rejection_reason', 'covers_from', 'covers_until', 'gateway', 'gateway_payment_id', 'gateway_order_id',
+    'coupon_id', 'coupon_code', 'discount',
 ])]
 class BillingPayment extends Model
 {
     use BelongsToTenant;
+
+    /** Online checkout started; becomes approved when the gateway confirms the money. */
+    public const INITIATED = 'initiated';
+
+    /** An online checkout that was abandoned or replaced. A late gateway confirmation still completes it. */
+    public const EXPIRED = 'expired';
 
     public const PENDING = 'pending';
 
@@ -40,6 +47,7 @@ class BillingPayment extends Model
     {
         return [
             'credit' => 'integer',
+            'discount' => 'integer',
             'amount' => 'integer',
             'tax_amount' => 'integer',
             'total' => 'integer',
@@ -64,6 +72,11 @@ class BillingPayment extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by_user_id');
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(BillingCoupon::class, 'coupon_id');
     }
 
     public function invoice(): HasOne

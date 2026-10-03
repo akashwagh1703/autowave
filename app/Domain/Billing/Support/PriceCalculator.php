@@ -2,6 +2,7 @@
 
 namespace App\Domain\Billing\Support;
 
+use App\Domain\Billing\Models\BillingCoupon;
 use App\Domain\Billing\Models\BillingPayment;
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Tenant\Models\Tenant;
@@ -20,6 +21,8 @@ use Illuminate\Validation\ValidationException;
  * - While a chosen plan is waiting to start (paid during the trial, or a cheaper plan at renewal), only that
  *   plan can be renewed; switching again is possible once it has started.
  *
+ * A coupon comes off after the credit and before GST.
+ *
  * GST is added only while it is switched on: CGST + SGST inside the seller's state, IGST otherwise (the
  * buyer's state is read from their GSTIN; without one, the seller's state).
  */
@@ -30,7 +33,7 @@ class PriceCalculator
         private readonly BillingSettings $settings,
     ) {}
 
-    public function quote(Tenant $tenant, Plan $plan, string $period, ?string $buyerGstin = null, ?Carbon $now = null): Quote
+    public function quote(Tenant $tenant, Plan $plan, string $period, ?string $buyerGstin = null, ?BillingCoupon $coupon = null, ?Carbon $now = null): Quote
     {
         $now ??= now();
         $subscription = $this->entitlements->subscription($tenant);
@@ -63,11 +66,13 @@ class PriceCalculator
             $from = $subscription->ends_at->copy();
         }
 
-        $amount = max(0, $price - $credit);
+        $beforeDiscount = max(0, $price - $credit);
+        $discount = $coupon?->discountOn($beforeDiscount) ?? 0;
+        $amount = $beforeDiscount - $discount;
         $tax = $this->tax($amount, $buyerGstin);
         $taxAmount = array_sum(array_column($tax, 'amount'));
 
-        return new Quote($plan, $period, $kind, $price, $credit, $amount, $tax, $taxAmount, $amount + $taxAmount, $from, self::periodEnd($from, $period));
+        return new Quote($plan, $period, $kind, $price, $credit, $amount, $tax, $taxAmount, $amount + $taxAmount, $from, self::periodEnd($from, $period), $discount, $coupon);
     }
 
     public static function periodEnd(Carbon $from, string $period): Carbon

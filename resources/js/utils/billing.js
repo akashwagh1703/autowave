@@ -19,6 +19,17 @@ export const PAYMENT_COLORS = {
     approved: 'success',
     rejected: 'error',
     cancelled: 'default',
+    initiated: 'info',
+    expired: 'default',
+};
+
+export const PAYMENT_STATUS_LABELS = {
+    pending: 'Waiting for approval',
+    approved: 'Approved',
+    rejected: 'Rejected',
+    cancelled: 'Withdrawn',
+    initiated: 'Checkout open',
+    expired: 'Not completed',
 };
 
 export function limitLabel(key, value) {

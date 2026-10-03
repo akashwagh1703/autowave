@@ -98,5 +98,6 @@ class AppServiceProvider extends ServiceProvider
 
         // Manual payment submissions per user (each one emails every platform admin).
         RateLimiter::for('billing-pay', fn (Request $request) => Limit::perHour(5)->by('billing-pay|'.($request->user()?->getKey() ?? $request->ip())));
+        RateLimiter::for('billing-checkout', fn (Request $request) => Limit::perHour(20)->by('billing-checkout|'.($request->user()?->getKey() ?? $request->ip())));
     }
 }

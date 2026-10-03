@@ -203,9 +203,14 @@ Role templates may use wildcards (`leads.*`), expanded by `PermissionCatalog::ex
     `services.view` or `courses.view`. Files of the website's Video and Downloads sections use
     `website.manage` and `website.view`.
 - **Billing:**
-  - `billing.view` opens Settings → Plan and billing and invoices; `billing.manage` gets quotes, reports
-    and withdraws payments (5 reports per hour per user). Only the Owner role has them (it holds every
-    permission once `RbacSeeder` has added the keys); no other default role gets them.
+  - `billing.view` opens Settings → Plan and billing and invoices, and downloads invoice PDFs (30 per
+    minute); `billing.manage` gets quotes, reports and withdraws payments (5 reports per hour per user),
+    starts and confirms online checkouts (20 checkouts per hour per user) and activates a plan with a 100%
+    coupon. Only the Owner role has them (it holds every permission once `RbacSeeder` has added the keys);
+    no other default role gets them. Payments and invoices are tenant-scoped, so another business's ids
+    return 404.
+  - The Razorpay webhook (`/webhooks/billing/razorpay`) has no user; it is authorised by the HMAC signature
+    with the webhook secret. Coupons (`/billing/coupons`) and admin invoice PDFs are Super Admin only.
   - `EnsureSubscriptionAllows` (alias `subscription`) runs on every app route after `tenant.member`:
     read-only businesses can't write, locked ones only reach `billing.*` routes. It skips the internal
     business and does nothing while enforcement is off.

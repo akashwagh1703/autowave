@@ -33,7 +33,11 @@ class SettingsController extends Controller
                 ...Arr::except($billing->all(), ['qr', 'gst']),
                 'gst' => Arr::only($billing->get('gst'), ['enabled', 'gstin']),
                 'qr' => $qr ? ['updated_at' => $qr['updated_at'] ?? null, 'updated_by' => $qr['updated_by'] ?? null] : null,
-                'gateway' => ['name' => $gateways->label(), 'configured' => $gateways->configured()],
+                'gateway' => [
+                    'name' => $gateways->label(),
+                    'configured' => $gateways->configured(),
+                    'webhook_url' => $gateways->current() ? route('webhooks.billing', $gateways->current()->name()) : null,
+                ],
                 'gst_rate' => config('billing.gst.rate'),
                 'qr_max_kb' => config('billing.qr.max_kb'),
             ],

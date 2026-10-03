@@ -11,7 +11,7 @@ export default function AdminBillingInvoice({ invoice }) {
                     ← Back to payments
                 </Button>
             </div>
-            <InvoiceDocument invoice={invoice} />
+            <InvoiceDocument invoice={invoice} pdfUrl={`/billing/invoices/${invoice.id}/pdf`} />
         </AdminLayout>
     );
 }

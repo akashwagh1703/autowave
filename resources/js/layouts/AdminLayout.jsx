@@ -8,6 +8,7 @@ const navigation = [
     { label: 'Tenants', href: '/tenants' },
     { label: 'Payments', href: '/billing/payments' },
     { label: 'Plans', href: '/billing/plans' },
+    { label: 'Coupons', href: '/billing/coupons' },
     { label: 'AI usage', href: '/ai-usage' },
     { label: 'Settings', href: '/settings' },
 ];

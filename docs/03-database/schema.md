@@ -377,6 +377,13 @@ Amounts are in paise.
 
 - Partial unique indexes: one `pending` payment per tenant; a `reference` used once across pending and
   approved payments.
+
+### Online payments and coupons (`2026_10_08_100000`)
+
+| Table / columns | Key columns |
+|---|---|
+| `billing_coupons` (not tenant-owned) | `code` unique (capitals), `description`, `type` (`percent`/`fixed`), `value` (percent, or paise for fixed), `plans`/`periods` jsonb (null = all), `max_redemptions` (null = no limit), `once_per_business`, `first_payment_only`, `starts_at`/`ends_at`, `is_active`, `created_by_user_id` (null on delete) |
+| `billing_payments` (added) | `gateway_order_id` unique (Razorpay order), `coupon_id` (restrict on delete), `coupon_code`, `discount`; index (`coupon_id`, `status`). New statuses `initiated` (online checkout open) and `expired` (not completed); new methods `online` and `coupon` |
 - Platform setting `billing`: enforcement, payment method switches, seller, GST, UPI, bank, instructions and
   the QR image path (defaults in `config('billing.settings')`).
 

@@ -37,11 +37,15 @@ class IssueInvoice
                 'from' => $payment->covers_from?->timezone('Asia/Kolkata')->format('j M Y'),
                 'until' => $payment->covers_until?->timezone('Asia/Kolkata')->format('j M Y'),
             ]),
-            'amount' => $payment->amount + $payment->credit,
+            'amount' => $payment->amount + $payment->credit + $payment->discount,
         ]];
 
         if ($payment->credit > 0) {
             $lines[] = ['description' => __('Credit for unused days of the previous plan'), 'amount' => -$payment->credit];
+        }
+
+        if ($payment->discount > 0) {
+            $lines[] = ['description' => __('Discount (coupon :code)', ['code' => $payment->coupon_code]), 'amount' => -$payment->discount];
         }
 
         $invoice = new BillingInvoice([

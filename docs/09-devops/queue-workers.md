@@ -13,7 +13,7 @@ worker nothing executes. Without the scheduler, waits never end and lost work is
 | `automation` | `AUTOMATION_QUEUE` | `RunAutomationStep` (one step of a run) | 3 / 30 s, 120 s |
 | `messaging` | `MESSAGING_QUEUE` | `SendOutboundMessage` (one message) | 3 / 60 s, 300 s |
 | `ai` | `AI_QUEUE` | `ExtractLeadFromConversation` (automatic lead details, delayed 120 s, unique per conversation) | 2 / 60 s |
-| `default` | — | Everything else | CLI defaults |
+| `default` | — | Everything else, including `ProcessGatewayEvent` (Razorpay webhooks for plan payments; 6 tries, backoff up to 1 hour) | CLI defaults |
 
 If no worker listens on `ai`, automatic lead extraction never runs; everything else keeps working.
 
@@ -30,7 +30,7 @@ minute.
 | `automation:dispatch-due` | Dispatches `pending` steps whose `run_at` has passed (waits). Re-queues steps stuck in `queued` for over 10 minutes (lost from Redis) or in `running` for over 15 minutes (crashed worker); a stuck step that has used all its tries fails the run. |
 | `messaging:dispatch-pending` | Re-dispatches messages stuck in `queued` (10 min) or `sending` (15 min). |
 | `education:fee-reminders` (**hourly**, Phase 10) | For every tenant with the education engine, fires `fee.due_soon` and `fee.overdue` once per unpaid instalment of an active student (claimed timestamps on `fee_instalments`, so re-runs and overlaps are safe). |
-| `billing:sweep` (**hourly**, billing A) | Settles plan changes whose start date has passed and emails owners the 7/3/1-day, ended, read-only and locked reminders once each (sent keys on `subscriptions.reminders`). Reminder emails go through the `notifications` queue. |
+| `billing:sweep` (**hourly**, billing A) | Marks online checkouts older than 24 hours as expired, settles plan changes whose start date has passed and emails owners the 7/3/1-day, ended, read-only and locked reminders once each (sent keys on `subscriptions.reminders`). Reminder emails go through the `notifications` queue. |
 
 The thresholds are `stuck_queued_minutes` / `stuck_running_minutes` in `config/automation.php` and
 `config/messaging.php`. A due wait starts at most about a minute late (AW-028).

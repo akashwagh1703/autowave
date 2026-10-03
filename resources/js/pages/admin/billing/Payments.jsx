@@ -19,13 +19,15 @@ import EmptyState from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
 import Pagination from '@/components/Pagination';
 import { formatDate, formatDateTime } from '@/utils/format';
-import { PAYMENT_COLORS, rupees } from '@/utils/billing';
+import { PAYMENT_COLORS, PAYMENT_STATUS_LABELS, rupees } from '@/utils/billing';
 
 const TABS = [
     { value: 'pending', label: 'To check' },
     { value: 'approved', label: 'Approved' },
     { value: 'rejected', label: 'Rejected' },
     { value: 'cancelled', label: 'Withdrawn' },
+    { value: 'initiated', label: 'Checkout open' },
+    { value: 'expired', label: 'Not completed' },
     { value: 'all', label: 'All' },
 ];
 
@@ -58,7 +60,10 @@ export default function Payments({ payments, filters, counts }) {
 
     return (
         <AdminLayout title="Payments">
-            <PageHeader title="Payments" description="Check each payment in your bank or UPI app before approving it. Approving extends the plan and issues the invoice." />
+            <PageHeader
+                title="Payments"
+                description="Check each UPI or bank payment in your bank or UPI app before approving it. Online payments are approved automatically once the gateway confirms them."
+            />
 
             <Tabs value={filters.status} onChange={(event, value) => apply({ status: value, page: undefined })} variant="scrollable" className="mb-4">
                 {TABS.map((tab) => (
@@ -73,7 +78,7 @@ export default function Payments({ payments, filters, counts }) {
                     apply({ page: undefined });
                 }}
             >
-                <TextField size="small" label="Business or UTR" value={search} onChange={(event) => setSearch(event.target.value)} className="w-full sm:w-72" />
+                <TextField size="small" label="Business, UTR, payment ID or coupon" value={search} onChange={(event) => setSearch(event.target.value)} className="w-full sm:w-72" />
                 <Button type="submit" variant="contained">
                     Search
                 </Button>
@@ -114,10 +119,18 @@ export default function Payments({ payments, filters, counts }) {
                                             <span className="font-semibold">{rupees(payment.total)}</span>
                                             {payment.tax_amount > 0 ? <span className="block text-xs text-slate-500">incl. GST {rupees(payment.tax_amount)}</span> : null}
                                             {payment.credit > 0 ? <span className="block text-xs text-slate-500">credit {rupees(payment.credit)}</span> : null}
+                                            {payment.discount > 0 ? (
+                                                <span className="block text-xs text-slate-500">
+                                                    {payment.coupon_code} −{rupees(payment.discount)}
+                                                </span>
+                                            ) : null}
                                         </TableCell>
                                         <TableCell>
                                             {payment.method_label}
                                             {payment.reference ? <span className="block font-mono text-xs text-slate-700">{payment.reference}</span> : null}
+                                            {payment.gateway_order_id && !payment.reference ? (
+                                                <span className="block font-mono text-xs text-slate-500">{payment.gateway_order_id}</span>
+                                            ) : null}
                                             {payment.paid_on ? <span className="block text-xs text-slate-500">paid {formatDate(payment.paid_on, 'UTC')}</span> : null}
                                             {payment.has_proof ? (
                                                 <a href={`/billing/payments/${payment.id}/proof`} target="_blank" rel="noopener" className="text-xs text-brand-700 hover:underline">
@@ -128,7 +141,7 @@ export default function Payments({ payments, filters, counts }) {
                                             {payment.note ? <span className="block text-xs text-slate-500">{payment.note}</span> : null}
                                         </TableCell>
                                         <TableCell>
-                                            <Chip size="small" variant="outlined" color={PAYMENT_COLORS[payment.status] ?? 'default'} label={payment.status} className="capitalize" />
+                                            <Chip size="small" variant="outlined" color={PAYMENT_COLORS[payment.status] ?? 'default'} label={PAYMENT_STATUS_LABELS[payment.status] ?? payment.status} />
                                             {payment.reviewed_by ? <span className="block text-xs text-slate-500">by {payment.reviewed_by}</span> : null}
                                             {payment.rejection_reason ? <span className="block text-xs text-red-700">{payment.rejection_reason}</span> : null}
                                         </TableCell>

@@ -334,6 +334,17 @@ This document describes what **actually exists** in the repository today. Planne
   locked emails once each.
 - **Tests:** `tests/Feature/Billing` (40).
 
+### Billing phases B and C ([billing.md](../05-features/billing.md))
+
+- **Online payments (Razorpay):** server-created orders for the server's amount, Checkout in the browser,
+  applied by the signed callback or signed webhook after the payment is fetched and matched (order, amount,
+  currency; authorized payments captured), once under a lock. Off until `BILLING_GATEWAY=razorpay`, the keys
+  and the Super Admin switch are set. Unfinished checkouts expire after 24 hours.
+- **Coupons:** Super Admin → Coupons; percent or fixed, plan / period limits, total uses, once per business,
+  new customers only, dates. Discount before GST, shown on the invoice; a 100% coupon activates the plan.
+- **PDF invoices:** download for owners and Super Admin, attached to the approval email.
+- **Tests:** `OnlineCheckoutTest` (15) and `CouponAndInvoicePdfTest` (12).
+
 ### Production (2026-09-29)
 
 - **Live:** <https://autowave.co.in>, <https://app.autowave.co.in>, <https://admin.autowave.co.in> and
@@ -354,8 +365,8 @@ This document describes what **actually exists** in the repository today. Planne
 ## Not implemented
 
 - **Platform:** invitations and member management, role editor, logo upload during onboarding, custom
-  domain UI, feature flags, custom fields, analytics, online subscription payments (Razorpay, billing
-  phase B), PDF invoices and coupons for subscriptions (phase C).
+  domain UI, feature flags, custom fields, analytics, refunds and automatic recurring charges for
+  subscriptions.
 - **AI gaps:** redaction of customer text (AW-055), plan-based allowances and INR cost (AW-056), streaming
   and saved assistant chats (AW-057).
 - **Vertical gaps:** website sections not added to existing sites (AW-059), discounts not recomputed when

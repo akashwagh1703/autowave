@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Domain\Audit\Services\AuditLogger;
 use App\Domain\Billing\Actions\ManagePayments;
 use App\Domain\Billing\Actions\SubscriptionLifecycle;
+use App\Domain\Billing\Models\BillingCoupon;
 use App\Domain\Billing\Models\BillingInvoice;
 use App\Domain\Billing\Models\BillingPayment;
 use App\Domain\Billing\Models\Plan;
+use App\Domain\Billing\Support\InvoicePdf;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Tenant\Scopes\TenantScope;
 use App\Http\Controllers\Controller;
@@ -15,6 +17,7 @@ use App\Http\Presenters\BillingPresenter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -28,7 +31,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class BillingController extends Controller
 {
-    private const STATUSES = [BillingPayment::PENDING, BillingPayment::APPROVED, BillingPayment::REJECTED, BillingPayment::CANCELLED];
+    private const STATUSES = [BillingPayment::PENDING, BillingPayment::APPROVED, BillingPayment::REJECTED, BillingPayment::CANCELLED, BillingPayment::INITIATED, BillingPayment::EXPIRED];
 
     public function __construct(private readonly ManagePayments $payments) {}
 
@@ -45,6 +48,9 @@ class BillingController extends Controller
             ->when($status !== 'all', fn (Builder $query) => $query->where('status', $status))
             ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query->where(fn (Builder $query) => $query
                 ->where('reference', 'like', '%'.BillingPayment::normalizeReference($search).'%')
+                ->orWhere('gateway_payment_id', trim($search))
+                ->orWhere('gateway_order_id', trim($search))
+                ->orWhere('coupon_code', BillingCoupon::normalizeCode($search))
                 ->orWhereHas('tenant', fn (Builder $query) => $query->whereLike('name', "%{$search}%")->orWhereLike('slug', "%{$search}%"))))
             ->orderByRaw("case when status = 'pending' then 0 else 1 end")
             ->latest('id')
@@ -103,6 +109,11 @@ class BillingController extends Controller
         return Inertia::render('admin/billing/Invoice', ['invoice' => BillingPresenter::invoice($invoice)]);
     }
 
+    public function invoicePdf(int $invoiceId, InvoicePdf $pdf): HttpResponse
+    {
+        return $pdf->download(BillingInvoice::withoutTenantScope()->findOrFail($invoiceId));
+    }
+
     /** A payment received another way (cash, cheque, a transfer without a request), or a free period. */
     public function record(Request $request, Tenant $tenant): RedirectResponse
     {
@@ -113,7 +124,7 @@ class BillingController extends Controller
         $validated = $request->validate([
             'plan' => ['required', Rule::exists('plans', 'code')->where('is_active', true)],
             'period' => ['required', Rule::in(array_keys(config('billing.periods')))],
-            'method' => ['required', Rule::in(array_values(array_diff(array_keys(config('billing.methods')), ['online'])))],
+            'method' => ['required', Rule::in(array_values(array_diff(array_keys(config('billing.methods')), ['online', 'coupon'])))],
             'amount' => ['nullable', 'numeric', 'min:0', 'max:10000000'],
             'reference' => ['nullable', 'string', 'max:40'],
             'paid_on' => ['required', 'date', 'before_or_equal:today'],

@@ -8,6 +8,14 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **Pay for a plan online.** Once AutoWave's Razorpay account is connected, owners can pay by UPI, card,
+  net banking or wallet in Razorpay Checkout and the plan is active straight away, with no approval. It
+  stays off until the keys are set and Super Admin switches it on; UPI and bank transfer keep working.
+- **Coupons for plans.** Super Admin creates discount codes in **Coupons** (percent or fixed amount, for
+  chosen plans and periods, with a use limit and dates). Owners enter the code when paying; the discount is
+  shown on the invoice, and a 100% coupon activates the plan without paying.
+- **Invoice PDFs.** Owners and Super Admin download invoices as PDF, and the payment confirmation email
+  has the PDF attached.
 - **Plans and billing.** Every business starts a 14-day free trial, then picks Starter (₹499/month),
   Growth (₹1,499) or Business (₹3,999), monthly or yearly (two months free). Owners open **Settings →
   Plan and billing** to see their plan, usage and invoices, and pay by UPI (ID and QR code) or bank

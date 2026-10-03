@@ -9,8 +9,10 @@ use App\Domain\Billing\Notifications\PaymentReviewed;
 use App\Domain\Billing\Notifications\PaymentSubmitted;
 use App\Domain\Billing\Support\BillingRecipients;
 use App\Domain\Billing\Support\BillingSettings;
+use App\Domain\Billing\Support\Coupons;
 use App\Domain\Billing\Support\Entitlements;
 use App\Domain\Billing\Support\PriceCalculator;
+use App\Domain\Billing\Support\Quote;
 use App\Domain\Tenant\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -40,11 +42,12 @@ class ManagePayments
         private readonly IssueInvoice $invoices,
         private readonly BillingSettings $settings,
         private readonly Entitlements $entitlements,
+        private readonly Coupons $coupons,
         private readonly AuditLogger $audit,
     ) {}
 
     /**
-     * @param  array<string, mixed>  $input  plan, period, method, reference, paid_on, buyer_gstin
+     * @param  array<string, mixed>  $input  plan, period, method, reference, paid_on, buyer_gstin, coupon
      *
      * @throws ValidationException
      */
@@ -55,7 +58,7 @@ class ManagePayments
         }
 
         $input['reference'] = BillingPayment::normalizeReference($input['reference'] ?? null);
-        $input['buyer_gstin'] = isset($input['buyer_gstin']) ? strtoupper(trim((string) $input['buyer_gstin'])) ?: null : null;
+        $input['buyer_gstin'] = self::normalizeGstin($input['buyer_gstin'] ?? null);
         $proofLimits = config('billing.proof');
 
         $data = Validator::make([...$input, 'proof' => $proof], [
@@ -65,6 +68,7 @@ class ManagePayments
             'reference' => ['required', 'string', 'regex:/^[A-Z0-9]{6,40}$/'],
             'paid_on' => ['required', 'date', 'before_or_equal:today', 'after_or_equal:'.now()->subDays(60)->toDateString()],
             'buyer_gstin' => ['nullable', 'regex:'.self::GSTIN_PATTERN],
+            'coupon' => ['nullable', 'string', 'max:30'],
             'proof' => ['nullable', 'file', 'max:'.$proofLimits['max_kb'], 'mimetypes:'.implode(',', $proofLimits['mimetypes']), 'mimes:'.implode(',', $proofLimits['mimes'])],
         ], [
             'reference.required' => __('Enter the UTR or transaction ID from your payment app or bank.'),
@@ -79,40 +83,43 @@ class ManagePayments
         $this->ensureReferenceUnused($data['reference']);
 
         $plan = Plan::query()->where('code', $data['plan'])->firstOrFail();
-        $quote = $this->prices->quote($tenant, $plan, $data['period'], $data['buyer_gstin']);
+        if ($this->quoteForPayment($tenant, $plan, $data['period'], $data['buyer_gstin'], $data['coupon'] ?? null)->total === 0) {
+            throw ValidationException::withMessages(['coupon' => __('This coupon covers the whole price, so there is nothing to pay. Use "Activate" instead.')]);
+        }
+
         $stored = $proof ? $this->storeProof($tenant, $proof) : null;
 
         try {
-            $payment = DB::transaction(fn () => BillingPayment::withoutTenantScope()->create([
-                'tenant_id' => $tenant->getKey(),
-                'plan_id' => $plan->id,
-                'period' => $quote->period,
-                'kind' => $quote->kind,
-                'credit' => $quote->credit,
-                'amount' => $quote->amount,
-                'tax_amount' => $quote->taxAmount,
-                'total' => $quote->total,
-                'tax' => $quote->tax ?: null,
-                'method' => $data['method'],
-                'status' => BillingPayment::PENDING,
-                'reference' => $data['reference'],
-                'paid_on' => $data['paid_on'],
-                'proof_disk' => $stored['disk'] ?? null,
-                'proof_path' => $stored['path'] ?? null,
-                'proof_mime' => $stored['mime'] ?? null,
-                'buyer_gstin' => $data['buyer_gstin'],
-                'submitted_by_user_id' => $actor->getKey(),
-            ]));
+            $payment = DB::transaction(function () use ($tenant, $actor, $plan, $data, $stored) {
+                $this->expireCheckouts($tenant);
+                $quote = $this->quoteForPayment($tenant, $plan, $data['period'], $data['buyer_gstin'], $data['coupon'] ?? null, lock: true);
+
+                return BillingPayment::withoutTenantScope()->create([
+                    ...$quote->paymentAttributes(),
+                    'tenant_id' => $tenant->getKey(),
+                    'method' => $data['method'],
+                    'status' => BillingPayment::PENDING,
+                    'reference' => $data['reference'],
+                    'paid_on' => $data['paid_on'],
+                    'proof_disk' => $stored['disk'] ?? null,
+                    'proof_path' => $stored['path'] ?? null,
+                    'proof_mime' => $stored['mime'] ?? null,
+                    'buyer_gstin' => $data['buyer_gstin'],
+                    'submitted_by_user_id' => $actor->getKey(),
+                ]);
+            });
         } catch (UniqueConstraintViolationException) {
-            if ($stored) {
-                Storage::disk($stored['disk'])->delete($stored['path']);
-            }
+            $this->deleteProof($stored);
 
             throw ValidationException::withMessages(['reference' => __('This payment was already submitted. Wait for it to be checked, or contact AutoWave support.')]);
+        } catch (ValidationException $exception) {
+            $this->deleteProof($stored);
+
+            throw $exception;
         }
 
         $this->entitlements->forget($tenant);
-        $this->audit->log('billing.payment_submitted', $payment, ['plan' => $plan->code, 'period' => $quote->period, 'total' => $quote->total, 'method' => $data['method']], $tenant->getKey());
+        $this->audit->log('billing.payment_submitted', $payment, ['plan' => $plan->code, 'period' => $payment->period, 'total' => $payment->total, 'method' => $data['method'], 'coupon' => $payment->coupon_code], $tenant->getKey());
         Notification::send(BillingRecipients::platformAdmins(), new PaymentSubmitted($payment->id, $tenant->name));
 
         return $payment;
@@ -131,25 +138,97 @@ class ManagePayments
     public function approve(int $paymentId, User $admin): BillingPayment
     {
         $payment = $this->review($paymentId, function (BillingPayment $payment) use ($admin) {
-            [$from, $until] = $this->lifecycle->apply($payment);
-            $payment->update([
-                'status' => BillingPayment::APPROVED,
-                'reviewed_by_user_id' => $admin->getKey(),
-                'reviewed_at' => now(),
-                'covers_from' => $from,
-                'covers_until' => $until,
-            ]);
-
-            if ($payment->total > 0) {
-                $this->invoices->handle($payment);
-            }
-
-            $this->audit->log('billing.payment_approved', $payment, ['total' => $payment->total, 'until' => $until->toIso8601String()], $payment->tenant_id);
+            $this->settle($payment, ['reviewed_by_user_id' => $admin->getKey(), 'reviewed_at' => now()]);
+            $this->audit->log('billing.payment_approved', $payment, ['total' => $payment->total, 'until' => $payment->covers_until->toIso8601String()], $payment->tenant_id);
         });
 
         $this->notifyOwners($payment);
 
         return $payment;
+    }
+
+    /**
+     * Marks a payment approved, applies its period to the subscription and issues the invoice (when anything
+     * was paid). Every way a payment is approved goes through here. Call inside a transaction.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function settle(BillingPayment $payment, array $attributes = []): void
+    {
+        [$from, $until] = $this->lifecycle->apply($payment);
+        $payment->update([...$attributes, 'status' => BillingPayment::APPROVED, 'covers_from' => $from, 'covers_until' => $until]);
+
+        if ($payment->total > 0) {
+            $this->invoices->handle($payment);
+        }
+    }
+
+    /**
+     * The owner takes a plan with a coupon that covers the whole price: approved at once, nothing to check.
+     *
+     * @param  array{plan?: ?string, period?: ?string, coupon?: ?string}  $input
+     */
+    public function activateWithCoupon(Tenant $tenant, User $actor, array $input): BillingPayment
+    {
+        $data = Validator::make($input, [
+            'plan' => ['required', 'string', Rule::exists('plans', 'code')->where('is_public', true)->where('is_active', true)],
+            'period' => ['required', Rule::in(array_keys(config('billing.periods')))],
+            'coupon' => ['required', 'string', 'max:30'],
+        ])->validate();
+
+        $this->ensureNoPending($tenant);
+        $plan = Plan::query()->where('code', $data['plan'])->firstOrFail();
+
+        $payment = DB::transaction(function () use ($tenant, $actor, $plan, $data) {
+            $this->expireCheckouts($tenant);
+            $quote = $this->quoteForPayment($tenant, $plan, $data['period'], null, $data['coupon'], lock: true);
+
+            if ($quote->total !== 0) {
+                throw ValidationException::withMessages(['coupon' => __('This coupon doesn\'t cover the whole price. Pay the rest to use it.')]);
+            }
+
+            $payment = BillingPayment::withoutTenantScope()->create([
+                ...$quote->paymentAttributes(),
+                'tenant_id' => $tenant->getKey(),
+                'method' => 'coupon',
+                'status' => BillingPayment::APPROVED,
+                'paid_on' => now()->timezone('Asia/Kolkata')->toDateString(),
+                'submitted_by_user_id' => $actor->getKey(),
+            ]);
+            $this->settle($payment);
+            $this->audit->log('billing.coupon_activated', $payment, ['plan' => $plan->code, 'period' => $payment->period, 'coupon' => $payment->coupon_code, 'until' => $payment->covers_until->toIso8601String()], $tenant->getKey());
+
+            return $payment;
+        });
+
+        $this->notifyOwners($payment);
+
+        return $payment;
+    }
+
+    /**
+     * The quote for a new payment, with the coupon checked for this business (and its row locked when
+     * `$lock`). Throws when the coupon can't be used.
+     */
+    public function quoteForPayment(Tenant $tenant, Plan $plan, string $period, ?string $buyerGstin, ?string $couponCode, bool $lock = false): Quote
+    {
+        $coupon = $this->coupons->resolve($couponCode, $tenant, $plan, $period, $lock);
+
+        return $this->prices->quote($tenant, $plan, $period, $buyerGstin, $coupon);
+    }
+
+    /** Unfinished online checkouts of the business stop counting once it starts another payment. */
+    public function expireCheckouts(Tenant $tenant): void
+    {
+        BillingPayment::withoutTenantScope()
+            ->where('tenant_id', $tenant->getKey())
+            ->where('status', BillingPayment::INITIATED)
+            ->update(['status' => BillingPayment::EXPIRED, 'updated_at' => now()]);
+    }
+
+    public static function normalizeGstin(mixed $gstin): ?string
+    {
+        return strtoupper(trim((string) $gstin)) ?: null;
     }
 
     /** Platform admin: the money did not arrive or the details are wrong. */
@@ -211,15 +290,8 @@ class ManagePayments
                     'reviewed_by_user_id' => $admin->getKey(),
                     'reviewed_at' => now(),
                 ]);
-
-                [$from, $until] = $this->lifecycle->apply($payment);
-                $payment->update(['covers_from' => $from, 'covers_until' => $until]);
-
-                if ($payment->total > 0) {
-                    $this->invoices->handle($payment);
-                }
-
-                $this->audit->log('billing.payment_recorded', $payment, ['plan' => $plan->code, 'method' => $input['method'], 'total' => $payment->total, 'until' => $until->toIso8601String()], $tenant->getKey());
+                $this->settle($payment);
+                $this->audit->log('billing.payment_recorded', $payment, ['plan' => $plan->code, 'method' => $input['method'], 'total' => $payment->total, 'until' => $payment->covers_until->toIso8601String()], $tenant->getKey());
 
                 return $payment;
             });
@@ -249,7 +321,7 @@ class ManagePayments
         });
     }
 
-    private function ensureNoPending(Tenant $tenant): void
+    public function ensureNoPending(Tenant $tenant): void
     {
         if (BillingPayment::withoutTenantScope()->where('tenant_id', $tenant->getKey())->where('status', BillingPayment::PENDING)->exists()) {
             throw ValidationException::withMessages(['plan' => __('A payment is already waiting to be checked. Cancel it first to pay another way.')]);
@@ -277,7 +349,15 @@ class ManagePayments
         return ['disk' => $disk, 'path' => $path, 'mime' => $mime];
     }
 
-    private function notifyOwners(BillingPayment $payment): void
+    /** @param  array{disk: string, path: string, mime: string}|null  $stored */
+    private function deleteProof(?array $stored): void
+    {
+        if ($stored) {
+            Storage::disk($stored['disk'])->delete($stored['path']);
+        }
+    }
+
+    public function notifyOwners(BillingPayment $payment): void
     {
         $tenant = Tenant::query()->find($payment->tenant_id);
 

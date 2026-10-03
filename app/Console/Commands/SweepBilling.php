@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Domain\Billing\Actions\OnlineCheckout;
 use App\Domain\Billing\Actions\SubscriptionLifecycle;
 use App\Domain\Billing\Models\BillingPayment;
 use App\Domain\Billing\Models\Subscription;
@@ -17,7 +18,7 @@ use Throwable;
 
 /**
  * Runs hourly (routes/console.php). Access is worked out from the dates on every request, so this only
- * makes scheduled plan changes permanent and emails owners: the trial or plan ends in 7, 3 and 1 days,
+ * expires unfinished online checkouts, makes scheduled plan changes permanent and emails owners: the trial or plan ends in 7, 3 and 1 days,
  * it ended, the business became read-only, or was locked (the last two only while enforcement is on).
  * Each email is sent once per period (`subscriptions.reminders`, cleared when a period is paid).
  */
@@ -27,11 +28,12 @@ class SweepBilling extends Command
 
     protected $description = 'Apply scheduled plan changes and send subscription reminder emails';
 
-    public function handle(SubscriptionLifecycle $lifecycle, BillingSettings $settings, Entitlements $entitlements): int
+    public function handle(SubscriptionLifecycle $lifecycle, BillingSettings $settings, Entitlements $entitlements, OnlineCheckout $checkout): int
     {
         $now = now();
         $sent = 0;
         $settled = 0;
+        $expired = $checkout->expireStale();
 
         Subscription::withoutTenantScope()->whereNotNull('ends_at')->orderBy('id')->each(function (Subscription $subscription) use ($lifecycle, $settings, $entitlements, $now, &$sent, &$settled) {
             try {
@@ -70,7 +72,7 @@ class SweepBilling extends Command
             }
         });
 
-        $this->components->info("Billing sweep: {$settled} plan changes applied, {$sent} reminders sent.");
+        $this->components->info("Billing sweep: {$settled} plan changes applied, {$sent} reminders sent, {$expired} unfinished checkouts expired.");
 
         return self::SUCCESS;
     }

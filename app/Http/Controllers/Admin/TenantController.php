@@ -89,7 +89,7 @@ class TenantController extends Controller
                 'is_trial' => $plan->isTrial(),
             ]),
             'periods' => collect(config('billing.periods'))->map(fn (array $period, string $key) => ['value' => $key, 'label' => $period['label']])->values(),
-            'methods' => collect(config('billing.methods'))->except('online')->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])->values(),
+            'methods' => collect(config('billing.methods'))->except(['online', 'coupon'])->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])->values(),
         ]);
     }
 

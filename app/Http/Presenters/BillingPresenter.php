@@ -3,6 +3,7 @@
 namespace App\Http\Presenters;
 
 use App\Domain\Billing\Enums\SubscriptionState;
+use App\Domain\Billing\Models\BillingCoupon;
 use App\Domain\Billing\Models\BillingInvoice;
 use App\Domain\Billing\Models\BillingPayment;
 use App\Domain\Billing\Models\Plan;
@@ -68,13 +69,16 @@ final class BillingPresenter
             'period' => $payment->period,
             'kind' => $payment->kind,
             'credit' => $payment->credit,
+            'discount' => $payment->discount,
+            'coupon_code' => $payment->coupon_code,
             'amount' => $payment->amount,
             'tax_amount' => $payment->tax_amount,
             'total' => $payment->total,
             'method' => $payment->method,
             'method_label' => config("billing.methods.{$payment->method}", $payment->method),
             'status' => $payment->status,
-            'reference' => $payment->reference,
+            'reference' => $payment->reference ?? $payment->gateway_payment_id,
+            'gateway_order_id' => $payment->gateway_order_id,
             'paid_on' => $payment->paid_on?->toDateString(),
             'has_proof' => $payment->proof_path !== null,
             'buyer_gstin' => $payment->buyer_gstin,
@@ -85,6 +89,27 @@ final class BillingPresenter
             'created_at' => $payment->created_at?->toIso8601String(),
             'reviewed_at' => $payment->reviewed_at?->toIso8601String(),
             'invoice' => $payment->relationLoaded('invoice') && $payment->invoice ? ['id' => $payment->invoice->id, 'number' => $payment->invoice->number] : null,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public static function coupon(BillingCoupon $coupon): array
+    {
+        return [
+            'id' => $coupon->id,
+            'code' => $coupon->code,
+            'description' => $coupon->description,
+            'type' => $coupon->type,
+            'value' => $coupon->value,
+            'plans' => $coupon->plans ?? [],
+            'periods' => $coupon->periods ?? [],
+            'max_redemptions' => $coupon->max_redemptions,
+            'once_per_business' => $coupon->once_per_business,
+            'first_payment_only' => $coupon->first_payment_only,
+            'starts_on' => $coupon->starts_at?->timezone('Asia/Kolkata')->toDateString(),
+            'ends_on' => $coupon->ends_at?->timezone('Asia/Kolkata')->toDateString(),
+            'is_active' => $coupon->is_active,
+            'live' => $coupon->isLive(),
         ];
     }
 
@@ -106,7 +131,7 @@ final class BillingPresenter
             'total' => $invoice->total,
             'payment' => $invoice->relationLoaded('payment') && $invoice->payment ? [
                 'method_label' => config("billing.methods.{$invoice->payment->method}", $invoice->payment->method),
-                'reference' => $invoice->payment->reference,
+                'reference' => $invoice->payment->reference ?? $invoice->payment->gateway_payment_id,
                 'paid_on' => $invoice->payment->paid_on?->toDateString(),
             ] : null,
         ];

@@ -11,7 +11,7 @@ export default function BillingInvoice({ invoice }) {
                     ← Back to billing
                 </Button>
             </div>
-            <InvoiceDocument invoice={invoice} />
+            <InvoiceDocument invoice={invoice} pdfUrl={`/settings/billing/invoices/${invoice.id}/pdf`} />
         </AppLayout>
     );
 }
