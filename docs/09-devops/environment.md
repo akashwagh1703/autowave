@@ -64,6 +64,7 @@ Template: `.env.example`. Never commit `.env`. Production secrets live only on t
 | `AI_MONTHLY_TOKENS` / `AI_AUTO_EXTRACT` / `AI_QUEUE` | `300000` / `true` / `ai` | same | AI cap for a business without a plan (otherwise the plan's `ai_tokens`), automatic lead extraction, queue |
 | `BILLING_TRIAL_DAYS` / `BILLING_INVOICE_PREFIX` | `14` / `AW` | same | Free trial length for new businesses; invoice number prefix (`AW/2026-27/0001`) |
 | `BILLING_GATEWAY` | `none` | `none` until a Razorpay account exists | Online payment gateway (`none` or `razorpay`); Super Admin can only switch online payments on when it is configured ([billing.md](../05-features/billing.md)) |
+| `AUTOWAVE_LEGAL_JURISDICTION` / `AUTOWAVE_GRIEVANCE_OFFICER` | empty | e.g. `Pune, Maharashtra` / the officer's name | Shown on the marketing site's Terms (courts for disputes) and Privacy / Contact pages (Grievance Officer, reached at the billing email). Empty: generic wording |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` | empty | secret | Razorpay API keys and the webhook secret (the one entered for the webhook in the Razorpay dashboard). The secret and webhook secret never leave the server; the key id is public by design and is sent to the browser at checkout. Online payment needs all three |
 | `AWS_*` | empty | DigitalOcean Spaces (future) | S3-compatible storage |
 | `VITE_APP_NAME` | `${APP_NAME}` | same | App name available to frontend at build time |

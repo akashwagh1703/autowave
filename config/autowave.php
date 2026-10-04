@@ -66,6 +66,22 @@ return [
         'password' => env('AUTOWAVE_ADMIN_PASSWORD'),
     ],
 
+    /*
+    | Marketing site policies (/privacy, /terms, /refunds). Company name, address, email, phone and GSTIN
+    | come from Super Admin → Settings → Billing (seller). Bump `updated` whenever the policy text changes.
+    */
+    'legal' => [
+        'updated' => '2026-10-04',
+        // City whose courts handle disputes, e.g. "Pune, Maharashtra". Empty: the registered office's courts.
+        'jurisdiction' => env('AUTOWAVE_LEGAL_JURISDICTION'),
+        // Named Grievance Officer (DPDP Act); reachable at the seller email.
+        'grievance_officer' => env('AUTOWAVE_GRIEVANCE_OFFICER'),
+        // Working days to send an approved refund back.
+        'refund_days' => 7,
+        // Days after a payment within which a refund can be requested.
+        'refund_request_days' => 30,
+    ],
+
     // Defaults for Super Admin → Settings until a platform admin changes them.
     'platform_settings' => [
         // New sign-ups must confirm their email before using the app.

@@ -1,4 +1,4 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
@@ -39,7 +39,7 @@ export default function Welcome({ appUrl }) {
             <Head title="Build, manage and automate your local business" />
 
             <section className="mx-auto max-w-5xl px-4 pt-16 pb-12 text-center sm:px-6 sm:pt-24">
-                <Chip label="Platform foundation · Phase 1" color="primary" variant="outlined" size="small" />
+                <Chip label="Free 14-day trial · no payment details needed" color="primary" variant="outlined" size="small" />
                 <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
                     Build, manage and automate a local business from one platform.
                 </h1>
@@ -51,8 +51,8 @@ export default function Welcome({ appUrl }) {
                     <Button variant="contained" size="large" href={`${appUrl}/register`}>
                         Get started
                     </Button>
-                    <Button variant="outlined" size="large" href={`${appUrl}/login`}>
-                        Log in
+                    <Button variant="outlined" size="large" component={Link} href="/pricing">
+                        See pricing
                     </Button>
                 </div>
             </section>

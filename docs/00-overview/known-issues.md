@@ -774,6 +774,8 @@ with the date and commit/PR reference; do not delete it.
   Live (needed to receive real WhatsApp/Instagram webhooks), and customer data is processed by OpenRouter
   (AW-055).
 - **Impact:** Businesses must supply their own privacy URL for their Meta app; no platform terms exist.
-- **Status:** Open — add `/privacy` and `/terms` to the marketing site.
+- **Status:** Resolved 2026-10-04 — `/pricing`, `/privacy`, `/terms`, `/refunds` and `/contact` on the
+  marketing site (`Marketing\PageController`), with company details from Super Admin → Settings → Billing.
+  The policy text is a sensible starting point, not legal advice; have it reviewed.
 - **Affected:** `routes/web.php`, marketing pages
 - **Created:** 2026-09-30

@@ -8,6 +8,9 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **Pricing and policy pages.** The marketing site now has Pricing (live plan prices), Terms of service,
+  Privacy policy, Refund and cancellation policy, and Contact pages, linked from every page's footer, the
+  sign-up form and the pay dialog. Company details come from Super Admin → Settings → Billing.
 - **Pay for a plan online.** Once AutoWave's Razorpay account is connected, owners can pay by UPI, card,
   net banking or wallet in Razorpay Checkout and the plan is active straight away, with no approval. It
   stays off until the keys are set and Super Admin switches it on; UPI and bank transfer keep working.

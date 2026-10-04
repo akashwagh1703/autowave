@@ -130,6 +130,12 @@ Online payments go straight from initiated to approved, so they never occupy the
 
 ### Turning on Razorpay
 
+Razorpay reviews the website before activating an account. The marketing site has the pages it looks for:
+`/pricing` (plans from the database), `/terms`, `/privacy`, `/refunds` (refund, cancellation and service
+delivery) and `/contact`. They take the company name, address, email and phone from Super Admin → Settings
+→ Billing (seller), so fill those in first; `AUTOWAVE_LEGAL_JURISDICTION` and `AUTOWAVE_GRIEVANCE_OFFICER`
+complete the Terms and Privacy pages.
+
 1. In `.env` on the server: `BILLING_GATEWAY=razorpay`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`,
    `RAZORPAY_WEBHOOK_SECRET` (any long random string), then `php artisan config:cache` and restart the worker.
 2. Razorpay Dashboard → Settings → Webhooks → add `https://app.autowave.co.in/webhooks/billing/razorpay` with

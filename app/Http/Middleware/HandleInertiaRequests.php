@@ -54,6 +54,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'app' => [
                 'name' => config('app.name'),
+                'marketing_url' => rtrim(str_replace(config('autowave.hosts.app'), config('autowave.hosts.marketing'), config('app.url')), '/'),
             ],
             'auth' => [
                 'user' => fn () => $request->user()?->only(['id', 'name', 'email']),

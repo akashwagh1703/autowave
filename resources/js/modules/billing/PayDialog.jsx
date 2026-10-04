@@ -1,4 +1,4 @@
-import { router, useForm } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
@@ -80,6 +80,7 @@ function CopyValue({ label, value }) {
  * reports the UTR for AutoWave to check. A coupon that covers the whole price activates the plan directly.
  */
 export default function PayDialog({ open, plan, period, methods, gst, reference, proof, subscription, timezone, onClose }) {
+    const { app } = usePage().props;
     const manual = methods.manual;
     const input = useRef(null);
     const [quote, setQuote] = useState(null);
@@ -300,7 +301,11 @@ export default function PayDialog({ open, plan, period, methods, gst, reference,
                         <p className="mt-2 text-xs text-slate-500">
                             {starts
                                 ? `Starts when your current ${subscription.is_trial ? 'trial' : 'plan'} ends on ${formatDate(starts, timezone)}, and runs until ${formatDate(quote.until, timezone)}. You keep every remaining day.`
-                                : `Starts as soon as your payment is confirmed and runs until about ${formatDate(quote.until, timezone)}.`}
+                                : `Starts as soon as your payment is confirmed and runs until about ${formatDate(quote.until, timezone)}.`}{' '}
+                            Plans don’t renew automatically.{' '}
+                            <a href={`${app.marketing_url}/refunds`} target="_blank" rel="noopener" className="text-brand-700 hover:underline">
+                                Refund policy
+                            </a>
                         </p>
 
                         <div className="mt-3 border-t border-slate-100 pt-3">

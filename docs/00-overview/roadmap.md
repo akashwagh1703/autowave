@@ -33,12 +33,15 @@ What exists is described in [current-state.md](current-state.md).
   enquiries, fees with instalments and reminders, attendance, demo classes), Cafe (food engine on
   commerce: menu marks, tables, reservations, dine-in, kitchen screen), Turf rates and advances, Local
   Commerce (coupons, widgets) (ADR-020; AW-044 coupons resolved).
+- **Billing A, B and C:** plans, trial, manual and Razorpay payments, invoices (PDF), GST switch, coupons,
+  plan limits and enforcement; pricing and policy pages on the marketing site.
 
 ## Next
 
-The master prompt's phases are complete. Candidates, to be chosen with the product owner: Clinic,
-Fitness, Car Service and Home Services presets; the vertical gaps AW-059 → AW-064; billing.
+The master prompt's phases are complete. Candidates, to be chosen with the product owner: team
+invitations and member management; Clinic, Fitness, Car Service and Home Services presets; the vertical
+gaps AW-059 → AW-064.
 
 ## Future
 
-- Billing (plans, subscriptions, usage), custom domains with verification/SSL, Horizon, PWA.
+- Custom domains with verification/SSL, Horizon, PWA, recurring subscription charges and refunds.

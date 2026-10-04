@@ -1,9 +1,10 @@
-import { Link, useForm } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import AuthLayout from '@/layouts/AuthLayout';
 
 export default function Register() {
+    const { app } = usePage().props;
     const form = useForm({ name: '', email: '', password: '', password_confirmation: '' });
 
     const submit = (event) => {
@@ -34,6 +35,17 @@ export default function Register() {
                 <Button type="submit" variant="contained" size="large" fullWidth disabled={form.processing}>
                     Create account
                 </Button>
+                <p className="text-center text-xs text-slate-500">
+                    By creating an account you agree to our{' '}
+                    <a href={`${app.marketing_url}/terms`} target="_blank" rel="noopener" className="text-brand-600 hover:underline">
+                        Terms of service
+                    </a>{' '}
+                    and{' '}
+                    <a href={`${app.marketing_url}/privacy`} target="_blank" rel="noopener" className="text-brand-600 hover:underline">
+                        Privacy policy
+                    </a>
+                    .
+                </p>
             </form>
 
             <p className="mt-6 text-center text-sm text-slate-600">

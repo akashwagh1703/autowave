@@ -343,6 +343,8 @@ This document describes what **actually exists** in the repository today. Planne
 - **Coupons:** Super Admin → Coupons; percent or fixed, plan / period limits, total uses, once per business,
   new customers only, dates. Discount before GST, shown on the invoice; a 100% coupon activates the plan.
 - **PDF invoices:** download for owners and Super Admin, attached to the approval email.
+- **Marketing pages:** Pricing, Terms, Privacy, Refund and cancellation, and Contact (what Razorpay and
+  Meta review), with company details from Settings → Billing (AW-068 resolved).
 - **Tests:** `OnlineCheckoutTest` (15) and `CouponAndInvoicePdfTest` (12).
 
 ### Production (2026-09-29)
