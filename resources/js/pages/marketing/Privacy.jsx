@@ -43,6 +43,10 @@ export default function Privacy({ company, legal }) {
                             never your card number, UPI PIN or bank password.
                         </>,
                         <>
+                            <strong>Demo requests:</strong> the name, phone number, email, business details and message you send through “Book a
+                            demo”, used only to contact you about AutoWave.
+                        </>,
+                        <>
                             <strong>Technical data:</strong> IP address, browser and device type, and logs of requests and security-relevant
                             actions (sign-ins, payments, settings changes).
                         </>,

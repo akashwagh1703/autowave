@@ -42,6 +42,7 @@ use App\Http\Controllers\App\WebsiteController;
 use App\Http\Controllers\App\WebsiteMediaController;
 use App\Http\Controllers\App\WebsiteSectionController;
 use App\Http\Controllers\App\WorkspaceController;
+use App\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -50,6 +51,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::redirect('/', '/dashboard');
+Route::get('/robots.txt', [SeoController::class, 'closedRobots'])->name('robots');
 
 Route::middleware(['auth', 'active', 'verified'])->group(function () {
     Route::get('/workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');

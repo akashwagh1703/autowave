@@ -409,11 +409,13 @@ with the date and commit/PR reference; do not delete it.
 ### AW-036 — Public site content is rendered in the browser
 
 - **Category:** SEO
-- **Description:** The public site is an Inertia page. The server renders the title, description and Open
-  Graph tags, but the section content is rendered by React in the browser (no SSR).
-- **Impact:** Search engines that don't run JavaScript see only the meta tags. Google does run JavaScript,
-  but indexing may be slower.
-- **Status:** Open — options: Inertia SSR, or a server-rendered HTML version of the site.
+- **Description:** The public site and the marketing site are Inertia pages. The server renders the title,
+  description, canonical link, Open Graph tags and JSON-LD (`LocalBusiness` / `SoftwareApplication`), and
+  serves `robots.txt` and `sitemap.xml`, but the page content is rendered by React in the browser (no SSR).
+- **Impact:** Search engines that don't run JavaScript see only the meta tags and structured data. Google
+  does run JavaScript, but indexing may be slower.
+- **Status:** Open, partly mitigated (2026-10-05) — options: Inertia SSR (needs a Node process; after the
+  server resize, AW-065), or a server-rendered HTML version of the site.
 - **Affected:** `resources/views/app.blade.php`, `pages/website/Home.jsx`
 - **Created:** 2026-09-30
 

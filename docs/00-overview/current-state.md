@@ -347,6 +347,24 @@ This document describes what **actually exists** in the repository today. Planne
   Meta review), with company details from Settings → Billing (AW-068 resolved).
 - **Tests:** `OnlineCheckoutTest` (15) and `CouponAndInvoicePdfTest` (12).
 
+### Marketing site and search (2026-10-05)
+
+- **Brand:** AutoWave mark and wordmark (`components/BrandLogo.jsx`, `public/favicon.svg`,
+  `public/images/autowave-mark.png`), Plus Jakarta Sans headings on marketing pages, `og-autowave.png`.
+- **Pages:** new home page (hero with product illustrations, features, industries, how it works, FAQ),
+  industry pages `/for/{salons,clinics,turfs,coaching,cafes,stores}`, `/demo`, and a new header (with
+  mobile menu) and footer. Search titles and descriptions are in `config/marketing.php`; page copy in
+  `modules/marketing/industries.js` and the pages. Product illustrations are drawn in code
+  (`modules/marketing/mockups.jsx`) until the business-site redesign gives real screenshots.
+- **Book a demo:** the form creates a website lead (interest "Demo: …", message with business and city)
+  in the AutoWave Internal tenant through `SubmitEnquiry`; honeypot and the website enquiry rate limit.
+  "Chat on WhatsApp" uses `AUTOWAVE_SALES_WHATSAPP`, else the seller phone.
+- **Search engines:** marketing pages and business sites render title, description, canonical, `og:*`
+  and JSON-LD on the server (`app.blade.php`; `SoftwareApplication` on the home page, `LocalBusiness` on
+  business sites); host-aware `/robots.txt` and `/sitemap.xml` (`SeoController`): marketing and live
+  business sites open, app and admin hosts closed, draft or locked sites closed.
+- **Tests:** `Foundation/MarketingSiteTest` (9).
+
 ### Production (2026-09-29)
 
 - **Live:** <https://autowave.co.in>, <https://app.autowave.co.in>, <https://admin.autowave.co.in> and

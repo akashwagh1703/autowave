@@ -5,13 +5,16 @@ namespace App\Http\Controllers\Marketing;
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Support\BillingSettings;
 use App\Http\Controllers\Controller;
+use App\Support\Phone;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Marketing site pages: pricing and the policies payment providers and Meta ask for. Company details come
- * from Super Admin → Settings → Billing and the numbers from config('billing'), so the text always matches
- * how billing works.
+ * Marketing site pages: home, industries, pricing, demo and the policies payment providers and Meta ask
+ * for. Company details come from Super Admin → Settings → Billing and the numbers from config('billing'),
+ * so the text always matches how billing works. Search titles and descriptions are in config('marketing').
  */
 class PageController extends Controller
 {
@@ -19,50 +22,94 @@ class PageController extends Controller
 
     public function home(): Response
     {
-        return Inertia::render('Welcome', ['appUrl' => $this->appUrl()]);
+        $plans = $this->plans();
+        $from = $plans->min('price_monthly');
+
+        return $this->page('Welcome', 'pages.home', ['startingPrice' => $from])->withViewData('schema', [
+            '@context' => 'https://schema.org',
+            '@graph' => [
+                ['@type' => 'Organization', 'name' => config('app.name'), 'url' => url('/'), 'logo' => url('/images/autowave-mark.png')],
+                array_filter([
+                    '@type' => 'SoftwareApplication',
+                    'name' => config('app.name'),
+                    'applicationCategory' => 'BusinessApplication',
+                    'operatingSystem' => 'Web',
+                    'description' => config('marketing.pages.home.description'),
+                    'offers' => $from !== null
+                        ? ['@type' => 'AggregateOffer', 'priceCurrency' => 'INR', 'lowPrice' => number_format($from / 100, 2, '.', ''), 'offerCount' => $plans->count()]
+                        : null,
+                ]),
+            ],
+        ]);
+    }
+
+    public function industry(string $industry): Response
+    {
+        abort_unless(array_key_exists($industry, config('marketing.industries')), 404);
+
+        return $this->page('marketing/Industry', "industries.{$industry}", [
+            'industry' => $industry,
+            'startingPrice' => $this->plans()->min('price_monthly'),
+        ]);
     }
 
     public function pricing(): Response
     {
-        return $this->page('marketing/Pricing', [
-            'plans' => Plan::query()->purchasable()->get()->map(fn (Plan $plan) => [
-                'code' => $plan->code,
-                'name' => $plan->name,
-                'description' => $plan->description,
-                'price_monthly' => $plan->price_monthly,
-                'price_yearly' => $plan->price_yearly,
-                'limits' => $plan->limits,
-            ])->values(),
+        return $this->page('marketing/Pricing', 'pages.pricing', ['plans' => $this->plans()]);
+    }
+
+    public function demo(Request $request): Response
+    {
+        return $this->page('marketing/Demo', 'pages.demo', [
+            'industries' => collect(config('marketing.industries'))->pluck('name')->push('Other')->values(),
+            'requested' => (bool) $request->session()->get('demo_requested'),
         ]);
     }
 
     public function privacy(): Response
     {
-        return $this->page('marketing/Privacy');
+        return $this->page('marketing/Privacy', 'pages.privacy');
     }
 
     public function terms(): Response
     {
-        return $this->page('marketing/Terms');
+        return $this->page('marketing/Terms', 'pages.terms');
     }
 
     public function refunds(): Response
     {
-        return $this->page('marketing/Refunds');
+        return $this->page('marketing/Refunds', 'pages.refunds');
     }
 
     public function contact(): Response
     {
-        return $this->page('marketing/Contact');
+        return $this->page('marketing/Contact', 'pages.contact');
+    }
+
+    /** @return Collection<int, array<string, mixed>> */
+    private function plans(): Collection
+    {
+        return Plan::query()->purchasable()->get()->map(fn (Plan $plan) => [
+            'code' => $plan->code,
+            'name' => $plan->name,
+            'description' => $plan->description,
+            'price_monthly' => $plan->price_monthly,
+            'price_yearly' => $plan->price_yearly,
+            'limits' => $plan->limits,
+        ])->values();
     }
 
     /** @param  array<string, mixed>  $props */
-    private function page(string $component, array $props = []): Response
+    private function page(string $component, string $meta, array $props = []): Response
     {
+        $meta = config("marketing.{$meta}");
         $seller = $this->billing->get('seller');
 
         return Inertia::render($component, [
+            'meta' => ['title' => $meta['title'], 'description' => $meta['description']],
             'appUrl' => $this->appUrl(),
+            'whatsappUrl' => $this->whatsappUrl($seller['phone'] ?? null),
+            'industryLinks' => collect(config('marketing.industries'))->map(fn (array $item, string $slug) => ['slug' => $slug, 'name' => $item['name']])->values(),
             'company' => [
                 'name' => $seller['name'] ?: config('app.name'),
                 'address' => $seller['address'],
@@ -88,6 +135,13 @@ class PageController extends Controller
             ],
             ...$props,
         ]);
+    }
+
+    private function whatsappUrl(?string $sellerPhone): ?string
+    {
+        $number = Phone::normalize(config('marketing.whatsapp') ?: $sellerPhone);
+
+        return $number ? 'https://wa.me/'.ltrim($number, '+').'?text='.rawurlencode((string) config('marketing.whatsapp_message')) : null;
     }
 
     private function appUrl(): string

@@ -71,7 +71,7 @@ return [
     | come from Super Admin → Settings → Billing (seller). Bump `updated` whenever the policy text changes.
     */
     'legal' => [
-        'updated' => '2026-10-04',
+        'updated' => '2026-10-05',
         // City whose courts handle disputes, e.g. "Pune, Maharashtra". Empty: the registered office's courts.
         'jurisdiction' => env('AUTOWAVE_LEGAL_JURISDICTION'),
         // Named Grievance Officer (DPDP Act); reachable at the seller email.

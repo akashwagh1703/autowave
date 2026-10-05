@@ -1,4 +1,3 @@
-import { Head } from '@inertiajs/react';
 import PublicLayout from '@/layouts/PublicLayout';
 import { formatDate } from '@/utils/format';
 
@@ -6,9 +5,8 @@ import { formatDate } from '@/utils/format';
 export default function LegalPage({ title, updated, intro, children }) {
     return (
         <PublicLayout>
-            <Head title={title} />
             <article className="mx-auto max-w-3xl px-4 pt-10 pb-20 text-slate-700 sm:px-6">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900">{title}</h1>
+                <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">{title}</h1>
                 {updated ? <p className="mt-2 text-sm text-slate-500">Last updated {formatDate(updated, 'UTC')}</p> : null}
                 {intro ? <div className="mt-6 space-y-3 leading-relaxed">{intro}</div> : null}
                 <div className="mt-8 space-y-8">{children}</div>
@@ -20,7 +18,7 @@ export default function LegalPage({ title, updated, intro, children }) {
 export function Section({ title, children }) {
     return (
         <section>
-            <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+            <h2 className="font-display text-lg font-bold text-ink">{title}</h2>
             <div className="mt-2 space-y-3 leading-relaxed">{children}</div>
         </section>
     );

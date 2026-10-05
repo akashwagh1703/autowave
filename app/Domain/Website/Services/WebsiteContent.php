@@ -45,7 +45,7 @@ class WebsiteContent
     /** @return array<string, mixed> */
     public function page(WebsiteConfig $config): array
     {
-        $tenant = $this->context->tenant()->loadMissing('businessType:id,name');
+        $tenant = $this->context->tenant()->loadMissing('businessType:id,code,name');
         $branding = $this->context->setting('branding', []);
         $profile = $this->context->setting('business_profile', []);
         $name = $branding['business_name'] ?? $tenant->name;
@@ -68,7 +68,8 @@ class WebsiteContent
             'seo' => [
                 'title' => ($config->seo['title'] ?? null) ?: $name,
                 'description' => ($config->seo['description'] ?? null) ?: ($business['tagline'] ?? $business['description']),
-                'image' => $business['logo'],
+                // Link previews (WhatsApp, Facebook) look best with the wide hero photo.
+                'image' => Media::query()->inCollection('hero')->first()?->url() ?? $business['logo'],
             ],
             'contact' => $this->contact($profile, $name),
             'social' => collect(config('website.social'))

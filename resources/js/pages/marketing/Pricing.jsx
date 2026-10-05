@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { useState } from 'react';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -8,6 +8,7 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import CheckIcon from '@mui/icons-material/Check';
 import PublicLayout from '@/layouts/PublicLayout';
+import { Container, CtaBand, Eyebrow, Faq, SectionHeader } from '@/modules/marketing/blocks';
 import { LIMIT_ORDER, limitLabel, rupees } from '@/utils/billing';
 
 const linkClass = 'text-brand-700 hover:underline';
@@ -18,10 +19,10 @@ export default function Pricing({ plans, appUrl, billing }) {
 
     return (
         <PublicLayout>
-            <Head title="Pricing" />
-            <section className="mx-auto max-w-5xl px-4 pt-10 pb-20 sm:px-6">
+            <section className="mx-auto max-w-5xl px-4 pt-12 pb-16 sm:px-6">
                 <div className="text-center">
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Simple plans for every local business</h1>
+                    <Eyebrow>Pricing</Eyebrow>
+                    <h1 className="font-display mt-2 text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">Simple plans for every local business</h1>
                     <p className="mx-auto mt-3 max-w-2xl text-slate-600">
                         Start with a free {billing.trial_days}-day trial, no payment details needed. Then pay monthly or yearly; plans never
                         renew automatically.
@@ -47,10 +48,14 @@ export default function Pricing({ plans, appUrl, billing }) {
                         const price = period === 'yearly' ? plan.price_yearly : plan.price_monthly;
 
                         return (
-                            <Card key={plan.code} variant="outlined" sx={plan.code === popular ? { borderColor: 'primary.main', borderWidth: 2 } : undefined}>
+                            <Card
+                                key={plan.code}
+                                variant="outlined"
+                                sx={{ borderRadius: 4, ...(plan.code === popular ? { borderColor: 'primary.main', borderWidth: 2, boxShadow: '0 20px 40px -20px rgba(67, 56, 202, 0.35)' } : {}) }}
+                            >
                                 <CardContent className="flex h-full flex-col">
                                     <div className="flex items-center gap-2">
-                                        <h2 className="text-lg font-semibold text-slate-900">{plan.name}</h2>
+                                        <h2 className="font-display text-lg font-bold text-ink">{plan.name}</h2>
                                         {plan.code === popular ? <Chip size="small" color="primary" label="Most popular" /> : null}
                                     </div>
                                     {plan.description ? <p className="mt-1 text-sm text-slate-600">{plan.description}</p> : null}
@@ -100,6 +105,29 @@ export default function Pricing({ plans, appUrl, billing }) {
                     </p>
                 </div>
             </section>
+
+            <section className="bg-slate-50 py-16">
+                <Container>
+                    <SectionHeader title="Billing questions" />
+                    <div className="mt-10">
+                        <Faq
+                            items={[
+                                { q: 'Do I need a card to start the trial?', a: `No. The ${billing.trial_days}-day trial needs no payment details. Pick a plan whenever you are ready.` },
+                                { q: 'Will I be charged automatically?', a: 'No. Plans never renew automatically. We remind you before your plan ends and you renew only if you want to.' },
+                                { q: 'Can I change plans later?', a: 'Yes. Upgrade any time and the unused days of your current plan are credited towards the new one.' },
+                                {
+                                    q: 'What happens if my plan ends?',
+                                    a: `You get ${billing.grace_days} days of grace to renew. After that the app becomes read-only, and after ${billing.lock_after_days} days your website goes offline until you renew. Your data is kept safe.`,
+                                },
+                            ]}
+                        />
+                    </div>
+                </Container>
+            </section>
+
+            <div className="pt-16">
+                <CtaBand trialDays={billing.trial_days} />
+            </div>
         </PublicLayout>
     );
 }

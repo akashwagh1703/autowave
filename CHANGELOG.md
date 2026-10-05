@@ -8,6 +8,15 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **New marketing website.** autowave.co.in has a new look and logo: a home page that shows what AutoWave
+  does (website, leads, WhatsApp and automation, bookings and orders), pages for salons, clinics, turfs,
+  coaching centres, cafes and local stores, a **Book a demo** form whose requests arrive as leads in
+  AutoWave's own CRM, and **Chat on WhatsApp** buttons (set `AUTOWAVE_SALES_WHATSAPP`).
+- **Better Google results and link previews.** The marketing site and every business website now tell
+  search engines what they are (business name, address, phone and links for business sites), have a
+  `robots.txt` and `sitemap.xml`, and show a proper preview image when the link is shared on WhatsApp or
+  Facebook (a business site uses its hero photo, else its logo). The app and admin sites and unpublished
+  business sites ask search engines to stay away.
 - **Pricing and policy pages.** The marketing site now has Pricing (live plan prices), Terms of service,
   Privacy policy, Refund and cancellation policy, and Contact pages, linked from every page's footer, the
   sign-up form and the pay dialog. Company details come from Super Admin → Settings → Billing.

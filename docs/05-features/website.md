@@ -1,7 +1,7 @@
 # Website
 
 - **Status:** ✅ Phase 6: builder, public site, enquiry form and online booking; products and cart in Phase 7
-- **Last updated:** 2026-10-01
+- **Last updated:** 2026-10-05 (structured data, robots.txt and sitemap)
 
 ## Purpose
 
@@ -99,6 +99,15 @@ business can edit it without help: design, content, images, publishing, the enqu
 - **Uploads.**
   - JPG, PNG or WebP only (sniffed MIME type, no SVG), up to 4 MB, 100–6000 px per side.
   - Limits: logo 1, hero 1, gallery 24. Uploading a new logo or hero image replaces the old one.
+- **Search engines and link previews** (rendered on the server in `app.blade.php`, so crawlers and
+  WhatsApp/Facebook previews see them without JavaScript):
+  - title, description, `og:*` tags and a canonical link; the preview image is the hero photo, else the logo;
+    the logo is also the favicon;
+  - schema.org `LocalBusiness` JSON-LD (`WebsiteSchema`): name, description, logo, image, phone, email,
+    address, map link and social links; the type follows the business type (`BeautySalon`, `MedicalClinic`,
+    `SportsActivityLocation`, `EducationalOrganization`, `CafeOrCoffeeShop`, `Store`);
+  - `/robots.txt` and `/sitemap.xml` (`SeoController`): open with a sitemap while the site is live; a draft or
+    locked site answers `Disallow: /` and its sitemap returns 404. Previews carry `noindex` and no JSON-LD.
 
 ## Database
 

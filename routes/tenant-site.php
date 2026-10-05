@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\Website\BookingController;
 use App\Http\Controllers\Website\EnquiryController;
 use App\Http\Controllers\Website\HomeController;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('tenant.home');
 Route::get('/preview', HomeController::class)->name('tenant.preview');
+Route::get('/robots.txt', [SeoController::class, 'siteRobots'])->name('tenant.robots');
+Route::get('/sitemap.xml', [SeoController::class, 'siteSitemap'])->name('tenant.sitemap');
 
 Route::middleware('site.live')->group(function () {
     Route::post('/enquiry', EnquiryController::class)->middleware('throttle:website-enquiry')->name('tenant.enquiry');
