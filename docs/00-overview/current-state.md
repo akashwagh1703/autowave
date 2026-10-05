@@ -356,14 +356,17 @@ This document describes what **actually exists** in the repository today. Planne
   mobile menu) and footer. Search titles and descriptions are in `config/marketing.php`; page copy in
   `modules/marketing/industries.js` and the pages. Product illustrations are drawn in code
   (`modules/marketing/mockups.jsx`) until the business-site redesign gives real screenshots.
-- **Book a demo:** the form creates a website lead (interest "Demo: …", message with business and city)
-  in the AutoWave Internal tenant through `SubmitEnquiry`; honeypot and the website enquiry rate limit.
-  "Chat on WhatsApp" uses `AUTOWAVE_SALES_WHATSAPP`, else the seller phone.
+- **Book a demo:** each request is saved in `demo_requests`, emailed to every active platform admin
+  (`DemoRequested`, `notifications` queue), and copied as a website lead (interest "Demo: …", message with
+  business and city) into the AutoWave Internal tenant through `SubmitEnquiry` when that tenant exists.
+  Super Admin → **Demo requests** lists them (New / Contacted / Became customer / Closed, search, WhatsApp
+  and call buttons, admin note, delete for spam); the dashboard shows the number of new ones. Honeypot and
+  the website enquiry rate limit. "Chat on WhatsApp" uses `AUTOWAVE_SALES_WHATSAPP`, else the seller phone.
 - **Search engines:** marketing pages and business sites render title, description, canonical, `og:*`
   and JSON-LD on the server (`app.blade.php`; `SoftwareApplication` on the home page, `LocalBusiness` on
   business sites); host-aware `/robots.txt` and `/sitemap.xml` (`SeoController`): marketing and live
   business sites open, app and admin hosts closed, draft or locked sites closed.
-- **Tests:** `Foundation/MarketingSiteTest` (9).
+- **Tests:** `Foundation/MarketingSiteTest` (10).
 
 ### Production (2026-09-29)
 

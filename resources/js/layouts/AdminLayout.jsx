@@ -6,6 +6,7 @@ import FlashMessages from '@/components/FlashMessages';
 const navigation = [
     { label: 'Dashboard', href: '/' },
     { label: 'Tenants', href: '/tenants' },
+    { label: 'Demo requests', href: '/demo-requests' },
     { label: 'Payments', href: '/billing/payments' },
     { label: 'Plans', href: '/billing/plans' },
     { label: 'Coupons', href: '/billing/coupons' },

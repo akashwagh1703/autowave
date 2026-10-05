@@ -51,6 +51,20 @@ export default function Dashboard({ stats, ai, businessTypes }) {
                 </Alert>
             ) : null}
 
+            {stats.new_demo_requests > 0 ? (
+                <Alert
+                    severity="info"
+                    sx={{ mt: 2 }}
+                    action={
+                        <Button component={Link} href="/demo-requests" color="inherit" size="small">
+                            Open
+                        </Button>
+                    }
+                >
+                    {stats.new_demo_requests} new {stats.new_demo_requests === 1 ? 'demo request is' : 'demo requests are'} waiting for a call.
+                </Alert>
+            ) : null}
+
             {ai ? (
                 <Card variant="outlined" className="mt-4">
                     <CardContent className="flex flex-wrap items-center justify-between gap-4">

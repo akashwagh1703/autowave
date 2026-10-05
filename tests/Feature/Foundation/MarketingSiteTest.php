@@ -4,9 +4,13 @@ namespace Tests\Feature\Foundation;
 
 use App\Domain\Activity\Models\Activity;
 use App\Domain\Lead\Models\Lead;
+use App\Domain\Marketing\Models\DemoRequest;
+use App\Domain\Marketing\Notifications\DemoRequested;
 use App\Domain\Website\Actions\UpdateWebsiteSettings;
 use App\Domain\Website\Support\WebsitePreview;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\Concerns\CreatesCrmRecords;
 use Tests\Concerns\CreatesTenants;
@@ -127,8 +131,10 @@ class MarketingSiteTest extends TestCase
             ->assertDontSee('rel="canonical"', false);
     }
 
-    public function test_a_demo_request_becomes_a_website_lead_of_the_internal_tenant(): void
+    public function test_a_demo_request_is_saved_emailed_to_admins_and_becomes_a_website_lead_of_the_internal_tenant(): void
     {
+        Notification::fake();
+        $admin = User::factory()->platformAdmin()->create();
         $internal = $this->createTenant('AutoWave Internal', 'autowave_internal', options: ['is_internal' => true]);
         $salon = $this->createTenant();
 
@@ -142,8 +148,22 @@ class MarketingSiteTest extends TestCase
             'message' => 'Two branches, five stylists.',
         ])->assertSessionHasNoErrors()->assertRedirect($this->marketingUrl('/demo'))->assertSessionHas('demo_requested', true);
 
-        $this->inTenant($internal, function () {
+        $demo = DemoRequest::query()->sole();
+        $this->assertSame(['Asha Patil', '+919876543210', 'Asha Beauty Lounge', 'Salons & spas', 'Nashik', 'Two branches, five stylists.', DemoRequest::NEW], [
+            $demo->name, $demo->phone, $demo->business_name, $demo->industry, $demo->city, $demo->message, $demo->status,
+        ]);
+        Notification::assertSentTo($admin, DemoRequested::class, function (DemoRequested $notification) use ($admin, $demo) {
+            $mail = $notification->toMail($admin);
+
+            return $notification->demoRequestId === $demo->id
+                && $mail->subject === 'Demo request: Asha Beauty Lounge'
+                && in_array('Phone: +919876543210', $mail->introLines, true)
+                && $mail->actionUrl === route('admin.demo-requests.index');
+        });
+
+        $this->inTenant($internal, function () use ($demo) {
             $lead = Lead::query()->with('source')->sole();
+            $this->assertSame($lead->id, $demo->lead_id);
             $this->assertSame('Asha Patil', $lead->name);
             $this->assertSame('website', $lead->source?->code);
             $this->assertSame('Demo: Salons & spas', $lead->interest);
@@ -170,11 +190,58 @@ class MarketingSiteTest extends TestCase
             ->assertSessionHas('demo_requested', true);
 
         $this->assertSame(0, $this->inTenant($internal, fn () => Lead::query()->count()));
+        $this->assertSame(0, DemoRequest::query()->count());
     }
 
-    public function test_a_demo_request_without_the_internal_tenant_asks_the_visitor_to_contact_us(): void
+    public function test_a_demo_request_without_the_internal_tenant_is_still_saved_and_emailed(): void
     {
+        Notification::fake();
+        $admin = User::factory()->platformAdmin()->create();
+
         $this->post($this->marketingUrl('/demo'), ['name' => 'Asha Patil', 'phone' => '98765 43210', 'business_name' => 'Asha Beauty Lounge'])
-            ->assertSessionHasErrors('name');
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('demo_requested', true);
+
+        $this->assertNull(DemoRequest::query()->sole()->lead_id);
+        Notification::assertSentTo($admin, DemoRequested::class);
+    }
+
+    public function test_platform_admins_follow_up_demo_requests_in_super_admin(): void
+    {
+        $admin = User::factory()->platformAdmin()->create(['name' => 'Akash']);
+        $fresh = DemoRequest::query()->create(['name' => 'Asha Patil', 'phone' => '+919876543210', 'business_name' => 'Asha Beauty Lounge', 'city' => 'Nashik']);
+        DemoRequest::query()->create(['name' => 'Ravi', 'phone' => '+919812345678', 'business_name' => 'Ravi Turf', 'status' => DemoRequest::CLOSED]);
+
+        $this->get($this->adminUrl('/demo-requests'))->assertRedirect();
+        $this->actingAs(User::factory()->create())->get($this->adminUrl('/demo-requests'))->assertForbidden();
+
+        $this->actingAs($admin);
+        $this->get($this->adminUrl('/'))->assertInertia(fn (Assert $page) => $page->where('stats.new_demo_requests', 1));
+        $this->get($this->adminUrl('/demo-requests'))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('admin/marketing/DemoRequests')
+            ->where('filters.status', 'new')
+            ->has('requests.data', 1)
+            ->where('requests.data.0.business_name', 'Asha Beauty Lounge')
+            ->where('counts.new', 1)
+            ->where('counts.closed', 1));
+        $this->get($this->adminUrl('/demo-requests?status=all&search=98123'))->assertInertia(fn (Assert $page) => $page
+            ->has('requests.data', 1)
+            ->where('requests.data.0.business_name', 'Ravi Turf'));
+        $this->get($this->adminUrl('/demo-requests?status=all&search=nashik'))->assertInertia(fn (Assert $page) => $page->has('requests.data', 1));
+
+        $this->put($this->adminUrl("/demo-requests/{$fresh->id}"), ['status' => 'contacted', 'note' => ' Demo on Friday 4 pm. '])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
+        $fresh->refresh();
+        $this->assertSame([DemoRequest::CONTACTED, 'Demo on Friday 4 pm.', $admin->id], [$fresh->status, $fresh->note, $fresh->handled_by_user_id]);
+        $this->assertNotNull($fresh->handled_at);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'marketing.demo_request_updated', 'subject_id' => $fresh->id]);
+        $this->get($this->adminUrl('/'))->assertInertia(fn (Assert $page) => $page->where('stats.new_demo_requests', 0));
+
+        $this->put($this->adminUrl("/demo-requests/{$fresh->id}"), ['status' => 'maybe'])->assertSessionHasErrors('status');
+
+        $this->delete($this->adminUrl("/demo-requests/{$fresh->id}"))->assertSessionHas('success');
+        $this->assertModelMissing($fresh);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'marketing.demo_request_deleted']);
     }
 }

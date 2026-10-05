@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DemoRequestController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\TenantController;
@@ -30,6 +31,9 @@ Route::name('admin.')->group(function () {
         Route::post('/tenants/{tenant}/suspend', [TenantController::class, 'suspend'])->name('tenants.suspend');
         Route::post('/tenants/{tenant}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
         Route::put('/tenants/{tenant}/storage-limit', [TenantController::class, 'updateStorageLimit'])->name('tenants.storage-limit');
+        Route::get('/demo-requests', [DemoRequestController::class, 'index'])->name('demo-requests.index');
+        Route::put('/demo-requests/{demoRequest}', [DemoRequestController::class, 'update'])->whereNumber('demoRequest')->name('demo-requests.update');
+        Route::delete('/demo-requests/{demoRequest}', [DemoRequestController::class, 'destroy'])->whereNumber('demoRequest')->name('demo-requests.destroy');
         Route::get('/ai-usage', [AiUsageController::class, 'index'])->name('ai.usage');
         Route::put('/tenants/{tenant}/ai-limit', [AiUsageController::class, 'updateLimit'])->name('tenants.ai-limit');
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings');

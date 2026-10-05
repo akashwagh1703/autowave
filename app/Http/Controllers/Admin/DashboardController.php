@@ -6,6 +6,7 @@ use App\Domain\AI\Models\AIUsage;
 use App\Domain\AI\Support\AIUsageMeter;
 use App\Domain\Billing\Models\BillingPayment;
 use App\Domain\Business\Models\BusinessType;
+use App\Domain\Marketing\Models\DemoRequest;
 use App\Domain\Tenant\Enums\TenantStatus;
 use App\Domain\Tenant\Models\Tenant;
 use App\Http\Controllers\Controller;
@@ -24,6 +25,7 @@ class DashboardController extends Controller
                 'suspended_tenants' => Tenant::query()->where('status', TenantStatus::Suspended)->count(),
                 'users' => User::query()->count(),
                 'pending_payments' => BillingPayment::withoutTenantScope()->where('status', BillingPayment::PENDING)->count(),
+                'new_demo_requests' => DemoRequest::query()->where('status', DemoRequest::NEW)->count(),
             ],
             'ai' => (function () {
                 $month = AIUsage::withoutTenantScope()->where('created_at', '>=', AIUsageMeter::monthStart())

@@ -8,6 +8,9 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **Demo requests in Super Admin.** Every "Book a demo" request is emailed to the platform admins and
+  listed in Super Admin → Demo requests, with WhatsApp and call buttons, a status (New, Contacted, Became
+  customer, Closed) and a private note. The dashboard shows how many new requests are waiting.
 - **New marketing website.** autowave.co.in has a new look and logo: a home page that shows what AutoWave
   does (website, leads, WhatsApp and automation, bookings and orders), pages for salons, clinics, turfs,
   coaching centres, cafes and local stores, a **Book a demo** form whose requests arrive as leads in

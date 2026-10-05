@@ -387,6 +387,12 @@ Amounts are in paise.
 - Platform setting `billing`: enforcement, payment method switches, seller, GST, UPI, bank, instructions and
   the QR image path (defaults in `config('billing.settings')`).
 
+### Demo requests (`2026_10_09_100000`)
+
+| Table | Key columns |
+|---|---|
+| `demo_requests` (not tenant-owned) | `name`, `phone` (normalised), `email`, `business_name`, `industry`, `city`, `message`, `status` (`new`/`contacted`/`converted`/`closed`), `note` (admin only), `lead_id` (copy in the AutoWave Internal CRM; null on delete), `handled_by_user_id` (null on delete), `handled_at`; index (`status`, `created_at`) |
+
 ## Deferred platform tables
 
 `feature_flags`, `custom_fields` — added with the first feature that needs them (AW-009).
