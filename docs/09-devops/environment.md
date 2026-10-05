@@ -52,7 +52,8 @@ Template: `.env.example`. Never commit `.env`. Production secrets live only on t
 | `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | `127.0.0.1` / `6379` / `null` | `127.0.0.1` / `6379` / `null` (AW-067) | Redis connection |
 | `REDIS_DB` / `REDIS_CACHE_DB` | `0` / `1` | `2` / `3` | Redis databases for queues and cache; production shares Redis with other projects |
 | `REDIS_PREFIX` | `autowave_database_` | `awp_` | Redis key prefix |
-| `MAIL_*` | `log` mailer | SMTP provider ([enable-integrations](../11-runbooks/enable-integrations.md)) | Outgoing mail |
+| `MAIL_*` | `log` mailer | `MAIL_MAILER=resend` ([enable-integrations](../11-runbooks/enable-integrations.md)) | Outgoing mail |
+| `RESEND_API_KEY` | — | Resend API key (`re_…`, sending access) | Used when `MAIL_MAILER=resend` |
 | `MESSAGING_WHATSAPP_PROVIDER` / `MESSAGING_INSTAGRAM_PROVIDER` | `log` | `log` | Fallback for businesses that have not connected the channel; connected channels always use Meta |
 | `MESSAGING_EMAIL_PROVIDER` | `mail` | `mail` | Email channel provider |
 | `MESSAGING_MEDIA_QUEUE` | `media` | `media` | Queue that downloads files contacts send in the inbox; a worker must listen on it |

@@ -1,6 +1,6 @@
 # Runbook: Enable email, AI and WhatsApp/Instagram in production
 
-- **Last updated:** 2026-09-30
+- **Last updated:** 2026-10-05
 - **Starting point:** production launched with `MAIL_MAILER=log`, `AI_PROVIDER=fake` and the `log`
   (simulated) messaging fallback, so nothing leaves the server until each part is set up.
 
@@ -17,10 +17,36 @@ sudo -u autowave php8.4 artisan queue:restart
 Config is cached, so a change has no effect until `optimize`; the worker keeps the old config until
 `queue:restart`. Never paste secrets into chat, tickets or Git; never `cat` the file on a shared screen.
 
-## 1. Email (SMTP)
+## 1. Email
 
-Used for password-reset emails (until SMTP is set, "Forgot password" only writes the email to the log)
-and for the Email channel in automations (`MESSAGING_EMAIL_PROVIDER=mail`).
+Used for password-reset emails (until email is set up, "Forgot password" only writes the email to the
+log), billing and demo-request alerts, and the Email channel in automations (`MESSAGING_EMAIL_PROVIDER=mail`).
+
+### Recommended: Resend over HTTPS
+
+DigitalOcean blocks SMTP ports and Brevo rejected the SMTP login (2026-10-05), so production uses Resend's
+API on port 443 (`resend/resend-php`, Laravel's `resend` mailer).
+
+1. Sign up at <https://resend.com>, open **Domains → Add domain**, enter `autowave.co.in`, region any.
+2. Add the records Resend shows in **DigitalOcean → Networking → Domains → autowave.co.in**: the DKIM TXT
+   `resend._domainkey`, and the MX + SPF TXT on the `send` subdomain. They don't touch the Zoho MX or the
+   root SPF. Click **Verify** until the domain shows **Verified**.
+3. **API Keys → Create API key**, permission *Sending access*, domain `autowave.co.in`. It starts with `re_`.
+4. In `.env`:
+
+   ```dotenv
+   MAIL_MAILER=resend
+   RESEND_API_KEY=re_...
+   MAIL_FROM_ADDRESS="hello@autowave.co.in"
+   MAIL_FROM_NAME="AutoWave"
+   ```
+
+5. `optimize` + `queue:restart`, then send the test in step 5 below.
+
+The root domain must have **one** SPF record (`v=spf1 include:zoho.in ~all`, plus any other sender) and
+**one** `_dmarc` record; duplicates make SPF / DMARC fail.
+
+### Alternative: SMTP provider
 
 1. Pick a transactional provider (Brevo, Amazon SES, Mailgun, Postmark, Zoho ZeptoMail…) and add
    `autowave.co.in` as a sending domain.
