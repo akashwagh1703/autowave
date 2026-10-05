@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Marketing;
 use App\Domain\Billing\Support\BillingRecipients;
 use App\Domain\Marketing\Models\DemoRequest;
 use App\Domain\Marketing\Notifications\DemoRequested;
+use App\Domain\Marketing\Notifications\DemoRequestReceived;
+use App\Domain\Marketing\Support\SalesWhatsApp;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Domain\Website\Actions\SubmitEnquiry;
@@ -16,16 +18,18 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
  * "Book a demo" on the marketing site. The request is saved for Super Admin → Demo requests, emailed to the
- * platform admins, and copied as a website lead into the AutoWave Internal CRM when that tenant exists.
+ * platform admins, copied as a website lead into the AutoWave Internal CRM when that tenant exists, and
+ * confirmed to the requester by email.
  */
 class DemoRequestController extends Controller
 {
-    public function __invoke(Request $request, TenantContext $context, SubmitEnquiry $submit): RedirectResponse
+    public function __invoke(Request $request, TenantContext $context, SubmitEnquiry $submit, SalesWhatsApp $whatsapp): RedirectResponse
     {
         if (filled($request->input(EnquiryController::HONEYPOT))) {
             Log::info('marketing.demo_honeypot');
@@ -36,12 +40,12 @@ class DemoRequestController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:120'],
             'phone' => ['required', 'string', 'regex:'.StoreBusinessRequest::PHONE_PATTERN],
-            'email' => ['nullable', 'string', 'email', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255'],
             'business_name' => ['required', 'string', 'min:2', 'max:120'],
             'industry' => ['nullable', 'string', Rule::in(collect(config('marketing.industries'))->pluck('name')->push('Other')->all())],
             'city' => ['nullable', 'string', 'max:80'],
             'message' => ['nullable', 'string', 'max:1000'],
-        ], ['phone.regex' => __('Enter a valid phone number.')]) + ['email' => null, 'industry' => null, 'city' => null, 'message' => null];
+        ], ['phone.regex' => __('Enter a valid phone number.')]) + ['industry' => null, 'city' => null, 'message' => null];
 
         $phone = Phone::normalize($data['phone']) ?? throw ValidationException::withMessages(['phone' => __('Enter a valid phone number.')]);
         $message = filled($data['message']) ? trim($data['message']) : null;
@@ -49,7 +53,7 @@ class DemoRequestController extends Controller
         $demo = DemoRequest::query()->create([
             'name' => trim($data['name']),
             'phone' => $phone,
-            'email' => $data['email'],
+            'email' => Str::lower(trim($data['email'])),
             'business_name' => trim($data['business_name']),
             'industry' => $data['industry'],
             'city' => filled($data['city']) ? trim($data['city']) : null,
@@ -76,6 +80,13 @@ class DemoRequestController extends Controller
         }
 
         Notification::send(BillingRecipients::platformAdmins(), new DemoRequested($demo->id));
+        Notification::route('mail', [$demo->email => $demo->name])->notify(new DemoRequestReceived(
+            $demo->name,
+            $demo->business_name,
+            $demo->phone,
+            rtrim(config('app.url'), '/').'/register',
+            $whatsapp->url(),
+        ));
 
         return back()->with('demo_requested', true);
     }

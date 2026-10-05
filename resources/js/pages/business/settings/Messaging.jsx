@@ -325,9 +325,9 @@ function TemplatesCard({ templates, canSync, whatsappConnected }) {
     );
 }
 
-function PreferencesCard({ quietHours, email, canUpdate }) {
+function PreferencesCard({ quietHours, email, ownerAlerts, canUpdate }) {
     const { timezone } = useTenant();
-    const form = useForm({ quiet_hours: quietHours, email: { from_name: email.from_name ?? '', reply_to: email.reply_to ?? '' } });
+    const form = useForm({ quiet_hours: quietHours, email: { from_name: email.from_name ?? '', reply_to: email.reply_to ?? '' }, owner_alerts: ownerAlerts });
     const setQuiet = (changes) => form.setData('quiet_hours', { ...form.data.quiet_hours, ...changes });
     const setEmail = (changes) => form.setData('email', { ...form.data.email, ...changes });
 
@@ -376,6 +376,15 @@ function PreferencesCard({ quietHours, email, canUpdate }) {
                         </div>
                     </div>
 
+                    <div className="space-y-2">
+                        <h2 className="font-semibold text-slate-900">Email alerts</h2>
+                        <FormControlLabel
+                            control={<Switch checked={form.data.owner_alerts} disabled={!canUpdate} onChange={(event) => form.setData('owner_alerts', event.target.checked)} />}
+                            label="Email the owners about new website enquiries and online bookings"
+                        />
+                        <p className="text-sm text-slate-600">Sent to every owner as soon as a customer sends an enquiry or books on your website. Website order and reservation emails are automations you can change in Automations.</p>
+                    </div>
+
                     <div className="space-y-3">
                         <h2 className="font-semibold text-slate-900">Email sender</h2>
                         <p className="text-sm text-slate-600">Automation emails are sent from AutoWave’s address with your business name. Replies go to the reply-to address.</p>
@@ -416,7 +425,7 @@ function PreferencesCard({ quietHours, email, canUpdate }) {
     );
 }
 
-export default function Messaging({ channels, templates, quietHours, email }) {
+export default function Messaging({ channels, templates, quietHours, email, ownerAlerts }) {
     const { can, timezone } = useTenant();
     const canUpdate = can('settings.update');
     const [disconnecting, setDisconnecting] = useState(null);
@@ -440,7 +449,7 @@ export default function Messaging({ channels, templates, quietHours, email }) {
             </Button>
             <PageHeader
                 title="Messaging"
-                description={canUpdate ? 'Connect WhatsApp and Instagram, manage templates, quiet hours and the email sender.' : 'You have view-only access.'}
+                description={canUpdate ? 'Connect WhatsApp and Instagram, manage templates, quiet hours, email alerts and the email sender.' : 'You have view-only access.'}
                 actions={
                     can('conversations.view') ? (
                         <Button component={Link} href="/inbox" variant="outlined">
@@ -454,7 +463,7 @@ export default function Messaging({ channels, templates, quietHours, email }) {
                 <WhatsAppCard channel={channels.whatsapp} canUpdate={canUpdate} onDisconnect={setDisconnecting} timezone={timezone} />
                 <TemplatesCard templates={templates} canSync={canUpdate} whatsappConnected={channels.whatsapp.connected} />
                 <InstagramCard channel={channels.instagram} canUpdate={canUpdate} onDisconnect={setDisconnecting} timezone={timezone} />
-                <PreferencesCard quietHours={quietHours} email={email} canUpdate={canUpdate} />
+                <PreferencesCard quietHours={quietHours} email={email} ownerAlerts={ownerAlerts} canUpdate={canUpdate} />
             </div>
 
             <ConfirmDialog

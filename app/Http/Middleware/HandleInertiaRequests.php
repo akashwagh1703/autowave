@@ -57,7 +57,9 @@ class HandleInertiaRequests extends Middleware
                 'marketing_url' => rtrim(str_replace(config('autowave.hosts.app'), config('autowave.hosts.marketing'), config('app.url')), '/'),
             ],
             'auth' => [
-                'user' => fn () => $request->user()?->only(['id', 'name', 'email']),
+                'user' => fn () => $request->user()
+                    ? [...$request->user()->only(['id', 'name', 'email']), 'email_verified' => $request->user()->hasVerifiedEmail()]
+                    : null,
             ],
             'tenant' => function () {
                 $context = app(TenantContext::class);

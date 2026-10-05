@@ -100,8 +100,8 @@ jump the wizard to the first step that has one.
 - Default automations and a default dashboard layout are not created yet: automations arrive with the
   automation engine (Phase 5); the dashboard uses the business type's `dashboard_widgets` setting.
 - No logo upload yet (needs the file-security pipeline).
-- Email verification is required before onboarding, unless a platform admin has switched it off in
-  Super Admin → Settings.
+- Email verification is required before onboarding, unless a platform admin has made it optional in
+  Super Admin → Settings (the confirmation email is still sent and a reminder banner is shown).
 - The platform-admin UI cannot raise a user's business limit yet (change the env value).
 
 ## Future extensions

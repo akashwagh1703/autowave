@@ -40,16 +40,23 @@ class MessagingSettings
         ];
     }
 
+    /** Email the owners about new website enquiries, bookings, orders and reservations (on by default). */
+    public function ownerAlerts(): bool
+    {
+        return (bool) ($this->stored()['owner_alerts'] ?? true);
+    }
+
     /**
      * @param  array{enabled: bool, start: string, end: string}  $quietHours
      * @param  array{from_name: ?string, reply_to: ?string}  $email
      */
-    public function update(array $quietHours, array $email): void
+    public function update(array $quietHours, array $email, ?bool $ownerAlerts = null): void
     {
         TenantSetting::query()->updateOrCreate(['key' => self::KEY], ['value' => [
             ...$this->stored(),
             'quiet_hours' => $quietHours,
             'email' => $email,
+            'owner_alerts' => $ownerAlerts ?? $this->ownerAlerts(),
         ]]);
     }
 

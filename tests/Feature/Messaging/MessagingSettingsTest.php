@@ -201,6 +201,24 @@ class MessagingSettingsTest extends TestCase
             $settings = app(MessagingSettings::class);
             $this->assertSame(['enabled' => true, 'start' => '22:00', 'end' => '08:30'], $settings->quietHours());
             $this->assertSame(['from_name' => 'ABC Salon Team', 'reply_to' => 'hello@abc-salon.test'], $settings->email());
+            $this->assertTrue($settings->ownerAlerts());
         });
+    }
+
+    public function test_owner_email_alerts_are_on_by_default_and_can_be_switched_off(): void
+    {
+        $tenant = $this->createTenant();
+        $this->actingAs($this->ownerOf($tenant));
+
+        $this->get($this->appUrl('/settings/messaging'))->assertInertia(fn (Assert $page) => $page->where('ownerAlerts', true));
+
+        $this->put($this->appUrl('/settings/messaging'), [
+            'quiet_hours' => ['enabled' => false, 'start' => '21:00', 'end' => '09:00'],
+            'email' => ['from_name' => '', 'reply_to' => ''],
+            'owner_alerts' => false,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertFalse($this->inTenant($tenant, fn () => app(MessagingSettings::class)->ownerAlerts()));
+        $this->get($this->appUrl('/settings/messaging'))->assertInertia(fn (Assert $page) => $page->where('ownerAlerts', false));
     }
 }

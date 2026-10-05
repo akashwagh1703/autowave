@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Marketing;
 
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Support\BillingSettings;
+use App\Domain\Marketing\Support\SalesWhatsApp;
 use App\Http\Controllers\Controller;
-use App\Support\Phone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -18,7 +18,10 @@ use Inertia\Response;
  */
 class PageController extends Controller
 {
-    public function __construct(private readonly BillingSettings $billing) {}
+    public function __construct(
+        private readonly BillingSettings $billing,
+        private readonly SalesWhatsApp $whatsapp,
+    ) {}
 
     public function home(): Response
     {
@@ -108,7 +111,7 @@ class PageController extends Controller
         return Inertia::render($component, [
             'meta' => ['title' => $meta['title'], 'description' => $meta['description']],
             'appUrl' => $this->appUrl(),
-            'whatsappUrl' => $this->whatsappUrl($seller['phone'] ?? null),
+            'whatsappUrl' => $this->whatsapp->url(),
             'industryLinks' => collect(config('marketing.industries'))->map(fn (array $item, string $slug) => ['slug' => $slug, 'name' => $item['name']])->values(),
             'company' => [
                 'name' => $seller['name'] ?: config('app.name'),
@@ -135,13 +138,6 @@ class PageController extends Controller
             ],
             ...$props,
         ]);
-    }
-
-    private function whatsappUrl(?string $sellerPhone): ?string
-    {
-        $number = Phone::normalize(config('marketing.whatsapp') ?: $sellerPhone);
-
-        return $number ? 'https://wa.me/'.ltrim($number, '+').'?text='.rawurlencode((string) config('marketing.whatsapp_message')) : null;
     }
 
     private function appUrl(): string

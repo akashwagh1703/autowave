@@ -35,6 +35,7 @@ class MessagingSettingsController extends Controller
                 ->map(fn (MessageTemplate $template) => MessagingPresenter::template($template))->all(),
             'quietHours' => $settings->quietHours(),
             'email' => $settings->email(),
+            'ownerAlerts' => $settings->ownerAlerts(),
             'graphVersion' => config('messaging.meta.graph_version'),
         ]);
     }
@@ -92,6 +93,7 @@ class MessagingSettingsController extends Controller
             'quiet_hours.end' => ['required', 'date_format:H:i', 'different:quiet_hours.start'],
             'email.from_name' => ['nullable', 'string', 'max:100', 'not_regex:/[\r\n<>"]/'],
             'email.reply_to' => ['nullable', 'email', 'max:191'],
+            'owner_alerts' => ['sometimes', 'boolean'],
         ], [
             'quiet_hours.end.different' => __('Quiet hours must end at a different time than they start.'),
         ]);
@@ -106,8 +108,10 @@ class MessagingSettingsController extends Controller
             'reply_to' => filled($validated['email']['reply_to'] ?? null) ? trim($validated['email']['reply_to']) : null,
         ];
 
-        $settings->update($quietHours, $email);
-        $audit->log('messaging.settings_updated', null, ['quiet_hours' => $quietHours, 'email' => $email]);
+        $ownerAlerts = array_key_exists('owner_alerts', $validated) ? (bool) $validated['owner_alerts'] : $settings->ownerAlerts();
+
+        $settings->update($quietHours, $email, $ownerAlerts);
+        $audit->log('messaging.settings_updated', null, ['quiet_hours' => $quietHours, 'email' => $email, 'owner_alerts' => $ownerAlerts]);
 
         return back()->with('success', __('Messaging settings saved.'));
     }

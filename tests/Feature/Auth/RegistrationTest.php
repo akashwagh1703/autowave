@@ -41,7 +41,7 @@ class RegistrationTest extends TestCase
         $this->get($this->appUrl('/dashboard'))->assertRedirect(route('verification.notice'));
     }
 
-    public function test_with_email_confirmation_off_new_users_are_confirmed_without_an_email(): void
+    public function test_with_email_confirmation_optional_new_users_still_get_the_email_but_are_not_blocked(): void
     {
         Notification::fake();
         app(PlatformSettings::class)->set(PlatformSettings::REQUIRE_EMAIL_VERIFICATION, false);
@@ -54,10 +54,39 @@ class RegistrationTest extends TestCase
         ])->assertRedirect('/dashboard');
 
         $user = User::query()->where('email', 'asha@example.com')->firstOrFail();
-        $this->assertTrue($user->hasVerifiedEmail());
-        Notification::assertNothingSent();
+        $this->assertFalse($user->hasVerifiedEmail());
+        Notification::assertSentTo($user, VerifyEmail::class);
 
         $this->get($this->appUrl('/dashboard'))->assertRedirect(route('onboarding.create'));
+        $this->get(route('onboarding.create'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('auth.user.email', 'asha@example.com')->where('auth.user.email_verified', false));
+    }
+
+    public function test_registration_still_works_when_the_mail_server_is_down(): void
+    {
+        config(['mail.default' => 'smtp', 'mail.mailers.smtp.host' => '127.0.0.1', 'mail.mailers.smtp.port' => 1, 'mail.mailers.smtp.timeout' => 2]);
+        app(PlatformSettings::class)->set(PlatformSettings::REQUIRE_EMAIL_VERIFICATION, false);
+
+        $this->post($this->appUrl('/register'), [
+            'name' => 'Asha Patil',
+            'email' => 'asha@example.com',
+            'password' => 'Str0ng-passw0rd!',
+            'password_confirmation' => 'Str0ng-passw0rd!',
+        ])->assertRedirect('/dashboard');
+
+        $this->assertAuthenticatedAs(User::query()->where('email', 'asha@example.com')->sole());
+    }
+
+    public function test_unconfirmed_users_can_ask_for_a_new_confirmation_email(): void
+    {
+        Notification::fake();
+        $user = User::factory()->unverified()->create();
+        app(PlatformSettings::class)->set(PlatformSettings::REQUIRE_EMAIL_VERIFICATION, false);
+
+        $this->actingAs($user)->post($this->appUrl('/email/verification-notification'))->assertRedirect();
+
+        Notification::assertSentTo($user, VerifyEmail::class);
     }
 
     public function test_unconfirmed_users_get_in_while_confirmation_is_off_and_not_after(): void

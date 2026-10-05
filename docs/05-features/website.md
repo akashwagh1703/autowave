@@ -34,7 +34,8 @@ business can edit it without help: design, content, images, publishing, the enqu
   in order, then the footer with social links. A floating WhatsApp button appears when a WhatsApp number is
   set.
 - **Enquiry form** (contact section): name, phone, optional email, interest and message. The form is replaced
-  by the section's success message after sending.
+  by the section's success message after sending. Owners are emailed the enquiry (and each online booking)
+  unless Settings → Messaging → Email alerts is off.
 - **Online booking** (booking section) goes through these steps:
   1. service (when the business has the service engine);
   2. staff or resource, or "Any available";

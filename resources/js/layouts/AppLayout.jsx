@@ -11,6 +11,7 @@ import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import { useState } from 'react';
 import FlashMessages from '@/components/FlashMessages';
+import VerifyEmailBanner from '@/components/VerifyEmailBanner';
 import BillingBanner from '@/modules/billing/BillingBanner';
 
 const navigation = [
@@ -55,6 +56,7 @@ export default function AppLayout({ title, children }) {
         <div className="min-h-screen bg-slate-50">
             <Head title={title} />
 
+            <VerifyEmailBanner />
             <BillingBanner />
 
             <header className="border-b border-slate-200 bg-white print:hidden">

@@ -32,17 +32,17 @@ export default function SettingsIndex({ settings, unverifiedUsers, billing }) {
                         label="Require email confirmation for new accounts"
                     />
                     <p className="text-sm text-slate-600">
-                        When on, people who sign up must click the link in the confirmation email before they can create or use a
-                        business. When off, new accounts are confirmed straight away and no email is sent, and anyone still waiting
-                        for a confirmation email can sign in.
+                        Everyone who signs up gets a confirmation email. When on, they must click its link before they can create or
+                        use a business. When off, confirming is optional: they can start straight away and see a reminder with a
+                        “Send it again” link until they confirm.
                     </p>
                     {!required ? (
-                        <Alert severity="warning">
-                            Email confirmation is off. Anyone can sign up with an email address they do not own. Turn it back on once
-                            email sending works and testing is done.
+                        <Alert severity="info">
+                            Email confirmation is optional. Accounts with an unconfirmed email can use AutoWave; turn this on to make
+                            confirming required.
                         </Alert>
                     ) : null}
-                    {required && unverifiedUsers > 0 ? (
+                    {unverifiedUsers > 0 ? (
                         <Alert severity="info">
                             {unverifiedUsers} {unverifiedUsers === 1 ? 'account is' : 'accounts are'} waiting for email confirmation.
                         </Alert>

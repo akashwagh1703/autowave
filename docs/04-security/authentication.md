@@ -11,10 +11,14 @@
 | Email verification | `/email/verify`, signed verify link, resend | `verified` middleware on the app (`EnsureEmailIsVerifiedWhenRequired`); a platform admin can switch it off in Super Admin → Settings |
 | Password reset | `/forgot-password`, `/reset-password/{token}` | Standard broker, 60-minute tokens |
 
-- With **Require email confirmation** off (`platform_settings.require_email_verification`, default on):
-  new sign-ups are marked verified at registration and get no email, and the `verified` check is skipped
-  for accounts still unconfirmed. Switching it back on sends those accounts to `/email/verify` again. Anyone
-  can then register with an address they do not own, so it is meant for testing or while email is down.
+- Every new sign-up gets the confirmation email (`VerifyEmail`), whatever the setting. It is sent inline;
+  a mail failure is reported but never fails the registration (`User::sendEmailVerificationNotification`).
+- **Require email confirmation** (`platform_settings.require_email_verification`, default on) decides only
+  whether it blocks: on, unconfirmed accounts are sent to `/email/verify`; off, the `verified` check is
+  skipped (confirmation is optional) and the app and the onboarding wizard show a reminder banner
+  (`VerifyEmailBanner`, driven by the shared `auth.user.email_verified`) with a "Send it again" link
+  (`POST /email/verification-notification`). Switching it back on sends unconfirmed accounts to
+  `/email/verify` again.
 - Custom `authenticateUsing`: case-insensitive email, rejects **suspended** accounts, records `last_login_at`.
 - `active` middleware logs out users suspended after login.
 - Fortify routes exist only on the app host; `/login` on any other host is 404.

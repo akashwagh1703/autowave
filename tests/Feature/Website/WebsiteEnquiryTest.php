@@ -4,9 +4,12 @@ namespace Tests\Feature\Website;
 
 use App\Domain\Activity\Models\Activity;
 use App\Domain\Lead\Models\Lead;
+use App\Domain\Messaging\Support\MessagingSettings;
 use App\Domain\Website\Actions\UpdateWebsiteSettings;
 use App\Domain\Website\Models\WebsiteSection;
+use App\Domain\Website\Notifications\WebsiteActivityAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\Concerns\CreatesAutomations;
 use Tests\Concerns\CreatesCrmRecords;
 use Tests\Concerns\CreatesTenants;
@@ -59,6 +62,33 @@ class WebsiteEnquiryTest extends TestCase
         $this->assertSame('completed', $run->status->value);
         $this->assertSame('website.enquiry', $run->trigger);
         $this->assertTrue($run->payload['new_lead']);
+    }
+
+    public function test_the_owners_are_emailed_about_an_enquiry_unless_alerts_are_off(): void
+    {
+        Notification::fake();
+        $tenant = $this->createTenant();
+        $owner = $this->ownerOf($tenant);
+
+        $this->enquire()->assertSessionHasNoErrors();
+
+        $leadId = $this->inTenant($tenant, fn () => Lead::query()->sole()->id);
+        Notification::assertSentTo($owner, WebsiteActivityAlert::class, function (WebsiteActivityAlert $alert) use ($owner, $leadId) {
+            $mail = $alert->toMail($owner);
+
+            return $mail->subject === 'New enquiry from Asha Patil'
+                && in_array('Interested in: Bridal makeup', $mail->introLines, true)
+                && in_array('Message: Do you have a slot on 12 December?', $mail->introLines, true)
+                && $mail->actionUrl === rtrim(config('app.url'), '/')."/leads/{$leadId}";
+        });
+
+        $this->inTenant($tenant, function () {
+            $settings = app(MessagingSettings::class);
+            $settings->update($settings->quietHours(), $settings->email(), false);
+        });
+        $this->enquire(['phone' => '98989 89898'])->assertSessionHasNoErrors();
+
+        Notification::assertSentToTimes($owner, WebsiteActivityAlert::class, 1);
     }
 
     public function test_a_repeat_enquiry_is_added_to_the_open_lead(): void

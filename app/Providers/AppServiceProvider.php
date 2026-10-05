@@ -11,6 +11,7 @@ use App\Domain\Messaging\Events\ConversationMessageReceived;
 use App\Domain\RBAC\Support\PermissionCatalog;
 use App\Domain\RBAC\Support\PermissionResolver;
 use App\Domain\Tenant\Support\TenantContext;
+use App\Domain\Website\Listeners\EmailOwnersAboutWebsiteActivity;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -44,6 +45,9 @@ class AppServiceProvider extends ServiceProvider
 
         foreach (StartAutomations::EVENTS as $event) {
             Event::listen($event, StartAutomations::class);
+        }
+        foreach (EmailOwnersAboutWebsiteActivity::EVENTS as $event) {
+            Event::listen($event, EmailOwnersAboutWebsiteActivity::class);
         }
         Event::listen(AppointmentRescheduled::class, RetimeAppointmentWaits::class);
         Event::listen(ConversationMessageReceived::class, QueueLeadExtraction::class);

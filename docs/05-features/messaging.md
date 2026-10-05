@@ -155,7 +155,11 @@ Stored in the `messaging` tenant setting:
 
 - quiet hours (on/off, start, end; may cross midnight);
 - email sender name and reply-to address. The from address stays the platform's `MAIL_FROM_ADDRESS`
-  (AW-029).
+  (AW-029);
+- `owner_alerts` (default on): email every owner (`WebsiteActivityAlert`, `notifications` queue) when a
+  customer sends an enquiry or books on the website. Sent by `EmailOwnersAboutWebsiteActivity` after the
+  transaction commits; failures are reported and never break the customer's request. Website orders and
+  reservations are covered by the default `new_online_order_alert` / `new_reservation_alert` automations.
 
 ## Database
 

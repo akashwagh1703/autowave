@@ -226,7 +226,13 @@ This document describes what **actually exists** in the repository today. Planne
     Instagram (token, app secret); checked against Meta before saving;
   - tokens and secrets stored encrypted and write-only (the page only says whether one is saved);
   - the webhook callback URL and verify token to paste into Meta; disconnect;
-  - sync WhatsApp templates; quiet hours; email sender name and reply-to.
+  - sync WhatsApp templates; quiet hours; email sender name and reply-to;
+  - **Email alerts** (on by default): owners get `WebsiteActivityAlert` for each website enquiry and online
+    booking (`EmailOwnersAboutWebsiteActivity`; staff-entered bookings and the internal tenant are skipped).
+    Website orders and reservations are emailed by the default "Tell the team" automations instead.
+- **Account emails:** every sign-up gets `VerifyEmail` (blocking only while Super Admin → Settings →
+  Require email confirmation is on; otherwise a reminder banner with resend); owners get `BusinessReady`
+  (welcome, trial length, website link, first steps) after onboarding.
 - **Webhooks** (`/webhooks/meta/{key}` on the app host): subscription check, `X-Hub-Signature-256`
   verification, size limit and rate limit; verified bodies are stored and processed on the `messaging`
   queue, recovered by `messaging:dispatch-pending` and pruned after 14 days.
@@ -356,8 +362,9 @@ This document describes what **actually exists** in the repository today. Planne
   mobile menu) and footer. Search titles and descriptions are in `config/marketing.php`; page copy in
   `modules/marketing/industries.js` and the pages. Product illustrations are drawn in code
   (`modules/marketing/mockups.jsx`) until the business-site redesign gives real screenshots.
-- **Book a demo:** each request is saved in `demo_requests`, emailed to every active platform admin
-  (`DemoRequested`, `notifications` queue), and copied as a website lead (interest "Demo: …", message with
+- **Book a demo:** name, phone, email and business are required. Each request is saved in `demo_requests`,
+  emailed to every active platform admin (`DemoRequested`, `notifications` queue), confirmed to the
+  requester by email (`DemoRequestReceived`, with the trial link and sales WhatsApp), and copied as a website lead (interest "Demo: …", message with
   business and city) into the AutoWave Internal tenant through `SubmitEnquiry` when that tenant exists.
   Super Admin → **Demo requests** lists them (New / Contacted / Became customer / Closed, search, WhatsApp
   and call buttons, admin note, delete for spam); the dashboard shows the number of new ones. Honeypot and

@@ -8,6 +8,14 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **More emails, now that email works.** People who book a demo get a confirmation email (email is now
+  required on the demo form). Owners get a welcome email when their business is set up, and an email
+  with the details whenever a customer sends an enquiry or books on their website (switch off in
+  Settings → Messaging → Email alerts; website orders and reservations keep their existing automation
+  emails).
+- **Email confirmation can be optional.** Every new account gets the confirmation email. With **Require
+  email confirmation** off in Super Admin → Settings, people can use the app straight away and see a
+  reminder with a "Send it again" link until they confirm.
 - **Demo requests in Super Admin.** Every "Book a demo" request is emailed to the platform admins and
   listed in Super Admin → Demo requests, with WhatsApp and call buttons, a status (New, Contacted, Became
   customer, Closed) and a private note. The dashboard shows how many new requests are waiting.
@@ -74,8 +82,7 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
   check covers object storage. An upload during a storage outage shows "could not be saved" instead of an
   error page.
 - Super Admin → Settings with **Require email confirmation for new accounts**. When switched off, new
-  sign-ups can use the app straight away without a confirmation email (for testing, or while email is not
-  set up). `php artisan autowave:admin-password` sets a new password for a platform admin.
+  sign-ups can use the app straight away (the confirmation email is still sent). `php artisan autowave:admin-password` sets a new password for a platform admin.
 - `OPENROUTER_TIMEOUT` and `OPENROUTER_REASONING` (`off`, `low`, `medium`, `high`) so slower or free
   OpenRouter models can be used; queued AI jobs get a matching timeout and `autowave:health` fails when
   the queue's `retry_after` is shorter than it.

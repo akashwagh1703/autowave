@@ -5,6 +5,7 @@ namespace Tests\Feature\Onboarding;
 use App\Domain\Audit\Models\AuditLog;
 use App\Domain\Engine\Services\EngineManager;
 use App\Domain\Module\Services\ModuleManager;
+use App\Domain\Onboarding\Notifications\BusinessReady;
 use App\Domain\Tenant\Enums\MembershipStatus;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Tenant\Support\TenantContext;
@@ -13,6 +14,7 @@ use App\Domain\Website\Models\WebsiteSection;
 use App\Http\Middleware\ResolveTenantFromMembership;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\Concerns\CreatesTenants;
 use Tests\TestCase;
@@ -188,6 +190,26 @@ class OnboardingTest extends TestCase
                 ->where('template.hero', 'gradient')
                 ->where('contact.phone', '+91 98765 43210')
                 ->where('sections.1.type', 'hero'));
+    }
+
+    public function test_the_owner_gets_a_welcome_email_with_the_website_link(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post($this->appUrl('/onboarding'), $this->payload())->assertRedirect(route('dashboard'));
+
+        Notification::assertSentTo($user, BusinessReady::class, function (BusinessReady $notification) use ($user) {
+            $mail = $notification->toMail($user);
+
+            return $mail->subject === 'Glow Studio is ready on AutoWave'
+                && str_ends_with((string) $notification->websiteUrl, '://glow-studio.autowave.test')
+                && $notification->trialDays === (int) config('billing.trial.days')
+                && $mail->actionUrl === rtrim(config('app.url'), '/').'/dashboard';
+        });
+
+        $this->post($this->appUrl('/onboarding'), $this->payload(['name' => 'Glow Two', 'slug' => 'glow-two', 'modules' => ['crm']]));
+        Notification::assertSentTo($user, BusinessReady::class, fn (BusinessReady $notification) => $notification->businessName === 'Glow Two' && $notification->websiteUrl === null);
     }
 
     public function test_leaving_out_the_website_module_keeps_the_site_offline(): void

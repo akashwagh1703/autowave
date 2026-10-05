@@ -4,6 +4,7 @@ namespace App\Domain\Onboarding\Actions;
 
 use App\Domain\Audit\Services\AuditLogger;
 use App\Domain\Business\Models\BusinessType;
+use App\Domain\Onboarding\Notifications\BusinessReady;
 use App\Domain\Tenant\Actions\CreateTenant;
 use App\Domain\Tenant\Models\Tenant;
 use App\Models\User;
@@ -60,6 +61,15 @@ class OnboardBusiness
             'business_type_version' => $type->version,
             'website_template' => $data['website_template'],
         ], $tenant->id);
+
+        $domain = in_array('website', $data['modules'], true) ? $tenant->loadMissing('primaryDomain')->primaryDomain?->domain : null;
+        $scheme = parse_url((string) config('app.url'), PHP_URL_SCHEME) ?: 'https';
+        $user->notify(new BusinessReady(
+            $tenant->name,
+            $domain ? "{$scheme}://{$domain}" : null,
+            rtrim(config('app.url'), '/').'/dashboard',
+            (int) config('billing.trial.days'),
+        ));
 
         return $tenant;
     }

@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Throwable;
 
 /**
  * A person. Users are global; access to a business comes from tenant memberships.
@@ -45,6 +46,16 @@ class User extends Authenticatable implements MustVerifyEmail
             'is_platform_admin' => 'boolean',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    /** Sent inline at sign-up; a mail outage must not turn registration into an error page (resend is in the app). */
+    public function sendEmailVerificationNotification(): void
+    {
+        try {
+            parent::sendEmailVerificationNotification();
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 
     public function memberships(): HasMany

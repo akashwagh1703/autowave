@@ -6,7 +6,9 @@ use App\Domain\Activity\Models\Activity;
 use App\Domain\Lead\Models\Lead;
 use App\Domain\Marketing\Models\DemoRequest;
 use App\Domain\Marketing\Notifications\DemoRequested;
+use App\Domain\Marketing\Notifications\DemoRequestReceived;
 use App\Domain\Website\Actions\UpdateWebsiteSettings;
+use App\Domain\Website\Notifications\WebsiteActivityAlert;
 use App\Domain\Website\Support\WebsitePreview;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -160,6 +162,14 @@ class MarketingSiteTest extends TestCase
                 && in_array('Phone: +919876543210', $mail->introLines, true)
                 && $mail->actionUrl === route('admin.demo-requests.index');
         });
+        Notification::assertSentOnDemand(DemoRequestReceived::class, function (DemoRequestReceived $notification, array $channels, object $notifiable) {
+            $mail = $notification->toMail($notifiable);
+
+            return $notifiable->routes['mail'] === ['asha@example.com' => 'Asha Patil']
+                && $mail->subject === 'We got your demo request'
+                && $mail->actionUrl === rtrim(config('app.url'), '/').'/register';
+        });
+        Notification::assertNothingSentTo($this->ownerOf($internal), WebsiteActivityAlert::class);
 
         $this->inTenant($internal, function () use ($demo) {
             $lead = Lead::query()->with('source')->sole();
@@ -183,9 +193,11 @@ class MarketingSiteTest extends TestCase
         $internal = $this->createTenant('AutoWave Internal', 'autowave_internal', options: ['is_internal' => true]);
 
         $this->post($this->marketingUrl('/demo'), ['name' => 'A', 'phone' => 'call me', 'industry' => 'Spaceships'])
-            ->assertSessionHasErrors(['name', 'phone', 'business_name', 'industry']);
+            ->assertSessionHasErrors(['name', 'phone', 'email', 'business_name', 'industry']);
+        $this->post($this->marketingUrl('/demo'), ['name' => 'Asha', 'phone' => '98765 43210', 'email' => 'not-an-email', 'business_name' => 'Asha Beauty Lounge'])
+            ->assertSessionHasErrors('email');
 
-        $this->post($this->marketingUrl('/demo'), ['name' => 'Bot', 'phone' => '98765 43210', 'business_name' => 'Spam', 'company_website' => 'https://spam.test'])
+        $this->post($this->marketingUrl('/demo'), ['name' => 'Bot', 'phone' => '98765 43210', 'email' => 'bot@spam.test', 'business_name' => 'Spam', 'company_website' => 'https://spam.test'])
             ->assertSessionHasNoErrors()
             ->assertSessionHas('demo_requested', true);
 
@@ -198,12 +210,14 @@ class MarketingSiteTest extends TestCase
         Notification::fake();
         $admin = User::factory()->platformAdmin()->create();
 
-        $this->post($this->marketingUrl('/demo'), ['name' => 'Asha Patil', 'phone' => '98765 43210', 'business_name' => 'Asha Beauty Lounge'])
+        $this->post($this->marketingUrl('/demo'), ['name' => 'Asha Patil', 'phone' => '98765 43210', 'email' => ' Asha@Example.com ', 'business_name' => 'Asha Beauty Lounge'])
             ->assertSessionHasNoErrors()
             ->assertSessionHas('demo_requested', true);
 
         $this->assertNull(DemoRequest::query()->sole()->lead_id);
+        $this->assertSame('asha@example.com', DemoRequest::query()->sole()->email);
         Notification::assertSentTo($admin, DemoRequested::class);
+        Notification::assertSentOnDemand(DemoRequestReceived::class);
     }
 
     public function test_platform_admins_follow_up_demo_requests_in_super_admin(): void

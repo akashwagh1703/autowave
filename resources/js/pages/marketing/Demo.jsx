@@ -63,7 +63,9 @@ export default function Demo({ industries, requested, whatsappUrl }) {
                             <div className="flex h-full flex-col items-center justify-center py-10 text-center" role="status">
                                 <CheckCircleIcon sx={{ fontSize: 56 }} className="text-accent-500" />
                                 <h2 className="font-display mt-4 text-2xl font-extrabold text-ink">Thank you! We will call you soon.</h2>
-                                <p className="mt-2 max-w-sm text-slate-600">Our team usually calls back within one working day to fix a time that suits you.</p>
+                                <p className="mt-2 max-w-sm text-slate-600">
+                                    Our team usually calls back within one working day to fix a time that suits you. We have also sent a confirmation to your email.
+                                </p>
                             </div>
                         ) : (
                             <form onSubmit={submit} noValidate>
@@ -82,7 +84,7 @@ export default function Demo({ industries, requested, whatsappUrl }) {
                                         ))}
                                     </TextField>
                                     <TextField {...field('city')} label="City" autoComplete="address-level2" />
-                                    <TextField {...field('email')} label="Email" type="email" autoComplete="email" />
+                                    <TextField {...field('email')} label="Email" required type="email" autoComplete="email" />
                                     <TextField {...field('message')} label="Anything we should know? (optional)" multiline minRows={3} className="sm:col-span-2" />
                                 </div>
                                 <input

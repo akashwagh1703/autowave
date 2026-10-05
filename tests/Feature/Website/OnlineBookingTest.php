@@ -10,7 +10,9 @@ use App\Domain\Customer\Models\Customer;
 use App\Domain\Messaging\Models\OutboundMessage;
 use App\Domain\Service\Models\Service;
 use App\Domain\Tenant\Models\Tenant;
+use App\Domain\Website\Notifications\WebsiteActivityAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\Concerns\CreatesAutomations;
 use Tests\Concerns\CreatesBookingRecords;
@@ -131,6 +133,28 @@ class OnlineBookingTest extends TestCase
             $this->assertSame('+919988776655', $customer->phone_normalized);
             $this->assertSame('online_booking', $customer->activities()->where('type', 'created')->sole()->metadata['via']);
             $this->assertSame('website', $customer->activities()->where('type', 'appointment_booked')->sole()->metadata['source']);
+        });
+    }
+
+    public function test_the_owners_are_emailed_about_online_bookings_but_not_team_bookings(): void
+    {
+        Notification::fake();
+        $owner = $this->ownerOf($this->tenant);
+
+        $this->book($this->tenant, $this->sana, '2026-10-07 11:00');
+        Notification::assertNothingSentTo($owner, WebsiteActivityAlert::class);
+
+        $this->bookOnline(['resource_id' => $this->riya->id])->assertSessionHasNoErrors();
+
+        $appointmentId = $this->inTenant($this->tenant, fn () => Appointment::query()->where('source', 'website')->sole()->id);
+        Notification::assertSentTo($owner, WebsiteActivityAlert::class, function (WebsiteActivityAlert $alert) use ($owner, $appointmentId) {
+            $mail = $alert->toMail($owner);
+
+            return $mail->subject === 'New booking: Haircut, Tue 6 Oct 2026, 11:00 AM'
+                && in_array('With: Riya', $mail->introLines, true)
+                && in_array('Phone: 99887 76655', $mail->introLines, true)
+                && in_array('Notes: First visit', $mail->introLines, true)
+                && $mail->actionUrl === rtrim(config('app.url'), '/')."/appointments/{$appointmentId}";
         });
     }
 

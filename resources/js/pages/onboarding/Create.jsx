@@ -9,6 +9,7 @@ import Stepper from '@mui/material/Stepper';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import EmptyState from '@/components/EmptyState';
 import FlashMessages from '@/components/FlashMessages';
+import VerifyEmailBanner from '@/components/VerifyEmailBanner';
 import BrandingStep from '@/components/onboarding/BrandingStep';
 import BusinessTypeStep from '@/components/onboarding/BusinessTypeStep';
 import CapabilitiesStep from '@/components/onboarding/CapabilitiesStep';
@@ -237,6 +238,7 @@ export default function Create({ catalog, limitReached, hasWorkspaces, defaults 
     return (
         <div className="min-h-screen bg-slate-50">
             <Head title="Set up your business" />
+            <VerifyEmailBanner />
             {header}
 
             <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
