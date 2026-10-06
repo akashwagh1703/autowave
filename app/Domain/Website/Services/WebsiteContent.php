@@ -53,6 +53,8 @@ class WebsiteContent
         $business = [
             'name' => $name,
             'business_type' => $tenant->businessType?->name,
+            'type_code' => $tenant->businessType?->code,
+            'city' => $profile['city'] ?? null,
             'tagline' => $branding['tagline'] ?? null,
             'description' => $profile['description'] ?? null,
             'primary_color' => $config->theme['primary_color'] ?? $branding['primary_color'] ?? null,

@@ -69,7 +69,7 @@ export default function ReservationSection({ config }) {
     if (showConfirmation && reservationConfirmation) {
         return (
             <Section id="reservation">
-                <SectionHeading title={config.heading} />
+                <SectionHeading title={config.heading} align="center" />
                 <Card className="mx-auto max-w-xl py-10 text-center">
                     <CheckCircleIcon className="text-emerald-600" sx={{ fontSize: 48 }} />
                     <p className="mt-3 text-lg font-semibold text-slate-900" role="status">
@@ -93,7 +93,7 @@ export default function ReservationSection({ config }) {
 
     return (
         <Section id="reservation">
-            <SectionHeading title={config.heading} intro={config.intro} />
+            <SectionHeading title={config.heading} intro={config.intro} align="center" />
             <Card className="mx-auto max-w-3xl space-y-6 sm:p-8">
                 <div>
                     <h3 className="mb-3 font-semibold text-slate-900">How many guests?</h3>

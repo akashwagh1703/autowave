@@ -61,6 +61,15 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         @if ($marketing)
             <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700|plus-jakarta-sans:600,700,800" rel="stylesheet" />
+        @elseif ($site)
+            {{-- Heading font per template; keep in sync with resources/js/utils/websiteTheme.js. --}}
+            @php($siteFont = match ($page['props']['template']['code'] ?? null) {
+                'premium' => '|playfair-display:500,600,700',
+                'elegant' => '|cormorant-garamond:500,600,700',
+                'modern', 'corporate' => '|plus-jakarta-sans:600,700,800',
+                default => '',
+            })
+            <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800{{ $siteFont }}" rel="stylesheet" />
         @else
             <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />
         @endif

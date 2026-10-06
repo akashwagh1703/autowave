@@ -7,8 +7,9 @@ import ShoppingBagIcon from '@mui/icons-material/ShoppingBagOutlined';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { postJson } from '@/utils/booking';
 import { formatPrice } from '@/utils/format';
+import { alpha } from '@/utils/websiteTheme';
 import ItemFiles from './ItemFiles';
-import { ActionButton, Card, Field, Honeypot, Section, SectionHeading, inputClass, useSite } from './site';
+import { ActionButton, Card, Field, Honeypot, Section, SectionHeading, headingStyle, initials, inputClass, useSite } from './site';
 
 const FULFILMENT_LABELS = { pickup: 'Pick up', delivery: 'Delivery' };
 
@@ -139,59 +140,110 @@ function Stepper({ quantity, max, onChange, label }) {
     );
 }
 
-export function Products({ config, data }) {
+function discountPercent(product) {
+    const price = Number(product.price);
+    const before = Number(product.compare_at_price);
+
+    return before > price && price > 0 ? Math.round(((before - price) / before) * 100) : 0;
+}
+
+function ProductCard({ product, showPrices }) {
     const { locale, theme, cart } = useSite();
+    const quantity = cart.quantityOf(product.id);
+    const discount = showPrices ? discountPercent(product) : 0;
+
+    return (
+        <Card hover className={`group flex flex-col overflow-hidden p-0 ${product.in_stock ? '' : 'opacity-75'}`}>
+            {product.image ? (
+                <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                    <img src={product.image} alt={product.name} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                    {discount ? (
+                        <span className="absolute top-3 left-3 rounded-full px-2.5 py-1 text-xs font-bold" style={{ backgroundColor: theme.color, color: theme.onColor }}>
+                            {discount}% off
+                        </span>
+                    ) : null}
+                </div>
+            ) : null}
+            <div className="flex flex-1 flex-col p-5">
+                <div className="flex items-start gap-4">
+                    {product.image ? null : (
+                        <span
+                            className="flex h-12 w-12 shrink-0 items-center justify-center text-base font-semibold"
+                            style={{ ...headingStyle(theme, { fontWeight: 700 }), backgroundColor: alpha(theme.color, 0.1), color: theme.color, borderRadius: theme.radius === '0px' ? '0px' : '14px' }}
+                            aria-hidden="true"
+                        >
+                            {initials(product.name)}
+                        </span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                            <h4 className="flex items-center gap-2 font-semibold text-slate-900">
+                                <FoodMark type={product.food_type} />
+                                {product.name}
+                            </h4>
+                            {discount && !product.image ? (
+                                <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ backgroundColor: alpha(theme.color, 0.12), color: theme.color }}>
+                                    {discount}% off
+                                </span>
+                            ) : null}
+                        </div>
+                        {product.description ? <p className="mt-1.5 text-sm leading-relaxed whitespace-pre-line text-slate-600">{product.description}</p> : null}
+                    </div>
+                </div>
+                <ItemFiles item={product} className="mt-3" />
+                <div className="mt-auto flex items-end justify-between gap-3 pt-5">
+                    {showPrices ? (
+                        <span>
+                            <span className="text-lg font-bold" style={{ color: theme.color }}>
+                                {formatPrice(product.price, locale.currency)}
+                            </span>
+                            {product.compare_at_price ? <span className="ml-2 text-sm text-slate-400 line-through">{formatPrice(product.compare_at_price, locale.currency)}</span> : null}
+                        </span>
+                    ) : (
+                        <span />
+                    )}
+                    {!product.in_stock ? (
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Out of stock</span>
+                    ) : cart.enabled ? (
+                        quantity > 0 ? (
+                            <Stepper quantity={quantity} max={product.max_quantity} onChange={(next) => cart.setQuantity(product.id, next)} label={product.name} />
+                        ) : (
+                            <ActionButton size="sm" onClick={() => cart.add(product.id)} aria-label={`Add ${product.name} to cart`}>
+                                <AddIcon sx={{ fontSize: 18 }} /> Add
+                            </ActionButton>
+                        )
+                    ) : null}
+                </div>
+            </div>
+        </Card>
+    );
+}
+
+export function Products({ config, data }) {
+    const { theme } = useSite();
+    const grouped = data.length > 1;
 
     return (
         <Section id="products" tone="muted">
             <SectionHeading title={config.heading} intro={config.intro} />
-            <div className="space-y-10">
+            <div className="space-y-12">
                 {data.map((group) => (
                     <div key={group.name ?? 'other'}>
-                        {group.name && data.length > 1 ? <h3 className="mb-4 text-lg font-semibold text-slate-800">{group.name}</h3> : null}
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {group.products.map((product) => {
-                                const quantity = cart.quantityOf(product.id);
-
-                                return (
-                                    <Card key={product.id} className="flex flex-col overflow-hidden p-0">
-                                        {product.image ? (
-                                            <img src={product.image} alt={product.name} loading="lazy" className="aspect-[4/3] w-full object-cover" style={{ borderTopLeftRadius: theme.radius, borderTopRightRadius: theme.radius }} />
-                                        ) : null}
-                                        <div className="flex flex-1 flex-col p-5">
-                                            <div className="flex items-start justify-between gap-3">
-                                                <h4 className="flex items-center gap-2 font-semibold text-slate-900">
-                                                    <FoodMark type={product.food_type} />
-                                                    {product.name}
-                                                </h4>
-                                                {config.show_prices ? (
-                                                    <span className="shrink-0 text-right">
-                                                        <span className="block font-semibold text-slate-900">{formatPrice(product.price, locale.currency)}</span>
-                                                        {product.compare_at_price ? (
-                                                            <span className="block text-xs text-slate-500 line-through">{formatPrice(product.compare_at_price, locale.currency)}</span>
-                                                        ) : null}
-                                                    </span>
-                                                ) : null}
-                                            </div>
-                                            {product.description ? <p className="mt-2 text-sm whitespace-pre-line text-slate-600">{product.description}</p> : null}
-                                            <ItemFiles item={product} className="mt-3" />
-                                            <div className="mt-auto flex items-center justify-end gap-3 pt-4">
-                                                {!product.in_stock ? (
-                                                    <span className="text-sm font-medium text-slate-500">Out of stock</span>
-                                                ) : cart.enabled ? (
-                                                    quantity > 0 ? (
-                                                        <Stepper quantity={quantity} max={product.max_quantity} onChange={(next) => cart.setQuantity(product.id, next)} label={product.name} />
-                                                    ) : (
-                                                        <ActionButton variant="secondary" className="px-3 py-1.5" onClick={() => cart.add(product.id)}>
-                                                            Add to cart
-                                                        </ActionButton>
-                                                    )
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                    </Card>
-                                );
-                            })}
+                        {grouped ? (
+                            <div className="mb-5 flex items-center gap-4">
+                                <h3 className="text-xl text-slate-900" style={headingStyle(theme, { fontWeight: Math.min(theme.headingWeight, 700) })}>
+                                    {group.name ?? 'More'}
+                                </h3>
+                                <span className="h-px flex-1 bg-slate-200" />
+                                <span className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+                                    {group.products.length} {group.products.length === 1 ? 'item' : 'items'}
+                                </span>
+                            </div>
+                        ) : null}
+                        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                            {group.products.map((product) => (
+                                <ProductCard key={product.id} product={product} showPrices={config.show_prices} />
+                            ))}
                         </div>
                     </div>
                 ))}

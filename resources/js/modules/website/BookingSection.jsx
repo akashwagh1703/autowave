@@ -146,7 +146,7 @@ export default function BookingSection({ config }) {
     if (showConfirmation && bookingConfirmation) {
         return (
             <Section id="booking">
-                <SectionHeading title={config.heading} />
+                <SectionHeading title={config.heading} align="center" />
                 <Confirmation confirmation={bookingConfirmation} message={config.success_message} onAgain={() => setShowConfirmation(false)} />
             </Section>
         );
@@ -156,7 +156,7 @@ export default function BookingSection({ config }) {
 
     return (
         <Section id="booking">
-            <SectionHeading title={config.heading} intro={config.intro} />
+            <SectionHeading title={config.heading} intro={config.intro} align="center" />
             <Card className="mx-auto max-w-3xl space-y-6 sm:p-8">
                 {booking.uses_services ? (
                     <Step number={step++} title="Choose a service">

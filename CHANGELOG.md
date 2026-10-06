@@ -8,6 +8,15 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **Redesigned business websites.** Each template now has its own look: **Modern** (split hero with a
+  live card of your services, turfs or products), **Premium** (full-screen dark hero, menu-style price
+  list), **Elegant** (serif type, arch-framed picture, price list with dotted leaders), **Minimal**
+  (editorial, big type, numbered sections) and **Corporate** (bold brand panel). Every site gets a sticky
+  header with a mobile menu, a call / WhatsApp / book bar on phones, an "about" block with real numbers,
+  smarter product and course cards, a gallery lightbox, offer tickets with a "Claim on WhatsApp" link, a
+  call-to-action band, a map in the contact section and a full footer. Wording that the owner has not
+  written (intros, headings, the hero line) now fits the business type, e.g. "Our menu" for a cafe or
+  "Meet our doctors" for a clinic. Owners' own text always wins.
 - **More emails, now that email works.** People who book a demo get a confirmation email (email is now
   required on the demo form). Owners get a welcome email when their business is set up, and an email
   with the details whenever a customer sends an enquiry or books on their website (switch off in

@@ -353,6 +353,21 @@ This document describes what **actually exists** in the repository today. Planne
   Meta review), with company details from Settings → Billing (AW-068 resolved).
 - **Tests:** `OnlineCheckoutTest` (15) and `CouponAndInvoicePdfTest` (12).
 
+### Business website redesign (2026-10-06)
+
+- **Templates with their own layout:** modern (split hero), premium (full-screen dark hero), elegant (arch
+  hero, serif), minimal (editorial) and corporate (brand panel), each with its own heading font. Heroes
+  without a photo show real services, turfs, products, courses or team instead of an empty space.
+- **Flow:** sticky header with active link and phone menu, alternating section backgrounds with fade-in,
+  "about" with real counts, price-list services (premium, elegant), product and course cards, gallery
+  lightbox, offer tickets, two-column FAQ, a call-to-action band, contact with a Google map, full footer and
+  a call / WhatsApp / book bar on phones.
+- **Wording:** default headings, intros, hero lines and CTA-band copy per business type
+  (`modules/website/copy.js`); the owner's own text always wins. The `business` prop adds `type_code` and
+  `city`.
+- **No schema or route changes.** Code in `pages/website/Home.jsx`, `modules/website/*` and
+  `utils/websiteTheme.js`.
+
 ### Marketing site and search (2026-10-05)
 
 - **Brand:** AutoWave mark and wordmark (`components/BrandLogo.jsx`, `public/favicon.svg`,
@@ -361,7 +376,7 @@ This document describes what **actually exists** in the repository today. Planne
   industry pages `/for/{salons,clinics,turfs,coaching,cafes,stores}`, `/demo`, and a new header (with
   mobile menu) and footer. Search titles and descriptions are in `config/marketing.php`; page copy in
   `modules/marketing/industries.js` and the pages. Product illustrations are drawn in code
-  (`modules/marketing/mockups.jsx`) until the business-site redesign gives real screenshots.
+  (`modules/marketing/mockups.jsx`); they can be swapped for screenshots of the redesigned business sites.
 - **Book a demo:** name, phone, email and business are required. Each request is saved in `demo_requests`,
   emailed to every active platform admin (`DemoRequested`, `notifications` queue), confirmed to the
   requester by email (`DemoRequestReceived`, with the trial link and sales WhatsApp), and copied as a website lead (interest "Demo: …", message with

@@ -39,3 +39,43 @@
 
     --radius-card: 0.75rem;
 }
+
+/* Public business websites (body[data-site]): sections fade in as they scroll into view. */
+[data-site] .site-reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+        opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-site] .site-reveal.is-visible {
+    opacity: 1;
+    transform: none;
+}
+
+@keyframes site-float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+[data-site] .site-float {
+    animation: site-float 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-site] .site-reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    [data-site] .site-float {
+        animation: none;
+    }
+}

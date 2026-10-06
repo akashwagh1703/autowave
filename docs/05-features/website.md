@@ -30,9 +30,14 @@ business can edit it without help: design, content, images, publishing, the enqu
 
 ### Visitors (tenant host)
 
-- The page shows the header (logo, section links, **Call** and **Book** buttons), then the enabled sections
-  in order, then the footer with social links. A floating WhatsApp button appears when a WhatsApp number is
-  set.
+- The page shows a sticky header (logo, section links with the current one underlined, **Call** and the main
+  action), then the enabled sections in order, a call-to-action band before the contact section, and a
+  footer with links, address, hours, contact and social links. The main action is the first of **Book**,
+  **Reserve a table**, **Order online** or **Contact** that the site offers.
+- On phones the header links move into a full-screen menu and a bottom bar offers **Call**, **WhatsApp**
+  and the main action. Elsewhere a floating WhatsApp button appears when a WhatsApp number is set.
+- Sections fade in as they scroll into view (off when the visitor prefers reduced motion), and their
+  backgrounds alternate.
 - **Enquiry form** (contact section): name, phone, optional email, interest and message. The form is replaced
   by the section's success message after sending. Owners are emailed the enquiry (and each online booking)
   unless Settings → Messaging → Email alerts is off.
@@ -77,8 +82,20 @@ business can edit it without help: design, content, images, publishing, the enqu
 - **Section files.** Video and Downloads files belong to the section (`attachments`, public). They are
   uploaded on the section's edit page with `website.manage`, and removing the section deletes them; hiding
   it keeps them. Products, services and courses show their own video and brochures inside their sections.
-- **Templates.** Templates change only the look (hero style, font, corner radius). Switching keeps all
-  content.
+- **Templates.** Templates change only the look. Switching keeps all content. Each has its own layout
+  (`siteLayout` in `utils/websiteTheme.js`):
+
+  | Template | Hero | Type | Notes |
+  |---|---|---|---|
+  | modern | Split: text left; photo, else a card of real services / turfs / products / courses / team | Plus Jakarta Sans | rounded buttons |
+  | premium | Full-screen dark; photo, else brand glow with glass cards of real items; info strip (open, find us, call) | Playfair Display | dark header and reviews, services as a price list |
+  | elegant | Soft tint, arch-framed photo or monogram | Cormorant Garamond | centred headings with an ornament, services as a price list |
+  | minimal | Editorial: huge name, hours / location / contact columns | Inter | numbered section labels, flat cards |
+  | corporate | Brand panel with a diagonal pattern and a card of real items | Plus Jakarta Sans | — |
+
+- **Default wording.** Where the owner left a field empty (section intro, hero subheadline) or kept a
+  catalogue default heading, the site uses wording for the business type from `modules/website/copy.js`
+  (e.g. "Our menu" for a cafe, "Meet our doctors" for a clinic). Text the owner wrote is always shown as is.
 - **Business data.** Business data is never copied into sections. The site reads services, staff, hours,
   media and the business profile at request time.
 - **Enquiries.**
@@ -131,7 +148,10 @@ business can edit it without help: design, content, images, publishing, the enqu
   - Tenant host: `Website\HomeController`, `Website\EnquiryController` and `Website\BookingController`,
     behind the `EnsureWebsiteIsLive` middleware (`site.live`).
 - **UI:**
-  - Public site: `pages/website/Home.jsx` and `modules/website/{site, sections, ContactSection, BookingSection}.jsx`.
+  - Public site: `pages/website/Home.jsx` and `modules/website/{site, Hero, sections, ContactSection,
+    BookingSection, ReservationSection, ShopSection, CoursesSection}.jsx`; default wording in
+    `modules/website/copy.js`; template layouts and colour helpers in `utils/websiteTheme.js`. Template fonts
+    are loaded in `app.blade.php`.
   - Editor: `pages/business/website/{Index, Design, Details, SectionEdit}.jsx` and
     `modules/website/{SchemaFields, MediaManager}.jsx`.
 
