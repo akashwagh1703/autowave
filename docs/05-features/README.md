@@ -21,6 +21,7 @@ Do not document planned features as if they exist.
 | Automation | [automation.md](automation.md) | ✅ Phase 5 |
 | Messaging | [messaging.md](messaging.md) | ✅ Phase 8 (outbound pipeline in Phase 5) |
 | AI | [ai.md](ai.md) | ✅ Phase 9 |
+| WhatsApp assistant | [whatsapp-assistant.md](whatsapp-assistant.md) | ✅ Step 1 (menu, information, hand-over); in-chat booking and AI answers planned |
 | Billing | [billing.md](billing.md) | ✅ Phase A (plans, trial, manual payments, GST switch, enforcement); Razorpay in Phase B |
 
 ## Template

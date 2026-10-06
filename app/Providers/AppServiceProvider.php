@@ -7,6 +7,7 @@ use App\Domain\Automation\Listeners\RetimeAppointmentWaits;
 use App\Domain\Automation\Listeners\StartAutomations;
 use App\Domain\Billing\Support\Entitlements;
 use App\Domain\Booking\Events\AppointmentRescheduled;
+use App\Domain\Chatbot\Listeners\QueueChatbotReply;
 use App\Domain\Messaging\Events\ConversationMessageReceived;
 use App\Domain\RBAC\Support\PermissionCatalog;
 use App\Domain\RBAC\Support\PermissionResolver;
@@ -51,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
         }
         Event::listen(AppointmentRescheduled::class, RetimeAppointmentWaits::class);
         Event::listen(ConversationMessageReceived::class, QueueLeadExtraction::class);
+        Event::listen(ConversationMessageReceived::class, QueueChatbotReply::class);
 
         // Numeric ids only, so a malformed URL is a 404 rather than a database error.
         Route::patterns([

@@ -64,9 +64,14 @@ export default function Settings({ business, branding, profile, website, domains
                             </Button>
                         ) : null}
                         {hasModule('messaging') ? (
-                            <Button component={Link} href="/settings/messaging" variant="outlined">
-                                Messaging
-                            </Button>
+                            <>
+                                <Button component={Link} href="/settings/messaging" variant="outlined">
+                                    Messaging
+                                </Button>
+                                <Button component={Link} href="/settings/whatsapp-assistant" variant="outlined">
+                                    WhatsApp assistant
+                                </Button>
+                            </>
                         ) : null}
                         {hasModule('ai') ? (
                             <Button component={Link} href="/settings/ai" variant="outlined">

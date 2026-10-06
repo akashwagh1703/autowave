@@ -451,11 +451,16 @@ export default function Messaging({ channels, templates, quietHours, email, owne
                 title="Messaging"
                 description={canUpdate ? 'Connect WhatsApp and Instagram, manage templates, quiet hours, email alerts and the email sender.' : 'You have view-only access.'}
                 actions={
-                    can('conversations.view') ? (
-                        <Button component={Link} href="/inbox" variant="outlined">
-                            Open inbox
+                    <>
+                        <Button component={Link} href="/settings/whatsapp-assistant" variant="outlined">
+                            WhatsApp assistant
                         </Button>
-                    ) : null
+                        {can('conversations.view') ? (
+                            <Button component={Link} href="/inbox" variant="outlined">
+                                Open inbox
+                            </Button>
+                        ) : null}
+                    </>
                 }
             />
 

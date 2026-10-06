@@ -57,7 +57,13 @@ class MessagingPresenter
             'error' => $outbound?->status === MessageStatus::Failed ? $outbound->error : null,
             'simulated' => (bool) $outbound?->simulated,
             'template' => $message->meta['template'] ?? null,
-            'sender' => $outbound?->sender?->name ?? ($outbound?->automation_run_id ? 'Automation' : null),
+            'options' => $message->meta['options'] ?? [],
+            'image' => $attachment ? null : ($message->meta['image'] ?? null),
+            'sender' => $outbound?->sender?->name ?? match (true) {
+                (bool) $outbound?->automation_run_id => 'Automation',
+                (bool) $outbound?->assistant => 'Assistant',
+                default => null,
+            },
         ];
     }
 

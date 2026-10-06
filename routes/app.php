@@ -12,6 +12,7 @@ use App\Http\Controllers\App\BatchController;
 use App\Http\Controllers\App\BillingController;
 use App\Http\Controllers\App\BookingResourceController;
 use App\Http\Controllers\App\BookingSettingsController;
+use App\Http\Controllers\App\ChatbotSettingsController;
 use App\Http\Controllers\App\CommerceSettingsController;
 use App\Http\Controllers\App\CouponController;
 use App\Http\Controllers\App\CourseController;
@@ -335,6 +336,9 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
                 Route::post('/settings/messaging/templates/sync', [MessagingSettingsController::class, 'syncTemplates'])->middleware('throttle:10,1')->name('settings.messaging.templates');
                 Route::put('/settings/messaging', [MessagingSettingsController::class, 'updatePreferences'])->name('settings.messaging.update');
             });
+
+            Route::get('/settings/whatsapp-assistant', [ChatbotSettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.chatbot');
+            Route::put('/settings/whatsapp-assistant', [ChatbotSettingsController::class, 'update'])->middleware('can:settings.update')->name('settings.chatbot.update');
         });
 
         Route::middleware('module:automation')->group(function () {

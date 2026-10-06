@@ -353,6 +353,25 @@ This document describes what **actually exists** in the repository today. Planne
   Meta review), with company details from Settings → Billing (AW-068 resolved).
 - **Tests:** `OnlineCheckoutTest` (15) and `CouponAndInvoicePdfTest` (12).
 
+### WhatsApp assistant, step 1 (2026-10-06, ADR-021)
+
+- **What it does:** answers a customer's WhatsApp message straight away with a welcome (optional photo)
+  and reply buttons, a "More options" list, and answers from live data: website booking, reservation or
+  order link, services and prices, turf rates, courses and demo classes, offers, common questions,
+  timings and location. Typed numbers and short keywords work too. Off by default.
+- **Hand-over:** a staff reply, "Talk to a person", a question after "Ask us", or two messages it did not
+  understand pause it for the owner's pause hours (default 12); the last three e-mail the owners and note
+  the interest on the lead.
+- **Messaging changes:** interactive messages (`outbound_messages.interactive`: buttons, list, photo),
+  inbound tap ids (`meta.reply_id`), `assistant` flag, inbox chips and "Tapped an option",
+  `messaging:simulate-inbound --reply=`.
+- **Code:** `app/Domain/Chatbot` (engine, content, session, job, listener, alert), `config/chatbot.php`,
+  Settings → WhatsApp assistant (`ChatbotSettingsController`, `business/settings/WhatsAppAssistant.jsx`),
+  migration `2026_10_10_100000`.
+- **Next:** step 2 takes bookings, reservations, orders and demo classes inside the chat; step 3 adds AI
+  answers to typed questions.
+- **Tests:** `Chatbot/WhatsAppAssistantTest` (16).
+
 ### Business website redesign (2026-10-06)
 
 - **Templates with their own layout:** modern (split hero), premium (full-screen dark hero), elegant (arch

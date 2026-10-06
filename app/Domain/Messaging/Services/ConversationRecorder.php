@@ -8,6 +8,7 @@ use App\Domain\Messaging\Models\ConversationMessage;
 use App\Domain\Messaging\Models\OutboundMessage;
 use App\Domain\Messaging\Support\ChannelResolver;
 use App\Domain\Messaging\Support\ContactHandle;
+use App\Domain\Messaging\Support\Interactive;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -65,10 +66,15 @@ class ConversationRecorder
             'conversation_id' => $conversation->id,
             'channel' => $message->channel,
             'direction' => ConversationMessage::OUTBOUND,
-            'type' => $message->template ? 'template' : 'text',
+            'type' => match (true) {
+                (bool) $message->template => 'template',
+                ($message->interactive['kind'] ?? null) === 'image' => 'image',
+                (bool) $message->interactive => 'interactive',
+                default => 'text',
+            },
             'body' => $message->body,
             'outbound_message_id' => $message->id,
-            'meta' => $message->template ? ['template' => $message->template['name'] ?? null] : null,
+            'meta' => $this->outboundMeta($message),
             'sent_at' => now(),
         ]);
 
@@ -106,6 +112,26 @@ class ConversationRecorder
             'last_message_preview' => Str::limit(preg_replace('/\s+/', ' ', $text) ?? '', (int) config('messaging.inbox.preview_length')),
             'last_message_direction' => $direction,
         ]);
+    }
+
+    /** @return array<string, mixed>|null what the inbox shows besides the text: template name, options, image */
+    private function outboundMeta(OutboundMessage $message): ?array
+    {
+        if ($message->template) {
+            return ['template' => $message->template['name'] ?? null];
+        }
+
+        $interactive = $message->interactive;
+
+        if (! $interactive) {
+            return null;
+        }
+
+        return array_filter([
+            'options' => array_column(Interactive::options($interactive), 'title') ?: null,
+            'button' => $interactive['button'] ?? null,
+            'image' => $interactive['header_image']['url'] ?? $interactive['image']['url'] ?? null,
+        ]) ?: null;
     }
 
     private function forRecipient(OutboundMessage $message): ?Conversation

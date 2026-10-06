@@ -119,7 +119,12 @@ Files open through `/attachments/{id}` after the `conversations.view` check; upl
   **idempotency key**; optionally purpose, template, lead, customer, member, conversation, sender and
   automation run. The same key returns the first message.
 - Every WhatsApp and Instagram message is appended to the contact's conversation in the same
-  transaction, whether it came from an automation, the inbox or the system.
+  transaction, whether it came from an automation, the inbox, the [WhatsApp assistant](whatsapp-assistant.md)
+  or the system.
+- **Buttons, lists and photos:** `interactive` (`App\Domain\Messaging\Support\Interactive`) adds up to 3
+  reply buttons (optionally with a header photo), a list of up to 10 rows, or a photo with the text as
+  caption. WhatsApp sends them as interactive messages; Instagram and the log provider send the text
+  with numbered options. A customer's tap arrives as `meta.reply_id` on the inbound message.
 - **Delivery:** `SendOutboundMessage` on the `messaging` queue claims the message (`queued → sending`),
   calls the provider and marks it `sent` with the provider id. Then the timeline and the automation run
   log are updated.
@@ -185,7 +190,8 @@ php artisan messaging:simulate-inbound abc-salon 9876543210 "Hi, do you have a s
 php artisan messaging:simulate-inbound abc-salon 5566778899 "Price?" --channel=instagram
 ```
 
-The command runs the same pipeline as a webhook (not in production). `DemoMessagingSeeder` creates a demo
+`--reply=aw.menu` simulates a button or list tap with that option id. The command runs the same
+pipeline as a webhook (not in production). `DemoMessagingSeeder` creates a demo
 inbox for ABC Salon locally.
 
 ## Testing

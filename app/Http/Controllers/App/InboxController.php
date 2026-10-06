@@ -183,7 +183,7 @@ class InboxController extends Controller
         $limit = (int) config('messaging.inbox.thread_limit');
 
         $messages = $conversation->messages()
-            ->with(['outbound:id,tenant_id,status,error,simulated,scheduled_for,sent_by_user_id,automation_run_id', 'outbound.sender:id,name', 'attachment.uploader:id,name'])
+            ->with(['outbound:id,tenant_id,status,error,simulated,assistant,scheduled_for,sent_by_user_id,automation_run_id', 'outbound.sender:id,name', 'attachment.uploader:id,name'])
             ->orderByDesc('sent_at')->orderByDesc('id')
             ->limit($limit + 1)
             ->get();

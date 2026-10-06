@@ -22,7 +22,8 @@ class SimulateInboundMessage extends Command
         {from : Phone number (WhatsApp) or numeric user id (Instagram)}
         {text : Message text}
         {--channel=whatsapp : whatsapp or instagram}
-        {--name= : Contact profile name}';
+        {--name= : Contact profile name}
+        {--reply= : Option id of a tapped button or list row (the text is its title), e.g. aw.menu}';
 
     protected $description = 'Simulate an inbound WhatsApp or Instagram message (local development only)';
 
@@ -44,14 +45,17 @@ class SimulateInboundMessage extends Command
             return self::FAILURE;
         }
 
+        $reply = $this->option('reply') ? Str::limit((string) $this->option('reply'), 200, '') : null;
+
         $message = $context->run($tenant, fn () => $receive->handle(new InboundMessage(
             channel: $channel,
             handle: $handle,
             providerMessageId: 'sim-in-'.Str::uuid(),
-            type: 'text',
+            type: $reply ? 'interactive' : 'text',
             text: Str::limit((string) $this->argument('text'), 4096, ''),
             occurredAt: CarbonImmutable::now('UTC'),
             name: $this->option('name') ?: null,
+            meta: $reply ? ['reply_id' => $reply] : [],
         )));
 
         $this->components->info("Stored message #{$message?->id} in conversation #{$message?->conversation_id} for {$tenant->name}.");

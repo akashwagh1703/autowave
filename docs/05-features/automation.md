@@ -61,6 +61,10 @@ different workflows, and they must be configurable without code.
   - Orders (Phase 7): `order.created`, `confirmed`, `ready`, `completed`, `cancelled`, `paid`.
   - Messages (Phase 9): `message.received` — every inbound WhatsApp/Instagram message except opt-out and
     opt-in keywords; one run per message.
+  - The [WhatsApp assistant](whatsapp-assistant.md) is not an automation; it answers alongside them.
+    Settings → WhatsApp assistant warns about active `lead.created` / `message.received` automations that
+    send WhatsApp messages (such as "Welcome new leads on WhatsApp"), because the customer would get two
+    replies. Nothing is paused automatically.
   - Lead triggers need the `leads` module, customer triggers the `customers` module, appointment triggers
     the `booking` engine, order triggers the `commerce` engine, message triggers the `messaging` module.
 - **Subjects:** a run is for a lead, a customer, an appointment, an order or a conversation. A step can read

@@ -141,6 +141,10 @@ function actorName(activity) {
         return 'AI';
     }
 
+    if (activity.metadata?.via === 'assistant') {
+        return 'WhatsApp assistant';
+    }
+
     return activity.metadata?.via === 'automation' ? 'Automation' : 'System';
 }
 

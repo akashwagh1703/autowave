@@ -393,6 +393,18 @@ Amounts are in paise.
 |---|---|
 | `demo_requests` (not tenant-owned) | `name`, `phone` (normalised), `email`, `business_name`, `industry`, `city`, `message`, `status` (`new`/`contacted`/`converted`/`closed`), `note` (admin only), `lead_id` (copy in the AutoWave Internal CRM; null on delete), `handled_by_user_id` (null on delete), `handled_at`; index (`status`, `created_at`) |
 
+## WhatsApp assistant (`2026_10_10_100000`) — ADR-021
+
+| Table / columns | Key columns |
+|---|---|
+| `chatbot_sessions` | `tenant_id` (cascade), `conversation_id` (composite FK with `tenant_id`, cascade), unique (`tenant_id`, `conversation_id`), `state` (`menu`/`question`), `data` jsonb (last options offered, interest, `paused_by: contact` when the customer asked for a person), `misses`, `last_reply_at`, `paused_until` |
+| `outbound_messages` (added) | `interactive` jsonb (nullable: `kind` `buttons` with `buttons`, `header_image`, `footer`; `list` with `button`, `rows`, `header`, `footer`; `image` with `image`), `assistant` boolean (default false) |
+
+- Tenant setting `whatsapp_assistant`: `enabled`, `welcome`, `show_image`, `hidden_items`, `pause_hours`,
+  `alert_team` (defaults in `config('chatbot.defaults')`).
+- Inbound taps are stored in `conversation_messages.meta.reply_id`; assistant replies keep the options
+  offered in `meta.options`.
+
 ## Deferred platform tables
 
 `feature_flags`, `custom_fields` — added with the first feature that needs them (AW-009).

@@ -11,11 +11,14 @@ use App\Domain\Messaging\Models\MessagingChannel;
 use App\Domain\Messaging\Models\OutboundMessage;
 use App\Domain\Messaging\Support\ChannelResolver;
 use App\Domain\Messaging\Support\ContactHandle;
+use App\Domain\Messaging\Support\Interactive;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * WhatsApp Cloud API, with the tenant's own number and token (Settings → Messaging). Text, template, or
- * one file from the inbox: uploaded to Meta first, then sent by media id with the text as its caption.
+ * WhatsApp Cloud API, with the tenant's own number and token (Settings → Messaging). Text, template,
+ * reply buttons or a list (the WhatsApp assistant), or one file from the inbox: files are uploaded to
+ * Meta first, then sent by media id with the text as its caption.
  */
 class MetaWhatsAppProvider implements MessagingProvider
 {
@@ -79,6 +82,10 @@ class MetaWhatsAppProvider implements MessagingProvider
             ])];
         }
 
+        if ($message->interactive) {
+            return $this->interactive($message, $channel, $message->interactive);
+        }
+
         $attachment = $message->entry()->first()?->attachment()->first();
 
         if (! $attachment) {
@@ -86,6 +93,80 @@ class MetaWhatsAppProvider implements MessagingProvider
         }
 
         return $this->media($message, $channel, $attachment);
+    }
+
+    /**
+     * Reply buttons, a list, or a photo with the text as caption (Messaging\Support\Interactive).
+     *
+     * @param  array<string, mixed>  $interactive
+     * @return array<string, mixed>
+     */
+    private function interactive(OutboundMessage $message, MessagingChannel $channel, array $interactive): array
+    {
+        $body = mb_substr($message->body, 0, Interactive::BODY_MAX);
+        $kind = $interactive['kind'] ?? null;
+
+        if ($kind === 'image') {
+            return ['type' => 'image', 'image' => array_filter([
+                'id' => $this->imageId($channel, $interactive['image']),
+                'caption' => $body !== '' ? $body : null,
+            ])];
+        }
+
+        $footer = isset($interactive['footer']) ? ['footer' => ['text' => $interactive['footer']]] : [];
+
+        if ($kind === 'buttons') {
+            $header = isset($interactive['header_image'])
+                ? ['header' => ['type' => 'image', 'image' => ['id' => $this->imageId($channel, $interactive['header_image'])]]]
+                : [];
+
+            return ['type' => 'interactive', 'interactive' => [
+                'type' => 'button',
+                ...$header,
+                'body' => ['text' => $body],
+                ...$footer,
+                'action' => ['buttons' => array_map(
+                    fn (array $button) => ['type' => 'reply', 'reply' => ['id' => $button['id'], 'title' => $button['title']]],
+                    $interactive['buttons'] ?? [],
+                )],
+            ]];
+        }
+
+        if ($kind === 'list') {
+            return ['type' => 'interactive', 'interactive' => [
+                'type' => 'list',
+                ...(isset($interactive['header']) ? ['header' => ['type' => 'text', 'text' => $interactive['header']]] : []),
+                'body' => ['text' => $body],
+                ...$footer,
+                'action' => [
+                    'button' => $interactive['button'],
+                    'sections' => [['rows' => array_map(fn (array $row) => array_filter([
+                        'id' => $row['id'],
+                        'title' => $row['title'],
+                        'description' => $row['description'] ?? null,
+                    ]), $interactive['rows'] ?? [])]],
+                ],
+            ]];
+        }
+
+        return ['type' => 'text', 'text' => ['preview_url' => false, 'body' => Interactive::fallbackText($message->body, $interactive)]];
+    }
+
+    /**
+     * Uploads an image once and reuses Meta's media id (valid for 30 days) for later messages.
+     *
+     * @param  array{disk: string, path: string, mime: string}  $image
+     */
+    private function imageId(MessagingChannel $channel, array $image): string
+    {
+        $key = 'whatsapp-media:'.$channel->id.':'.sha1($image['disk'].'|'.$image['path']);
+
+        return Cache::remember($key, now()->addDays(25), function () use ($channel, $image) {
+            $contents = Storage::disk($image['disk'])->get($image['path'])
+                ?? throw new PermanentDeliveryFailure('The image is missing from storage.');
+
+            return $this->client->uploadWhatsAppMedia((string) $channel->external_id, (string) $channel->credential('access_token'), $contents, $image['mime'], basename($image['path']));
+        });
     }
 
     /** @return array<string, mixed> */

@@ -8,6 +8,15 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **WhatsApp assistant.** Turn it on in Settings → WhatsApp assistant and every customer who messages
+  you on WhatsApp gets an instant reply with buttons: book, reserve or order (straight to your website),
+  services and prices, turf rates, courses and free demo classes, offers, common questions, timings and
+  location, or talk to a person. It uses your live services, prices and website, so it is always up to
+  date, and shows your website's main photo with the welcome. Customers can also type a number or a word
+  like "price" or "timings". It goes quiet when your team replies or a customer asks for a person, and
+  starts again after the hours you choose (12 by default); owners get an email when a customer is
+  waiting. Every exchange appears in the inbox with the options offered. It only ever answers messages
+  customers send.
 - **Redesigned business websites.** Each template now has its own look: **Modern** (split hero with a
   live card of your services, turfs or products), **Premium** (full-screen dark hero, menu-style price
   list), **Elegant** (serif type, arch-framed picture, price list with dotted leaders), **Minimal**

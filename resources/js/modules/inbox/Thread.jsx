@@ -49,9 +49,20 @@ function Bubble({ message, timezone }) {
                 } ${message.status === 'failed' ? 'ring-2 ring-red-300' : ''}`}
             >
                 {message.template ? <p className={`mb-1 text-[11px] font-medium ${outbound ? 'text-brand-100' : 'text-slate-500'}`}>Template · {message.template}</p> : null}
+                {!outbound && message.type === 'interactive' ? <p className="mb-1 text-[11px] font-medium text-slate-500">Tapped an option</p> : null}
                 {message.attachment ? <MessageFile file={message.attachment} outbound={outbound} /> : null}
+                {message.image ? <img src={message.image} alt="" loading="lazy" className="mb-1 max-h-48 w-full rounded-lg object-cover" /> : null}
                 {message.body || !message.attachment ? (
                     <p className={`break-words whitespace-pre-line ${message.attachment ? 'mt-1' : ''}`}>{message.body || <span className="italic opacity-75">(no text)</span>}</p>
+                ) : null}
+                {message.options?.length ? (
+                    <ul className={`mt-2 space-y-1 border-t pt-2 ${outbound ? 'border-white/20' : 'border-slate-200'}`} aria-label="Options sent">
+                        {message.options.map((option, index) => (
+                            <li key={`${index}-${option}`} className={`rounded-md px-2 py-1 text-center text-xs font-medium ${outbound ? 'bg-white/15' : 'bg-slate-100'}`}>
+                                {option}
+                            </li>
+                        ))}
+                    </ul>
                 ) : null}
                 {message.media_status === 'pending' ? <p className="mt-1 text-xs italic opacity-75">Saving the file…</p> : null}
                 {message.media_status === 'skipped' ? <p className="mt-1 text-xs opacity-75">File not saved: {message.media_error}</p> : null}

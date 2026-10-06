@@ -79,7 +79,11 @@ class MetaWebhookNormalizer
                         text: $text,
                         occurredAt: $this->time($message['timestamp'] ?? null),
                         name: $names[(string) $message['from']] ?? null,
-                        meta: array_filter(['reply_to' => $this->string(Arr::get($message, 'context.id'), 191)]),
+                        meta: array_filter([
+                            'reply_to' => $this->string(Arr::get($message, 'context.id'), 191),
+                            // Which button or list row was tapped (the WhatsApp assistant's option ids).
+                            'reply_id' => $this->string(Arr::get($message, 'interactive.button_reply.id') ?? Arr::get($message, 'interactive.list_reply.id') ?? Arr::get($message, 'button.payload'), 200),
+                        ]),
                         media: $mediaId ? ['id' => $mediaId, 'filename' => $this->string(Arr::get($message, "{$type}.filename"), 200)] : null,
                     );
                 }

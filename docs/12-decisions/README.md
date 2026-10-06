@@ -27,3 +27,4 @@ Format: **Title, Status, Date, Context, Decision, Alternatives, Consequences.**
 | [ADR-018](ADR-018-messaging-channels.md) | Messaging channels: per-business Meta apps, stored webhooks, one compliance gate | Accepted |
 | [ADR-019](ADR-019-ai-features.md) | AI features: OpenRouter behind one gateway, drafts never sent, metered monthly cap | Accepted |
 | [ADR-020](ADR-020-additional-verticals.md) | Additional verticals: education and food engines, turf rates, coupons | Accepted |
+| [ADR-021](ADR-021-whatsapp-assistant.md) | WhatsApp assistant: rule-based menu from live business data, interactive messages, hand-over to staff | Accepted |

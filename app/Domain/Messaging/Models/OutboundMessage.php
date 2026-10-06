@@ -16,10 +16,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * A message sent (or being sent) through MessagingService. `simulated` messages went to a provider
- * that does not deliver anything (the `log` provider).
+ * that does not deliver anything (the `log` provider). `interactive` holds buttons, a list or an image
+ * (Messaging\Support\Interactive); `assistant` marks replies from the WhatsApp assistant.
  */
 #[Fillable([
-    'tenant_id', 'channel', 'provider', 'simulated', 'recipient', 'recipient_name', 'subject', 'body', 'template', 'status',
+    'tenant_id', 'channel', 'provider', 'simulated', 'assistant', 'recipient', 'recipient_name', 'subject', 'body', 'template', 'interactive', 'status',
     'idempotency_key', 'lead_id', 'customer_id', 'tenant_user_id', 'automation_run_id', 'conversation_id', 'sent_by_user_id',
     'attempts', 'provider_message_id', 'error', 'queued_at', 'scheduled_for', 'sent_at', 'delivered_at', 'read_at', 'failed_at',
 ])]
@@ -32,7 +33,9 @@ class OutboundMessage extends Model
         return [
             'status' => MessageStatus::class,
             'simulated' => 'boolean',
+            'assistant' => 'boolean',
             'template' => 'array',
+            'interactive' => 'array',
             'queued_at' => 'datetime',
             'scheduled_for' => 'datetime',
             'sent_at' => 'datetime',

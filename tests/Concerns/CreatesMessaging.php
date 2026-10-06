@@ -71,7 +71,10 @@ trait CreatesMessaging
         ]));
     }
 
-    /** Feeds a message into the inbound pipeline, as a webhook would after normalisation. */
+    /**
+     * Feeds a message into the inbound pipeline, as a webhook would after normalisation. Options: channel,
+     * id, at, name, type, and reply (the id of a tapped button or list row).
+     */
     protected function receive(Tenant $tenant, string $from, string $text = 'Hello', array $options = []): Conversation
     {
         $channel = $options['channel'] ?? 'whatsapp';
@@ -82,10 +85,11 @@ trait CreatesMessaging
                 channel: $channel,
                 handle: $handle,
                 providerMessageId: $options['id'] ?? 'wamid.'.Str::random(20),
-                type: 'text',
+                type: isset($options['reply']) ? 'interactive' : ($options['type'] ?? 'text'),
                 text: $text,
                 occurredAt: $options['at'] ?? CarbonImmutable::now('UTC'),
                 name: $options['name'] ?? null,
+                meta: isset($options['reply']) ? ['reply_id' => $options['reply']] : [],
             ));
 
             return Conversation::query()->where('channel', $channel)->where('contact_handle', $handle)->sole();
