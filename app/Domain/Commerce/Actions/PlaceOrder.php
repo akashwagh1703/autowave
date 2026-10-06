@@ -19,11 +19,13 @@ use App\Domain\Food\Models\DiningTable;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Models\User;
+use App\Support\OnlineSource;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Places an order, from the team (source `manual`) or the website (source `website`). ADR-017:
+ * Places an order, from the team (source `manual`), the website (`website`) or a WhatsApp chat (`whatsapp`,
+ * same rules as the website). ADR-017:
  * - prices come from the products (OrderPricing), never from the request;
  * - stock of tracked products is taken at once, under row locks (StockLedger), so two orders can
  *   never sell the same last item; cancelling puts it back;
@@ -60,7 +62,8 @@ class PlaceOrder
      */
     public function handle(array $data, ?User $actor = null): Order
     {
-        $online = ($data['source'] ?? 'manual') === 'website';
+        $source = OnlineSource::resolve($data['source'] ?? null);
+        $online = $source !== 'manual';
         $items = OrderPricing::normalize($data['items'] ?? null);
         $fulfilment = $this->fulfilment($data['fulfilment'] ?? null, $online);
         $address = filled($data['delivery_address'] ?? null) ? trim($data['delivery_address']) : null;
@@ -76,7 +79,7 @@ class PlaceOrder
                 ?? throw ValidationException::withMessages(['dining_table_id' => __('Choose an active table.')]);
         }
 
-        return DB::transaction(function () use ($data, $actor, $online, $items, $fulfilment, $address, $table) {
+        return DB::transaction(function () use ($data, $actor, $source, $online, $items, $fulfilment, $address, $table) {
             $priced = $this->pricing->strict($items);
             $subtotal = $priced['subtotal'];
 
@@ -110,7 +113,7 @@ class PlaceOrder
                 'customer_id' => $customer?->id,
                 'dining_table_id' => $table?->id,
                 'status' => $status,
-                'source' => $online ? 'website' : 'manual',
+                'source' => $source,
                 'fulfilment' => $fulfilment,
                 'subtotal' => $subtotal,
                 'discount' => $discount,
@@ -137,7 +140,7 @@ class PlaceOrder
 
             $this->recordActivity->handle('order_placed', order: $order, actor: $actor, metadata: [
                 ...self::summary($order),
-                ...($online ? ['source' => 'website'] : []),
+                ...($online ? ['source' => $source] : []),
             ]);
 
             OrderCreated::dispatch($order);

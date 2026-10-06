@@ -203,7 +203,7 @@ All tables are tenant-owned. Cross-row references are composite FKs `(x_id, tena
 |---|---|
 | `product_categories` | `name` (80, unique per tenant), `sort_order`, timestamps |
 | `products` | `product_category_id` (nullable), `name` (120), `description`, `sku` (60, nullable), `price`, `compare_at_price` (nullable), `image_media_id` (nullable), `is_active`, `track_stock`, `stock_quantity` (int), `low_stock_threshold` (nullable), `sort_order`, `created_by_user_id`, timestamps, soft deletes. Check `products_valid`: prices ≥ 0 and `stock_quantity >= 0`. Partial unique `products_sku_unique (tenant_id, lower(sku)) WHERE deleted_at IS NULL AND sku IS NOT NULL` |
-| `orders` | `number` (unique per tenant, from 1001), `customer_id`, `status` (`pending\|confirmed\|ready\|completed\|cancelled`), `source` (`manual\|website`), `fulfilment` (`in_store\|pickup\|delivery`), `subtotal`, `discount`, `delivery_fee`, `total`, `amount_paid`, `payment_status` (`unpaid\|partial\|paid`), `delivery_address` (500), `notes`, `confirmed_at`, `ready_at`, `completed_at`, `cancelled_at`, `cancellation_reason`, `created_by_user_id`, timestamps. Check `orders_valid`: known status and payment status, `discount <= subtotal`, `total = subtotal - discount + delivery_fee`, `0 <= amount_paid <= total` |
+| `orders` | `number` (unique per tenant, from 1001), `customer_id`, `status` (`pending\|confirmed\|ready\|completed\|cancelled`), `source` (`manual\|website\|whatsapp`), `fulfilment` (`in_store\|pickup\|delivery`), `subtotal`, `discount`, `delivery_fee`, `total`, `amount_paid`, `payment_status` (`unpaid\|partial\|paid`), `delivery_address` (500), `notes`, `confirmed_at`, `ready_at`, `completed_at`, `cancelled_at`, `cancellation_reason`, `created_by_user_id`, timestamps. Check `orders_valid`: known status and payment status, `discount <= subtotal`, `total = subtotal - discount + delivery_fee`, `0 <= amount_paid <= total` |
 | `order_items` | `order_id` (cascade), `product_id` (restrict), `product_name` (120) and `sku` (copied at order time), `unit_price`, `quantity`, `line_total`, `stock_deducted`. Check `order_items_valid`: `quantity > 0`, `line_total = unit_price * quantity` |
 | `order_payments` | `order_id` (cascade), `amount` (check `> 0`), `method` (20, a `config('commerce.payment_methods')` key), `reference` (100), `paid_at`, `recorded_by_user_id`, timestamps |
 | `stock_movements` | `product_id` (cascade), `quantity_change` (≠ 0), `balance_after` (≥ 0), `reason` (20, a `config('commerce.stock_reasons')` key), `order_id` (nullable), `note` (255), `created_by_user_id`, `created_at` only (append-only) |
@@ -322,7 +322,7 @@ All new tables are tenant-owned (`BelongsToTenant`, `tenant_id` cascade on tenan
 | `products.food_type` | `veg\|non_veg\|egg` or null |
 | `products.is_available` | boolean default true ("sold out today") |
 | `dining_tables` | `name` (40, unique lower(name) per tenant among live rows), `seats` (1–100), `area` (40), `is_active`, `sort_order`, soft deletes |
-| `reservations` | `customer_id`, `dining_table_id` (null), `party_size` (1–100), `reserved_at`, `ends_at` (> reserved_at), `status` (`pending\|confirmed\|seated\|completed\|cancelled\|no_show`), `source` (`manual\|website`), `notes`, `cancellation_reason`, status timestamps, `created_by_user_id`. Exclusion constraint `reservations_no_overlap` (table × time range, live statuses) |
+| `reservations` | `customer_id`, `dining_table_id` (null), `party_size` (1–100), `reserved_at`, `ends_at` (> reserved_at), `status` (`pending\|confirmed\|seated\|completed\|cancelled\|no_show`), `source` (`manual\|website\|whatsapp`), `notes`, `cancellation_reason`, status timestamps, `created_by_user_id`. Exclusion constraint `reservations_no_overlap` (table × time range, live statuses) |
 | `orders.dining_table_id` | composite FK, null; CHECK only with `fulfilment = dine_in` |
 | `orders.customer_id` | now nullable; CHECK required unless `fulfilment = dine_in` |
 | `order_items.notes` / `kitchen_status` / `added_at` | `kitchen_status` `queued\|ready` or null; partial index on queued items |
@@ -397,13 +397,17 @@ Amounts are in paise.
 
 | Table / columns | Key columns |
 |---|---|
-| `chatbot_sessions` | `tenant_id` (cascade), `conversation_id` (composite FK with `tenant_id`, cascade), unique (`tenant_id`, `conversation_id`), `state` (`menu`/`question`), `data` jsonb (last options offered, interest, `paused_by: contact` when the customer asked for a person), `misses`, `last_reply_at`, `paused_until` |
+| `chatbot_sessions` | `tenant_id` (cascade), `conversation_id` (composite FK with `tenant_id`, cascade), unique (`tenant_id`, `conversation_id`), `state` (`menu`/`question`/`flow`), `data` jsonb (last options offered, interest, `paused_by: contact` when the customer asked for a person; step 2: `flow` {`kind`, `await`, `then`} while a typed answer is awaited, `name`, `order` {`cart`, `fulfilment`, `address`}, `placed`, `done` (last confirmations)), `misses`, `last_reply_at`, `paused_until` |
 | `outbound_messages` (added) | `interactive` jsonb (nullable: `kind` `buttons` with `buttons`, `header_image`, `footer`; `list` with `button`, `rows`, `header`, `footer`; `image` with `image`), `assistant` boolean (default false) |
 
 - Tenant setting `whatsapp_assistant`: `enabled`, `welcome`, `show_image`, `hidden_items`, `pause_hours`,
   `alert_team` (defaults in `config('chatbot.defaults')`).
 - Inbound taps are stored in `conversation_messages.meta.reply_id`; assistant replies keep the options
   offered in `meta.options`.
+- Step 2 (`2026_10_11_100000`): `source = whatsapp` on `appointments`, `orders` and `reservations` for
+  bookings made in the chat. The `reservations_valid` check now allows `manual|website|whatsapp`;
+  `appointments.source` and `orders.source` are unconstrained strings (labels in `config('booking.sources')`,
+  `config('commerce.sources')`, `config('food.sources')`).
 
 ## Deferred platform tables
 

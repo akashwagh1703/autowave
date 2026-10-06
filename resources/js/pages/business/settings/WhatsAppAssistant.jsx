@@ -127,8 +127,9 @@ export default function WhatsAppAssistant({ settings, items, business, defaultWe
                                 label={<span className="font-semibold text-slate-900">Reply to WhatsApp messages automatically</span>}
                             />
                             <p className="text-sm text-slate-600">
-                                Customers tap buttons to see your services and prices, offers, timings and location, or to book and order online. Questions and
-                                “Talk to a person” go to your team in the inbox.
+                                Customers tap buttons to see your services and prices, offers, timings and location, and can book, reserve a table, order or
+                                book a demo class right in the chat, with the same rules as your website. Questions and “Talk to a person” go to your team in
+                                the inbox.
                             </p>
                         </CardContent>
                     </Card>

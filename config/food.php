@@ -26,6 +26,7 @@ return [
     'sources' => [
         'manual' => 'Added by the team',
         'website' => 'Website',
+        'whatsapp' => 'WhatsApp',
     ],
 
     /*

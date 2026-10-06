@@ -159,8 +159,8 @@ class WhatsAppAssistantTest extends TestCase
         $this->assertSame(['aw.book.'.$this->haircut->id, 'aw.ask.svc.'.$this->haircut->id, 'aw.menu'], array_column($detail->interactive['buttons'], 'id'));
 
         $this->receive($this->tenant, self::PHONE, 'Book this', ['reply' => 'aw.book.'.$this->haircut->id]);
-        $this->assertStringContainsString('abc-salon.', $this->lastReply()->body);
-        $this->assertStringContainsString('/#booking', $this->lastReply()->body);
+        $this->assertStringContainsString('Which day suits you?', $this->lastReply()->body);
+        $this->assertStringStartsWith('aw.bk.day.'.$this->haircut->id.'.', $this->lastReply()->interactive['rows'][0]['id']);
     }
 
     public function test_typed_numbers_and_keywords_pick_options(): void
@@ -310,7 +310,7 @@ class WhatsAppAssistantTest extends TestCase
         $detail = $this->lastReply();
         $this->assertStringContainsString('₹12,000 · 1 year', $detail->body);
         $this->assertStringContainsString('Evening', $detail->body);
-        $this->assertSame('aw.ask.demo.'.$course->id, $detail->interactive['buttons'][0]['id']);
+        $this->assertSame('aw.dm.c.'.$course->id, $detail->interactive['buttons'][0]['id']);
 
         $this->receive($coaching, self::PHONE, 'Free demo class', ['reply' => 'aw.ask.demo.'.$course->id]);
         $this->receive($coaching, self::PHONE, 'Saturday 11 am please');

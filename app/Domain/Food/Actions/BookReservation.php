@@ -13,6 +13,7 @@ use App\Domain\Food\Models\Reservation;
 use App\Domain\Food\Support\FoodSettings;
 use App\Domain\Food\Support\ReservationSlots;
 use App\Models\User;
+use App\Support\OnlineSource;
 use Carbon\CarbonImmutable;
 use DateTimeInterface;
 use Illuminate\Database\QueryException;
@@ -20,7 +21,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Books a table reservation (ADR-020), from the team (`manual`) or the website (`website`).
+ * Books a table reservation (ADR-020), from the team (`manual`), the website (`website`) or a WhatsApp chat
+ * (`whatsapp`, same rules as the website).
  *
  * - Website requests must fit the tenant's reservation hours, notice and horizon and never pick a
  *   table; they start pending unless auto-confirm is on.
@@ -51,7 +53,8 @@ class BookReservation
     public function handle(array $data, ?User $actor = null): Reservation
     {
         $settings = $this->settings->reservations();
-        $online = ($data['source'] ?? 'manual') === 'website';
+        $source = OnlineSource::resolve($data['source'] ?? null);
+        $online = $source !== 'manual';
         $party = (int) ($data['party_size'] ?? 0);
         $start = CarbonImmutable::instance($data['reserved_at'])->utc()->startOfMinute();
         $duration = (int) ($data['duration_minutes'] ?? 0) ?: $settings['duration_minutes'];
@@ -92,7 +95,7 @@ class BookReservation
         };
 
         try {
-            return DB::transaction(function () use ($data, $actor, $online, $party, $start, $duration, $table, $status) {
+            return DB::transaction(function () use ($data, $actor, $source, $online, $party, $start, $duration, $table, $status) {
                 $customer = $this->resolveCustomer($data, $actor, $online);
 
                 $reservation = Reservation::query()->create([
@@ -102,7 +105,7 @@ class BookReservation
                     'reserved_at' => $start,
                     'ends_at' => $start->addMinutes($duration),
                     'status' => $status,
-                    'source' => $online ? 'website' : 'manual',
+                    'source' => $source,
                     'notes' => filled($data['notes'] ?? null) ? trim($data['notes']) : null,
                     'confirmed_at' => $status !== ReservationStatus::Pending ? now() : null,
                     'seated_at' => $status === ReservationStatus::Seated ? now() : null,
@@ -113,7 +116,7 @@ class BookReservation
 
                 $this->recordActivity->handle('reservation_created', customer: $customer, actor: $actor, metadata: [
                     ...self::summary($reservation),
-                    ...($online ? ['source' => 'website'] : []),
+                    ...($online ? ['source' => $source] : []),
                 ]);
 
                 ReservationCreated::dispatch($reservation);

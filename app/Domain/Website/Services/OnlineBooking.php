@@ -12,6 +12,7 @@ use App\Domain\Booking\Support\ResourceRates;
 use App\Domain\Service\Models\Service;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Requests\Onboarding\StoreBusinessRequest;
+use App\Support\OnlineSource;
 use App\Support\Phone;
 use App\Support\TenantTime;
 use Carbon\CarbonImmutable;
@@ -136,8 +137,11 @@ class OnlineBooking
         return array_values($slots);
     }
 
-    /** @param  array<string, mixed>  $input */
-    public function book(array $input): Appointment
+    /**
+     * @param  array<string, mixed>  $input
+     * @param  string  $source  `website`, or `whatsapp` for the WhatsApp assistant (same rules)
+     */
+    public function book(array $input, string $source = 'website'): Appointment
     {
         $data = Validator::make($input, [
             'service_id' => [$this->usesServices() ? 'required' : 'nullable', 'integer'],
@@ -185,7 +189,7 @@ class OnlineBooking
                     'duration_minutes' => $this->duration($service),
                     'notes' => filled($data['notes'] ?? null) ? trim($data['notes']) : null,
                     'status' => $status->value,
-                    'source' => 'website',
+                    'source' => OnlineSource::resolve($source),
                 ]);
             } catch (ValidationException $exception) {
                 if (! array_key_exists('starts_at', $exception->errors())) {

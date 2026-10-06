@@ -23,6 +23,9 @@ class ChatbotSession extends Model
     /** Waiting for the contact to type a question or request for the team. */
     public const QUESTION = 'question';
 
+    /** In a booking, reservation or order, waiting for a typed answer (name, address, number of guests). */
+    public const FLOW = 'flow';
+
     protected $attributes = ['state' => self::MENU, 'misses' => 0];
 
     protected function casts(): array
@@ -49,5 +52,40 @@ class ChatbotSession extends Model
     public function isStale(): bool
     {
         return ! $this->last_reply_at || $this->last_reply_at->lt(now()->subMinutes((int) config('chatbot.session_minutes')));
+    }
+
+    public function get(string $key, mixed $default = null): mixed
+    {
+        return $this->data[$key] ?? $default;
+    }
+
+    public function put(string $key, mixed $value): void
+    {
+        $data = $this->data ?? [];
+
+        if ($value === null) {
+            unset($data[$key]);
+        } else {
+            $data[$key] = $value;
+        }
+
+        $this->data = $data ?: null;
+    }
+
+    /**
+     * Waits for a typed answer inside a flow; `then` is the option (without the prefix) to continue with.
+     *
+     * @param  list<string>  $then
+     */
+    public function await(string $flow, string $what, array $then = []): void
+    {
+        $this->state = self::FLOW;
+        $this->put('flow', ['kind' => $flow, 'await' => $what, 'then' => $then]);
+    }
+
+    public function stopWaiting(): void
+    {
+        $this->state = self::MENU;
+        $this->put('flow', null);
     }
 }

@@ -368,9 +368,25 @@ This document describes what **actually exists** in the repository today. Planne
 - **Code:** `app/Domain/Chatbot` (engine, content, session, job, listener, alert), `config/chatbot.php`,
   Settings → WhatsApp assistant (`ChatbotSettingsController`, `business/settings/WhatsAppAssistant.jsx`),
   migration `2026_10_10_100000`.
-- **Next:** step 2 takes bookings, reservations, orders and demo classes inside the chat; step 3 adds AI
-  answers to typed questions.
 - **Tests:** `Chatbot/WhatsAppAssistantTest` (16).
+
+### WhatsApp assistant, step 2 (2026-10-11, ADR-021)
+
+- **What it does:** bookings, table reservations, orders and free demo classes are taken inside the chat
+  with buttons and lists: service → staff or resource → day → time → confirm; day → time → guests →
+  confirm; products → quantity → cart → pickup or delivery (+ address) → confirm; batch → class day →
+  confirm. "Book this" on a service starts booking it.
+- **Same rules as the website:** the final step calls `OnlineBooking`, `OnlineReservations` or
+  `OnlineShop` with source `whatsapp` (or `ScheduleDemo` on the open lead), so notice, booking window,
+  stock, delivery fee, auto-confirm and statuses match. Double taps are ignored; a time taken meanwhile
+  shows the free times again; the name is asked when the chat has none.
+- **Records:** `App\Support\OnlineSource` (`website`, `whatsapp`); WhatsApp source labels in the order,
+  reservation and timeline views; owners are emailed about WhatsApp bookings, orders, reservations and
+  demos.
+- **Code:** `app/Domain/Chatbot/Flows` (`ChatFlow`, `BookingFlow`, `ReservationFlow`, `OrderFlow`,
+  `DemoFlow`), session state `flow`, migration `2026_10_11_100000` (reservations source check).
+- **Next:** step 3 adds AI answers to typed questions.
+- **Tests:** `Chatbot/WhatsAppAssistantFlowsTest` (10).
 
 ### Business website redesign (2026-10-06)
 

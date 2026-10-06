@@ -73,6 +73,7 @@ return [
     'sources' => [
         'manual' => 'Added by the team',
         'website' => 'Online booking',
+        'whatsapp' => 'WhatsApp',
     ],
 
     'per_page' => 25,

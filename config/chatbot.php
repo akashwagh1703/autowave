@@ -43,7 +43,7 @@ return [
     // Typed words that open a menu item. Matched on whole words, only in short messages.
     'keyword_max_words' => 5,
     'keywords' => [
-        'menu' => ['hi', 'hii', 'hiii', 'hello', 'hey', 'helo', 'hlo', 'namaste', 'namaskar', 'menu', 'options', 'option', 'help', 'start over', 'main menu', 'good morning', 'good afternoon', 'good evening'],
+        'menu' => ['hi', 'hii', 'hiii', 'hello', 'hey', 'helo', 'hlo', 'namaste', 'namaskar', 'menu', 'options', 'option', 'help', 'start over', 'main menu', 'good morning', 'good afternoon', 'good evening', 'back'],
         'book' => ['book', 'booking', 'appointment', 'appointments', 'slot', 'slots'],
         'reserve' => ['reserve', 'reservation', 'table'],
         'order' => ['order', 'orders', 'buy', 'delivery', 'pickup'],

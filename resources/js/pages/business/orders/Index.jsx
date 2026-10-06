@@ -15,6 +15,7 @@ import TextField from '@mui/material/TextField';
 import AddIcon from '@mui/icons-material/Add';
 import LanguageIcon from '@mui/icons-material/Language';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLongOutlined';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import AppLayout from '@/layouts/AppLayout';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
@@ -150,6 +151,7 @@ export default function Index({ orders, filters: initialFilters, counts, statuse
                                             </Link>
                                             <p className="flex items-center gap-1 text-xs text-slate-500">
                                                 {order.source === 'website' ? <LanguageIcon sx={{ fontSize: 12 }} titleAccess="Website order" /> : null}
+                                                {order.source === 'whatsapp' ? <WhatsAppIcon sx={{ fontSize: 12 }} titleAccess="WhatsApp order" /> : null}
                                                 {formatDateTime(order.created_at, timezone, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}
                                             </p>
                                         </TableCell>

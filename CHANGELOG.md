@@ -9,9 +9,12 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 ### Added
 
 - **WhatsApp assistant.** Turn it on in Settings → WhatsApp assistant and every customer who messages
-  you on WhatsApp gets an instant reply with buttons: book, reserve or order (straight to your website),
-  services and prices, turf rates, courses and free demo classes, offers, common questions, timings and
-  location, or talk to a person. It uses your live services, prices and website, so it is always up to
+  you on WhatsApp gets an instant reply with buttons: book, reserve or order, services and prices, turf
+  rates, courses and free demo classes, offers, common questions, timings and location, or talk to a
+  person. **Customers can book an appointment or slot, reserve a table, order for pickup or delivery,
+  and book a free demo class right inside the chat**, step by step with buttons and lists (pick a day,
+  a time, how many, confirm). The same rules and statuses as your website apply, the booking or order
+  shows "WhatsApp" as its source, and owners get an email for each one. It uses your live services, prices and website, so it is always up to
   date, and shows your website's main photo with the welcome. Customers can also type a number or a word
   like "price" or "timings". It goes quiet when your team replies or a customer asks for a person, and
   starts again after the hours you choose (12 by default); owners get an email when a customer is

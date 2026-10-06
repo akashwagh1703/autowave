@@ -16,6 +16,7 @@ use App\Domain\Customer\Models\Customer;
 use App\Domain\Service\Models\Service;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Models\User;
+use App\Support\OnlineSource;
 use Carbon\CarbonImmutable;
 use DateTimeInterface;
 use Illuminate\Database\QueryException;
@@ -191,7 +192,7 @@ class BookAppointment
                 'name' => $inline['name'],
                 'phone' => $inline['phone'] ?? null,
                 'email' => $inline['email'] ?? null,
-            ], $actor, ['via' => ($data['source'] ?? 'manual') === 'website' ? 'online_booking' : 'booking']);
+            ], $actor, ['via' => OnlineSource::is($data['source'] ?? null) ? 'online_booking' : 'booking']);
     }
 
     private function initialStatus(?string $requested): AppointmentStatus

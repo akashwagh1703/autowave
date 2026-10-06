@@ -124,6 +124,7 @@ export default function Index({ reservations, filters, today, counts, tables, de
                                             {reservation.party_size} guest{reservation.party_size === 1 ? '' : 's'}
                                             {reservation.customer?.phone ? ` · ${reservation.customer.phone}` : ''}
                                             {reservation.source === 'website' ? ' · online' : ''}
+                                            {reservation.source === 'whatsapp' ? ' · WhatsApp' : ''}
                                         </p>
                                         {reservation.notes ? <p className="line-clamp-1 text-xs text-slate-600">{reservation.notes}</p> : null}
                                     </div>

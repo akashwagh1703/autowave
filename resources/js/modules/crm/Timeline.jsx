@@ -169,6 +169,14 @@ function appointmentLabel(meta, timezone) {
     return `the appointment on ${when}${meta.resource ? ` with ${meta.resource}` : ''}${meta.service ? ` (${meta.service})` : ''}`;
 }
 
+function sourceSuffix(source, website) {
+    if (source === 'whatsapp') {
+        return ' on WhatsApp';
+    }
+
+    return source === 'website' ? website : '';
+}
+
 function describe(activity, timezone, currency) {
     const meta = activity.metadata ?? {};
 
@@ -202,13 +210,13 @@ function describe(activity, timezone, currency) {
         case 'demo_scheduled':
             return `scheduled ${demoLabel(meta, timezone)}`;
         case 'reservation_created':
-            return `reserved ${reservationLabel(meta, timezone)}${meta.source === 'website' ? ' online' : ''}`;
+            return `reserved ${reservationLabel(meta, timezone)}${sourceSuffix(meta.source, ' online')}`;
         case 'reservation_table_assigned':
             return `updated ${reservationLabel(meta, timezone)}`;
         case 'order_items_added':
             return `added ${meta.added || 'items'} to ${orderLabel(meta)}`;
         case 'order_placed':
-            return `placed ${orderLabel(meta)}${meta.source === 'website' ? ' on the website' : ''}${meta.items ? `: ${meta.items}` : ''}`;
+            return `placed ${orderLabel(meta)}${sourceSuffix(meta.source, ' on the website')}${meta.items ? `: ${meta.items}` : ''}`;
         case 'payment_recorded':
             return `recorded a payment of ${formatPrice(meta.amount, currency)}${meta.method_label ? ` (${meta.method_label})` : ''} for ${activity.appointment_id ? appointmentLabel(meta, timezone) : orderLabel(meta)}`;
         case 'payment_removed':
@@ -231,7 +239,7 @@ function describe(activity, timezone, currency) {
             }
 
             if (meta.via === 'online_order') {
-                return 'added the customer from a website order';
+                return 'added the customer from an online order';
             }
 
             if (meta.via === 'admission') {
@@ -248,7 +256,7 @@ function describe(activity, timezone, currency) {
 
             return meta.lead_name ? `added the customer when converting ${meta.lead_name}` : 'added the customer';
         case 'appointment_booked':
-            return `booked ${appointmentLabel(meta, timezone)}${meta.source === 'website' ? ' online' : ''}`;
+            return `booked ${appointmentLabel(meta, timezone)}${sourceSuffix(meta.source, ' online')}`;
         case 'website_enquiry':
             return `sent an enquiry from the website${meta.interest ? ` about ${meta.interest}` : ''}`;
         case 'appointment_rescheduled':

@@ -12,6 +12,7 @@ use App\Domain\Commerce\Support\CommerceSettings;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Domain\Website\Models\WebsiteSection;
 use App\Http\Requests\Onboarding\StoreBusinessRequest;
+use App\Support\OnlineSource;
 use App\Support\Phone;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -97,8 +98,11 @@ class OnlineShop
         ];
     }
 
-    /** @param  array<string, mixed>  $input */
-    public function place(array $input): Order
+    /**
+     * @param  array<string, mixed>  $input
+     * @param  string  $source  `website`, or `whatsapp` for the WhatsApp assistant (same rules)
+     */
+    public function place(array $input, string $source = 'website'): Order
     {
         $data = Validator::make($input, [
             'name' => ['required', 'string', 'min:2', 'max:120'],
@@ -126,7 +130,7 @@ class OnlineShop
             'delivery_address' => $data['delivery_address'] ?? null,
             'notes' => $data['notes'] ?? null,
             'coupon_code' => $data['coupon_code'] ?? null,
-            'source' => 'website',
+            'source' => OnlineSource::resolve($source),
         ]);
     }
 

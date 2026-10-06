@@ -3,6 +3,11 @@
 namespace App\Domain\Chatbot\Services;
 
 use App\Domain\Chatbot\Actions\AlertTeamAboutChat;
+use App\Domain\Chatbot\Flows\BookingFlow;
+use App\Domain\Chatbot\Flows\ChatFlow;
+use App\Domain\Chatbot\Flows\DemoFlow;
+use App\Domain\Chatbot\Flows\OrderFlow;
+use App\Domain\Chatbot\Flows\ReservationFlow;
 use App\Domain\Chatbot\Models\ChatbotSession;
 use App\Domain\Chatbot\Support\ChatbotSettings;
 use App\Domain\Lead\Actions\UpdateLead;
@@ -35,6 +40,10 @@ class ChatbotEngine
         private readonly ChatbotSettings $chatbotSettings,
         private readonly AlertTeamAboutChat $alert,
         private readonly UpdateLead $updateLead,
+        private readonly BookingFlow $booking,
+        private readonly ReservationFlow $reservation,
+        private readonly OrderFlow $order,
+        private readonly DemoFlow $demo,
     ) {}
 
     /** @return array{body: string, interactive: ?array<string, mixed>}|null null when the assistant stays quiet */
@@ -48,18 +57,26 @@ class ChatbotEngine
         }
 
         $text = trim((string) $message->body);
-        // While waiting for a question, typed words are the question; only "menu" or a tap leaves.
-        $choice = $this->choice($session, $message, $text, $session->state === ChatbotSession::QUESTION);
+        $typed = $message->type === 'text' && $text !== '' && ! isset($message->meta['reply_id']);
+        // While waiting for a question or a typed answer, typed words are the answer; only "menu" or a tap leaves.
+        $waiting = in_array($session->state, [ChatbotSession::QUESTION, ChatbotSession::FLOW], true);
+        $choice = $this->choice($session, $message, $text, $waiting);
 
-        if ($choice === null && $session->state === ChatbotSession::QUESTION && $message->type === 'text' && $text !== '') {
+        if ($choice === null && $typed && $session->state === ChatbotSession::QUESTION) {
             return $this->remember($session, $this->handOver($session, $conversation, 'question', $text));
         }
 
+        if ($choice === null && $typed && $session->state === ChatbotSession::FLOW && ($flow = $this->flow($session->get('flow')['kind'] ?? null))) {
+            return $this->remember($session, $flow->typed($session, $conversation, (string) ($session->get('flow')['await'] ?? ''), $text));
+        }
+
         if ($choice !== null) {
-            $session->forceFill(['state' => ChatbotSession::MENU, 'misses' => 0]);
+            $session->stopWaiting();
+            $session->misses = 0;
             // A typed "hi" after a while gets the welcome; a tapped "More options" always opens the menu.
-            $typed = ! isset($message->meta['reply_id']);
-            $reply = $choice === 'aw.menu' && $fresh && $typed ? $this->welcome($conversation, false) : $this->open($session, $conversation, $choice);
+            $reply = $choice === 'aw.menu' && $fresh && ! isset($message->meta['reply_id'])
+                ? $this->welcome($conversation, false)
+                : $this->open($session, $conversation, $choice);
 
             if ($reply !== null) {
                 return $this->remember($session, $reply);
@@ -176,12 +193,18 @@ class ChatbotEngine
         return match (true) {
             $item === 'menu' => $this->mainMenu(),
             $item === 'home' => $this->welcome($conversation, false),
-            in_array($item, ['book', 'reserve', 'order'], true) && $offered($item) => $this->online($session, $item, $parts[1] ?? null),
+            $item === 'book' && $offered('book') => $this->booking->start($id),
+            $item === 'reserve' && $offered('reserve') => $this->reservation->start(),
+            $item === 'order' && $offered('order') => $this->order->start($session),
+            $item === 'bk' && $offered('book') => $this->booking->handle($session, $conversation, array_slice($parts, 1)),
+            $item === 'rv' && $offered('reserve') => $this->reservation->handle($session, $conversation, array_slice($parts, 1)),
+            $item === 'or' && $offered('order') => $this->order->handle($session, $conversation, array_slice($parts, 1)),
+            $item === 'dm' && $offered('courses') => $this->demo->handle($session, $conversation, array_slice($parts, 1)),
             $item === 'services' && $offered('services') => $this->servicesList($id),
             $item === 'svc' && $offered('services') && $id !== null => $this->serviceDetail($id),
             $item === 'rates' && $offered('rates') => $this->rates(),
             $item === 'courses' && $offered('courses') => $this->coursesList(),
-            $item === 'course' && $offered('courses') && $id !== null => $this->courseDetail($id),
+            $item === 'course' && $offered('courses') && $id !== null => $this->courseDetail($id, $conversation),
             $item === 'offers' && $offered('offers') => $this->offers(),
             $item === 'faq' && $offered('faq') => $id !== null ? $this->faqAnswer($id) : $this->faqList(),
             $item === 'info' => $this->info(),
@@ -237,32 +260,15 @@ class ChatbotEngine
         return $this->reply(__('What would you like to do? Tap *See options* to choose.'), Interactive::list(__('See options'), $rows, $this->content->name()));
     }
 
-    /** Booking, reservations and orders happen on the website for now; without a live website the team takes the request. */
-    private function online(ChatbotSession $session, string $item, ?string $detail): array
+    private function flow(?string $key): ?ChatFlow
     {
-        $website = $this->content->website();
-        $anchor = ['book' => '#booking', 'reserve' => '#reservation', 'order' => '#products'][$item];
-        $service = $item === 'book' && $detail !== null && ctype_digit($detail) ? $this->content->service((int) $detail) : null;
-
-        if ($website === null) {
-            return $this->ask($session, $item, $service?->id);
-        }
-
-        $intro = match ($item) {
-            'book' => $service ? __('You can book *:service* online in under a minute:', ['service' => $service->name]) : __('You can book online in under a minute:'),
-            'reserve' => __('You can reserve a table online in under a minute:'),
-            default => __('You can see everything and order online here:'),
+        return match ($key) {
+            'bk' => $this->booking,
+            'rv' => $this->reservation,
+            'or' => $this->order,
+            'dm' => $this->demo,
+            default => null,
         };
-        $fallback = match ($item) {
-            'book' => __('Or tap *Ask us* and tell us the day and time you would like; we will confirm here.'),
-            'reserve' => __('Or tap *Ask us* and tell us the day, time and number of people; we will confirm here.'),
-            default => __('Or tap *Ask us* and tell us what you would like to order.'),
-        };
-
-        return $this->reply($intro."\n".$website.'/'.$anchor."\n\n".$fallback, Interactive::buttons([
-            ['id' => 'aw.ask.'.$item.($service ? '.'.$service->id : ''), 'title' => __('Ask us')],
-            ['id' => 'aw.menu', 'title' => __('Main menu')],
-        ]));
     }
 
     private function servicesList(?int $categoryId): array
@@ -352,7 +358,7 @@ class ChatbotEngine
         return $this->reply(__('Here are our courses. Tap one to see the batches and fees.'), Interactive::list(__('See courses'), $rows, __('Courses & fees')));
     }
 
-    private function courseDetail(int $id): ?array
+    private function courseDetail(int $id, Conversation $conversation): ?array
     {
         $course = $this->content->course($id);
 
@@ -367,7 +373,7 @@ class ChatbotEngine
             .($batches !== '' ? "\n\n".__('*Batches*')."\n".$batches : '');
 
         return $this->reply(Str::limit($body, Interactive::BODY_MAX - 10), Interactive::buttons([
-            ['id' => 'aw.ask.demo.'.$course->id, 'title' => __('Free demo class')],
+            ['id' => ($this->demo->offers($course, $conversation) ? 'aw.dm.c.' : 'aw.ask.demo.').$course->id, 'title' => __('Free demo class')],
             ['id' => 'aw.ask.course.'.$course->id, 'title' => __('Ask about this')],
             ['id' => 'aw.menu', 'title' => __('Main menu')],
         ]));

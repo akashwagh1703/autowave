@@ -9,6 +9,7 @@ use App\Domain\Food\Support\ReservationSlots;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Domain\Website\Models\WebsiteSection;
 use App\Http\Requests\Onboarding\StoreBusinessRequest;
+use App\Support\OnlineSource;
 use App\Support\Phone;
 use App\Support\TenantTime;
 use Carbon\CarbonImmutable;
@@ -55,8 +56,11 @@ class OnlineReservations
         ];
     }
 
-    /** @param  array<string, mixed>  $input */
-    public function book(array $input): Reservation
+    /**
+     * @param  array<string, mixed>  $input
+     * @param  string  $source  `website`, or `whatsapp` for the WhatsApp assistant (same rules)
+     */
+    public function book(array $input, string $source = 'website'): Reservation
     {
         $data = Validator::make($input, [
             'name' => ['required', 'string', 'min:2', 'max:120'],
@@ -80,7 +84,7 @@ class OnlineReservations
                 'party_size' => (int) $data['party_size'],
                 'reserved_at' => CarbonImmutable::parse($data['starts_at']),
                 'notes' => $data['notes'] ?? null,
-                'source' => 'website',
+                'source' => OnlineSource::resolve($source),
             ]);
         } catch (ValidationException $exception) {
             // The website form calls the time `starts_at`.

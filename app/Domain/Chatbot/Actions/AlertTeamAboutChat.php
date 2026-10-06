@@ -57,4 +57,37 @@ class AlertTeamAboutChat
             report($exception);
         }
     }
+
+    /**
+     * Emails the owners about something the contact did in the chat (a demo class booked). Bookings,
+     * reservations and orders are emailed by EmailOwnersAboutWebsiteActivity like website ones.
+     *
+     * @param  array<string, ?string>  $details
+     */
+    public function notify(Conversation $conversation, string $subject, string $intro, array $details, string $action, string $path, string $kind): void
+    {
+        try {
+            $tenant = $this->context->tenant();
+            $owners = $this->settings->ownerAlerts() ? BillingRecipients::owners($tenant) : collect();
+
+            if ($owners->isEmpty()) {
+                return;
+            }
+
+            Notification::send($owners, new WebsiteActivityAlert(
+                'whatsapp_'.$kind,
+                $subject,
+                $intro,
+                array_filter([
+                    ...$details,
+                    __('Phone') => $conversation->channel === 'whatsapp' ? $conversation->contact_handle : null,
+                ], fn ($value) => filled($value)),
+                $action,
+                rtrim((string) config('app.url'), '/').$path,
+                $tenant->name,
+            ));
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
 }

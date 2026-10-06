@@ -18,7 +18,7 @@ The `food` engine is on for the **Cafe & Restaurant** business type, together wi
 |---|---|
 | Menu item | A commerce **product** with an optional food type (veg, non-veg, contains egg) and an "available now" switch (`is_available`). |
 | Dining table | A named table with seats and an optional area ("Garden"). |
-| Reservation | A guest (customer), party size, time, duration, optional table, status and source (team or website). |
+| Reservation | A guest (customer), party size, time, duration, optional table, status and source (team, website or [WhatsApp](whatsapp-assistant.md)). |
 | Dine-in order | A commerce order with fulfilment `dine_in`, an optional table and an optional customer (walk-ins). |
 | Kitchen ticket | The queued items of a confirmed order. Each item is `queued` or `ready`. |
 

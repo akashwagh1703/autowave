@@ -37,6 +37,7 @@ php artisan migrate:fresh --seed           # local only — destroys data
 | 2026-10-07 | `2026_10_07_100000` plans, subscriptions, billing payments, billing invoices | Billing A | New tables only. Partial unique indexes for one pending payment per tenant and a reference used once (PG11-safe). Run `RbacSeeder` (adds `billing.*`) and `TenantBackfillSeeder` (seeds the plans and gives every business without a subscription a fresh 14-day trial) |
 | 2026-10-08 | `2026_10_08_100000` billing coupons; online payment and coupon columns on billing payments | Billing B/C | New table and nullable / defaulted columns only; safe while the previous release runs. No seeder needed |
 | 2026-10-10 | `2026_10_10_100000` chatbot sessions; `outbound_messages.interactive` and `assistant` | WhatsApp assistant | New table and nullable / defaulted columns only; safe while the previous release runs. No seeder needed: the assistant is off until an owner turns it on |
+| 2026-10-11 | `2026_10_11_100000` reservations source check allows `whatsapp` | WhatsApp assistant step 2 | Drops and re-adds the `reservations_valid` check with the wider source list; brief lock on `reservations` only. Deploy the migration before the code (the old code never writes `whatsapp`). The down migration turns `whatsapp` reservations into `website` before restoring the old check. No seeder needed |
 
 ## Compatibility
 

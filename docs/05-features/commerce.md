@@ -224,7 +224,8 @@ Condition fields: `order.status`, `order.source`, `order.fulfilment`, `order.pay
 Default templates:
 
 - **Tell the team about website orders** (on): on `order.created` with source website, notifies the owners
-  by email.
+  by email. Orders placed in the [WhatsApp assistant](whatsapp-assistant.md) (source `whatsapp`) are
+  emailed to the owners directly, without an automation.
 - **Tell customers their order is ready** (paused): on `order.ready`, sends the customer a WhatsApp message.
 
 Both are created for businesses with the commerce engine and backfilled once for existing ones.
