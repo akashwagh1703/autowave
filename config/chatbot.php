@@ -23,6 +23,14 @@ return [
         'show_image' => true,
         'pause_hours' => 12,
         'alert_team' => true,
+        // Typed questions the menu does not understand are answered by AI (needs the AI module).
+        'ai_answers' => false,
+    ],
+
+    // AI answers (step 3): the longest question sent to AI and the longest answer sent back.
+    'ai' => [
+        'question_max' => 600,
+        'answer_max' => 700,
     ],
 
     'welcome_max' => 600,

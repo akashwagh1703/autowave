@@ -47,6 +47,7 @@ return [
         'summary' => ['label' => 'Summaries', 'max_tokens' => 400, 'temperature' => 0.2],
         'extraction' => ['label' => 'Lead details', 'max_tokens' => 400, 'temperature' => 0.0],
         'assistant' => ['label' => 'Assistant', 'max_tokens' => 700, 'temperature' => 0.2],
+        'chatbot' => ['label' => 'WhatsApp answers', 'max_tokens' => 450, 'temperature' => 0.2],
         'copy' => ['label' => 'Writing help', 'max_tokens' => 700, 'temperature' => 0.7],
     ],
 

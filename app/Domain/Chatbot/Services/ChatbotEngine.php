@@ -44,9 +44,15 @@ class ChatbotEngine
         private readonly ReservationFlow $reservation,
         private readonly OrderFlow $order,
         private readonly DemoFlow $demo,
+        private readonly ChatbotAI $ai,
     ) {}
 
-    /** @return array{body: string, interactive: ?array<string, mixed>}|null null when the assistant stays quiet */
+    /**
+     * The reply to a message, or `['ai' => …]` when a typed question should go to AI first (step 3): the
+     * caller asks AI outside its transaction (consultAi) and then calls answered().
+     *
+     * @return array{body: string, interactive: ?array<string, mixed>}|array{ai: array{reason: string, question: string}}|null null when the assistant stays quiet
+     */
     public function respond(ChatbotSession $session, Conversation $conversation, ConversationMessage $message): ?array
     {
         $this->load();
@@ -63,7 +69,7 @@ class ChatbotEngine
         $choice = $this->choice($session, $message, $text, $waiting);
 
         if ($choice === null && $typed && $session->state === ChatbotSession::QUESTION) {
-            return $this->remember($session, $this->handOver($session, $conversation, 'question', $text));
+            return $this->pendingAi('question', $text) ?? $this->remember($session, $this->handOver($session, $conversation, 'question', $text));
         }
 
         if ($choice === null && $typed && $session->state === ChatbotSession::FLOW && ($flow = $this->flow($session->get('flow')['kind'] ?? null))) {
@@ -84,6 +90,10 @@ class ChatbotEngine
         }
 
         if ($fresh) {
+            if ($choice === null && $typed && self::looksLikeQuestion($text) && ($pending = $this->pendingAi('fresh', $text))) {
+                return $pending;
+            }
+
             return $this->remember($session, $this->welcome($conversation, $message->type === 'text' && $text !== ''));
         }
 
@@ -92,19 +102,99 @@ class ChatbotEngine
             return null;
         }
 
+        if ($choice === null && $typed && ($pending = $this->pendingAi('unclear', $text))) {
+            return $pending;
+        }
+
+        return $this->remember($session, $this->notUnderstood($session, $conversation, $text));
+    }
+
+    /**
+     * Asks AI about a typed question. Called outside any transaction: it may take seconds. Null when AI
+     * could not be asked; otherwise the answer (null when AI was not confident) and its topic.
+     *
+     * @param  array{reason: string, question: string}  $pending
+     * @return array{answer: ?string, topic: ?string}|null
+     */
+    public function consultAi(Conversation $conversation, array $pending): ?array
+    {
+        $this->load();
+        $actions = [];
+
+        foreach (['book', 'reserve', 'order'] as $item) {
+            if (in_array($item, $this->items, true)) {
+                $actions[$item] = $this->label($item)['button'];
+            }
+        }
+
+        return $this->ai->answer($conversation, $pending['question'], $this->items, $actions, $pending['reason'] === 'fresh');
+    }
+
+    /**
+     * The reply once AI was consulted: its answer with buttons, the team when it was not sure, or the
+     * menu's usual reply when AI could not be asked.
+     *
+     * @param  array{reason: string, question: string}  $pending
+     * @param  array{answer: ?string, topic: ?string}|null  $result
+     * @return array{body: string, interactive: ?array<string, mixed>}
+     */
+    public function answered(ChatbotSession $session, Conversation $conversation, array $pending, ?array $result): array
+    {
+        $this->load();
+        ['reason' => $reason, 'question' => $text] = $pending;
+
+        if ($result === null) {
+            return $this->remember($session, match ($reason) {
+                'question' => $this->handOver($session, $conversation, 'question', $text),
+                'fresh' => $this->welcome($conversation, true),
+                default => $this->notUnderstood($session, $conversation, $text),
+            });
+        }
+
+        if ($result['answer'] === null) {
+            return $this->remember($session, $this->handOver($session, $conversation, $reason === 'question' ? 'question' : 'unsure', $text));
+        }
+
+        $session->forceFill(['state' => ChatbotSession::MENU, 'misses' => 0]);
+        $first = $result['topic'] !== null && in_array($result['topic'], $this->items, true)
+            ? ['id' => self::PREFIX.$result['topic'], 'title' => $this->label($result['topic'])['button']]
+            : $this->primaryAction();
+
+        return $this->remember($session, $this->reply($result['answer'], Interactive::buttons(array_values(array_filter([
+            $first,
+            ['id' => 'aw.human', 'title' => __('Talk to us')],
+            ['id' => 'aw.menu', 'title' => __('Main menu')],
+        ])), __('Automatic answer'))));
+    }
+
+    /** @return array{ai: array{reason: string, question: string}}|null */
+    private function pendingAi(string $reason, string $text): ?array
+    {
+        return $this->ai->enabled() ? ['ai' => ['reason' => $reason, 'question' => $text]] : null;
+    }
+
+    /** A question rather than a greeting or a one-word reply, so a first "ok" still gets the welcome. */
+    private static function looksLikeQuestion(string $text): bool
+    {
+        return str_contains($text, '?') || count(preg_split('/\s+/u', trim($text)) ?: []) >= 3;
+    }
+
+    /** @return array{body: string, interactive: ?array<string, mixed>} */
+    private function notUnderstood(ChatbotSession $session, Conversation $conversation, string $text): array
+    {
         $session->misses++;
 
         if ($session->misses >= (int) config('chatbot.misses_before_handover')) {
-            return $this->remember($session, $this->handOver($session, $conversation, 'unclear', $text));
+            return $this->handOver($session, $conversation, 'unclear', $text);
         }
 
-        return $this->remember($session, $this->reply(
+        return $this->reply(
             __('I’m the automatic assistant, so I can only help with the options below. For anything else, tap *Talk to us* and our team will reply.'),
             Interactive::buttons([
                 ['id' => 'aw.menu', 'title' => __('See options')],
                 ['id' => 'aw.human', 'title' => __('Talk to us')],
             ]),
-        ));
+        );
     }
 
     /** The welcome when the owner has not written one; {name} is the contact's first name. */
@@ -489,6 +579,7 @@ class ChatbotEngine
         if ($this->settings['alert_team']) {
             $intro = match ($reason) {
                 'question' => __(':name sent a question to the WhatsApp assistant. Please reply in the inbox.', ['name' => $name]),
+                'unsure' => __('The WhatsApp assistant could not answer a question from :name. Please reply in the inbox.', ['name' => $name]),
                 'unclear' => __('The WhatsApp assistant could not help :name. Please reply in the inbox.', ['name' => $name]),
                 default => __(':name asked to talk to a person on WhatsApp. Please reply in the inbox.', ['name' => $name]),
             };
@@ -497,7 +588,7 @@ class ChatbotEngine
         }
 
         $body = match ($reason) {
-            'question' => __('Thank you! We have passed this to our team and they will reply here soon.'),
+            'question', 'unsure' => __('Thank you! We have passed this to our team and they will reply here soon.'),
             'unclear' => __('Let me get someone from our team to help you. They will reply here soon.'),
             default => __('Sure! Someone from our team will reply here soon.'),
         };

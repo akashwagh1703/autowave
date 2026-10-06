@@ -15,7 +15,7 @@ class ChatbotSettings
 
     public function __construct(private readonly TenantContext $context) {}
 
-    /** @return array{enabled: bool, welcome: ?string, show_image: bool, items: list<string>, pause_hours: int, alert_team: bool} */
+    /** @return array{enabled: bool, welcome: ?string, show_image: bool, items: list<string>, pause_hours: int, alert_team: bool, ai_answers: bool} */
     public function all(): array
     {
         $stored = $this->context->setting(self::KEY, []);
@@ -32,6 +32,7 @@ class ChatbotSettings
             'items' => array_values(array_diff($items, is_array($stored['hidden_items'] ?? null) ? $stored['hidden_items'] : [])),
             'pause_hours' => max($limits['min'], min($limits['max'], (int) ($stored['pause_hours'] ?? $defaults['pause_hours']))),
             'alert_team' => (bool) ($stored['alert_team'] ?? $defaults['alert_team']),
+            'ai_answers' => (bool) ($stored['ai_answers'] ?? $defaults['ai_answers']),
         ];
     }
 
@@ -40,7 +41,7 @@ class ChatbotSettings
         return $this->all()['enabled'];
     }
 
-    /** @param  array{enabled: bool, welcome: ?string, show_image: bool, items: list<string>, pause_hours: int, alert_team: bool}  $values */
+    /** @param  array{enabled: bool, welcome: ?string, show_image: bool, items: list<string>, pause_hours: int, alert_team: bool, ai_answers?: bool}  $values */
     public function update(array $values): void
     {
         TenantSetting::query()->updateOrCreate(['key' => self::KEY], ['value' => [
@@ -50,6 +51,7 @@ class ChatbotSettings
             'hidden_items' => array_values(array_diff(config('chatbot.items'), $values['items'])),
             'pause_hours' => $values['pause_hours'],
             'alert_team' => $values['alert_team'],
+            'ai_answers' => (bool) ($values['ai_answers'] ?? false),
         ]]);
     }
 }

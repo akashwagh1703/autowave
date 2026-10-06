@@ -51,7 +51,7 @@ function Preview({ welcome, business, image, buttons }) {
     );
 }
 
-export default function WhatsAppAssistant({ settings, items, business, defaultWelcome, image, connected, ownerAlerts, overlapping, limits }) {
+export default function WhatsAppAssistant({ settings, items, business, defaultWelcome, image, connected, ownerAlerts, overlapping, ai, limits }) {
     const { can } = useTenant();
     const canUpdate = can('settings.update');
     const form = useForm({
@@ -61,6 +61,7 @@ export default function WhatsAppAssistant({ settings, items, business, defaultWe
         items: settings.items,
         pause_hours: settings.pause_hours,
         alert_team: settings.alert_team,
+        ai_answers: settings.ai_answers,
     });
     const locked = !canUpdate;
     const offered = items.filter((item) => item.available && form.data.items.includes(item.item));
@@ -128,8 +129,8 @@ export default function WhatsAppAssistant({ settings, items, business, defaultWe
                             />
                             <p className="text-sm text-slate-600">
                                 Customers tap buttons to see your services and prices, offers, timings and location, and can book, reserve a table, order or
-                                book a demo class right in the chat, with the same rules as your website. Questions and “Talk to a person” go to your team in
-                                the inbox.
+                                book a demo class right in the chat, with the same rules as your website. Questions go to your team in the inbox, or are
+                                answered by AI if you turn it on below; “Talk to a person” always reaches your team.
                             </p>
                         </CardContent>
                     </Card>
@@ -187,6 +188,33 @@ export default function WhatsAppAssistant({ settings, items, business, defaultWe
                             {form.errors.items ? <p className="text-sm text-red-600">{form.errors.items}</p> : null}
                         </CardContent>
                     </Card>
+
+                    {ai.module ? (
+                        <Card variant="outlined">
+                            <CardContent className="space-y-2">
+                                <FormControlLabel
+                                    control={
+                                        <Switch checked={form.data.ai_answers} disabled={locked} onChange={(event) => form.setData('ai_answers', event.target.checked)} />
+                                    }
+                                    label={<span className="font-semibold text-slate-900">Answer typed questions with AI</span>}
+                                />
+                                <p className="text-sm text-slate-600">
+                                    When a customer types a question the menu does not cover, AI answers from your services, prices, products, offers, common
+                                    questions and the notes in AI settings, with buttons to book or talk to you. It never confirms bookings, prices it does not
+                                    know, payments or orders. When it is not sure, the chat goes to your team as usual. Answers are marked “Automatic answer” and
+                                    count towards your monthly AI usage.
+                                </p>
+                                {form.data.ai_answers && !ai.available ? (
+                                    <p className="text-sm text-amber-700">
+                                        {ai.message} Until then, questions go to your team.{' '}
+                                        <Link href="/settings/ai" className="font-medium underline">
+                                            AI settings
+                                        </Link>
+                                    </p>
+                                ) : null}
+                            </CardContent>
+                        </Card>
+                    ) : null}
 
                     <Card variant="outlined">
                         <CardContent className="space-y-3">

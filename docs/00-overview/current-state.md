@@ -385,8 +385,21 @@ This document describes what **actually exists** in the repository today. Planne
   demos.
 - **Code:** `app/Domain/Chatbot/Flows` (`ChatFlow`, `BookingFlow`, `ReservationFlow`, `OrderFlow`,
   `DemoFlow`), session state `flow`, migration `2026_10_11_100000` (reservations source check).
-- **Next:** step 3 adds AI answers to typed questions.
 - **Tests:** `Chatbot/WhatsAppAssistantFlowsTest` (10).
+
+### WhatsApp assistant, step 3 (2026-10-12, ADR-021, amends ADR-019)
+
+- **What it does:** with the owner's opt-in "Answer typed questions with AI", typed questions the menu
+  does not understand, questions after "Ask us" and question-like first messages are answered by AI
+  from the business facts (services, products, hours, contact, rates, courses, offers, FAQ, owner
+  notes), with buttons and the footer "Automatic answer".
+- **Safety:** never confirms bookings, orders, payments or discounts; untrusted customer text; JSON
+  `{answer, confident, topic}`; not confident → the usual hand-over and owner e-mail; AI unavailable or
+  failing → the step 1 reply. Metered (feature `chatbot`) against the monthly cap.
+- **Code:** `ChatbotAI`, `AIService::answerCustomer()`, prompt `resources/prompts/whatsapp.md`,
+  `ChatbotEngine::consultAi()` / `answered()`, two-phase `ReplyWithChatbot` (no lock held during the AI
+  call), setting `ai_answers`, inbox footer.
+- **Tests:** `Chatbot/WhatsAppAssistantAiTest` (8).
 
 ### Business website redesign (2026-10-06)
 

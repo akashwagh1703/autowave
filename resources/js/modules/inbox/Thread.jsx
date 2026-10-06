@@ -55,6 +55,7 @@ function Bubble({ message, timezone }) {
                 {message.body || !message.attachment ? (
                     <p className={`break-words whitespace-pre-line ${message.attachment ? 'mt-1' : ''}`}>{message.body || <span className="italic opacity-75">(no text)</span>}</p>
                 ) : null}
+                {message.footer ? <p className="mt-1 text-xs opacity-75">{message.footer}</p> : null}
                 {message.options?.length ? (
                     <ul className={`mt-2 space-y-1 border-t pt-2 ${outbound ? 'border-white/20' : 'border-slate-200'}`} aria-label="Options sent">
                         {message.options.map((option, index) => (

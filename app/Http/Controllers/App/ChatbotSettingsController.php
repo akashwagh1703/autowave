@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Domain\AI\Services\AIGateway;
 use App\Domain\Audit\Services\AuditLogger;
 use App\Domain\Automation\Models\Automation;
 use App\Domain\Chatbot\Services\ChatbotContent;
@@ -17,10 +18,10 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/** Settings → WhatsApp assistant (ADR-021): on/off, welcome, menu items, pause after a person takes over. */
+/** Settings → WhatsApp assistant (ADR-021): on/off, welcome, menu items, AI answers, pause after a person takes over. */
 class ChatbotSettingsController extends Controller
 {
-    public function show(ChatbotSettings $settings, ChatbotEngine $engine, ChatbotContent $content, ChannelResolver $channels, MessagingSettings $messaging, TenantContext $context): Response
+    public function show(ChatbotSettings $settings, ChatbotEngine $engine, ChatbotContent $content, ChannelResolver $channels, MessagingSettings $messaging, TenantContext $context, AIGateway $ai): Response
     {
         $availability = $content->availability();
         $image = $content->welcomeImage();
@@ -45,6 +46,7 @@ class ChatbotSettingsController extends Controller
             'connected' => $channels->connected('whatsapp') !== null,
             'ownerAlerts' => $messaging->ownerAlerts(),
             'overlapping' => $this->overlappingAutomations($context),
+            'ai' => [...$ai->status(), 'module' => $context->hasModule('ai')],
             'limits' => ['welcome' => (int) config('chatbot.welcome_max'), ...config('chatbot.pause_hours')],
         ]);
     }
@@ -60,6 +62,7 @@ class ChatbotSettingsController extends Controller
             'items.*' => ['string', Rule::in(config('chatbot.items'))],
             'pause_hours' => ['required', 'integer', 'min:'.$limits['min'], 'max:'.$limits['max']],
             'alert_team' => ['required', 'boolean'],
+            'ai_answers' => ['sometimes', 'boolean'],
         ]);
 
         $values = [
@@ -70,6 +73,7 @@ class ChatbotSettingsController extends Controller
             'items' => array_values(array_unique([...$validated['items'], 'human'])),
             'pause_hours' => (int) $validated['pause_hours'],
             'alert_team' => (bool) $validated['alert_team'],
+            'ai_answers' => (bool) ($validated['ai_answers'] ?? $settings->all()['ai_answers']),
         ];
 
         $settings->update($values);

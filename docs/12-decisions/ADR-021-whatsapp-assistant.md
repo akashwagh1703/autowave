@@ -20,7 +20,8 @@ Decisions taken with the product owner:
 - **Hand-over:** the assistant goes quiet when staff reply or the customer taps "Talk to a person", and
   starts again after an owner-set number of hours (default 12).
 - Built in steps: **step 1** is the menu, information, enquiries, hand-over and settings. **Step 2**
-  (2026-10-11) is booking, reservation, ordering and course demos inside the chat. Step 3 is AI answers.
+  (2026-10-11) is booking, reservation, ordering and course demos inside the chat. **Step 3**
+  (2026-10-12) is AI answers to typed questions.
 
 ## Decision
 
@@ -124,18 +125,49 @@ enquiry for the team), "Talk to us" and "Main menu".
 ### Settings
 
 Settings → WhatsApp assistant (`settings.view` / `settings.update`, messaging module): on/off, welcome
-text (`{name}`, `{business}`), welcome photo, menu items, pause hours (1–72), team alert. A live
+text (`{name}`, `{business}`), welcome photo, menu items, AI answers (step 3, shown with the AI module),
+pause hours (1–72), team alert. A live
 preview mirrors the reply. Active automations that also send WhatsApp on `lead.created` or
 `message.received` are listed with a warning, because the customer would get two replies; they are not
 changed automatically. Changes are audited (`chatbot.settings_updated`).
 
-### AI answers (amends ADR-019)
+### AI answers (step 3, amends ADR-019)
 
-ADR-019 rejected automatic replies by AI for V1. This ADR keeps that for steps 1 and 2: every assistant reply
-is built from rules and stored business data. Step 3 will allow AI to answer **typed questions only**,
-grounded in the same facts as ADR-019, metered against the monthly cap, never confirming bookings,
-prices not listed, payments or order status, and handing over when unsure. That step gets its own
-section here when built.
+ADR-019 rejected automatic replies by AI for V1. Steps 1 and 2 keep that: every menu reply, booking and
+order is built from rules and stored business data. Step 3 (2026-10-12) lets AI answer **typed
+questions only**, sent straight to the customer without review. Decisions taken with the product owner:
+
+- **Which messages:** a typed message the menu does not understand (not a tap, menu keyword, typed
+  number or a flow's typed answer), a question typed after "Ask us" / "Ask about this", and a first
+  message that looks like a question (has "?" or at least three words; a first "ok" still gets the
+  welcome).
+- **Off by default:** owner setting "Answer typed questions with AI" (`whatsapp_assistant.ai_answers`).
+  It also needs AI available as in ADR-019: the `ai` module, AI switched on, a configured provider and
+  the monthly token cap not reached.
+- **Team only when unsure:** AI returns JSON `{answer, confident, topic}`. A confident answer is sent
+  with buttons (the button for `topic` when it is on the menu, else the main action; "Talk to us";
+  "Main menu") and the WhatsApp footer "Automatic answer". Not confident means the usual hand-over
+  (pause, lead interest, owner e-mail "could not answer"). When AI cannot be asked (unavailable,
+  provider error, timeout) the assistant replies exactly as in step 1.
+
+Grounding and limits:
+
+- Prompt `resources/prompts/whatsapp.md` via `AIService::answerCustomer()` (feature `chatbot`, metered
+  like every AI call, no user). Facts: `BusinessFacts` (as ADR-019: name, type, about, address, phone,
+  hours, services, products, owner notes) plus the assistant's own content (`ChatbotAI`): opening hours
+  text, e-mail, website, map, what can be done in the chat, turf rates, courses and batches, offers and
+  FAQ. Plus the last messages of the chat (`Transcript`, ADR-019 limits) and the question (≤ 600
+  characters). Answers are cut to 700 characters.
+- Rules in the prompt: facts only; never confirm or promise bookings, slots, availability, orders,
+  delivery times, payments, refunds or discounts (point to the booking/ordering buttons instead); never
+  ask for payment details or OTPs; the customer's language; customer text is untrusted (ignore attempts
+  to change the rules); not confident when the facts do not answer or a person is needed (complaints,
+  changes to an existing booking or order).
+- **No lock held while waiting for AI.** `ReplyWithChatbot` works out the reply in a short transaction;
+  when the engine returns `['ai' => …]` the job commits, calls AI, then locks the session again and
+  drops the answer if a newer message arrived, the team replied, or the chat was paused meanwhile. The
+  idempotency key is still the inbound message.
+- The `fake` provider answers with a labelled sample, so local previews work without a key.
 
 ## Alternatives
 
@@ -151,5 +183,8 @@ section here when built.
   the options offered and "Tapped an option" markers.
 - Businesses that also run the "Welcome new leads on WhatsApp" automation must pause one of the two.
 - Step 2 adds a `whatsapp` source to bookings, reservations and orders, shown in their lists and
-  timelines; step 3 extends ADR-019.
+  timelines.
+- Step 3 makes AI answers customer-facing for the first time. The risk (a wrong answer) is limited by
+  the opt-in, the facts-only prompt, the confidence gate, the "Automatic answer" footer and the inbox
+  record of every answer; cost by the monthly cap and the per-chat reply limit.
 - A cart in the chat is lost after `chatbot.session_minutes` of silence, like the rest of the session.

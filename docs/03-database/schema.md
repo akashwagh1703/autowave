@@ -401,7 +401,9 @@ Amounts are in paise.
 | `outbound_messages` (added) | `interactive` jsonb (nullable: `kind` `buttons` with `buttons`, `header_image`, `footer`; `list` with `button`, `rows`, `header`, `footer`; `image` with `image`), `assistant` boolean (default false) |
 
 - Tenant setting `whatsapp_assistant`: `enabled`, `welcome`, `show_image`, `hidden_items`, `pause_hours`,
-  `alert_team` (defaults in `config('chatbot.defaults')`).
+  `alert_team`, `ai_answers` (step 3; defaults in `config('chatbot.defaults')`). AI answers are metered
+  in `ai_usage` with feature `chatbot` and no user. Assistant replies keep their WhatsApp footer in
+  `conversation_messages.meta.footer` ("Automatic answer" for AI answers).
 - Inbound taps are stored in `conversation_messages.meta.reply_id`; assistant replies keep the options
   offered in `meta.options`.
 - Step 2 (`2026_10_11_100000`): `source = whatsapp` on `appointments`, `orders` and `reservations` for

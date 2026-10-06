@@ -130,6 +130,7 @@ class ConversationRecorder
         return array_filter([
             'options' => array_column(Interactive::options($interactive), 'title') ?: null,
             'button' => $interactive['button'] ?? null,
+            'footer' => $interactive['footer'] ?? null,
             'image' => $interactive['header_image']['url'] ?? $interactive['image']['url'] ?? null,
         ]) ?: null;
     }

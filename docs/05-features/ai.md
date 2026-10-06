@@ -9,8 +9,10 @@
 ## Purpose
 
 AI saves staff typing and reading time (master prompt §40–42). It drafts, summarises and suggests;
-**it never sends a message or changes prices, stock, bookings, payments or orders.** A person reviews
-every draft and presses Send.
+**it never changes prices, stock, bookings, payments or orders.** A person reviews every draft and
+presses Send. The one exception to reviewing is opt-in: the [WhatsApp assistant](whatsapp-assistant.md)
+can answer customers' typed questions with AI (ADR-021 step 3, feature `chatbot`, "WhatsApp answers" in
+usage), from the business facts only, handing over to the team when unsure.
 
 The platform works fully without AI. When AI is unavailable, AI buttons are disabled with the reason,
 and automations skip AI steps.

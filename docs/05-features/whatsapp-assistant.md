@@ -1,9 +1,10 @@
 # WhatsApp assistant
 
-- **Status:** ✅ Step 1 (menu, information, enquiries, hand-over, settings) and step 2 (booking,
-  reservations, ordering and demo classes inside the chat). Step 3 (AI answers) is planned.
+- **Status:** ✅ Step 1 (menu, information, enquiries, hand-over, settings), step 2 (booking,
+  reservations, ordering and demo classes inside the chat) and step 3 (AI answers to typed questions,
+  opt-in).
 - **Decision:** [ADR-021](../12-decisions/ADR-021-whatsapp-assistant.md) (builds on ADR-018, amends ADR-019)
-- **Last updated:** 2026-10-11
+- **Last updated:** 2026-10-12
 
 ## Purpose
 
@@ -31,11 +32,32 @@ answers messages the customer sends; it never starts a conversation.
    - **Timings & location:** address, opening hours, phone, e-mail, map link and website.
    - **Talk to a person:** hands over to the team.
 4. **Ask us / Ask about this:** the customer types their question; it goes to the team (see hand-over),
-   and the lead's interest is noted.
+   and the lead's interest is noted. With AI answers on, AI answers it first (below).
 
 Customers can also type: a number picks from the last options offered, and short messages such as
 "price", "timings", "offers", "book" or "talk to someone" open the matching item. "menu", "hi" or
 "back" always goes back to the start.
+
+### AI answers to typed questions (optional)
+
+With **Answer typed questions with AI** on (and AI available for the business), a typed message the
+menu does not understand is answered by AI, for example "Do you have parking?" or "Is the facial
+suitable for sensitive skin?". So is a question typed after **Ask us**, and a first message that is a
+question ("How much is a haircut?"), which gets a short greeting too.
+
+- The answer uses only the business's own information: services and prices, products, opening hours,
+  address and contact details, website, turf rates, courses and batches, offers, common questions, and
+  the owner's notes in Settings → AI.
+- It comes with buttons: the matching option (for example **Book now** or **Timings & location**),
+  **Talk to us** and **Main menu**, and the footer "Automatic answer".
+- It never confirms a booking, a time, an order, a payment or a discount; for those it points to the
+  buttons. It never asks for payment details.
+- When AI is not sure (the information is not there, a complaint, a change to an existing booking), the
+  customer gets "We have passed this to our team" and the chat is handed over as usual, with an e-mail
+  to the owners.
+- When AI is not available (switched off, monthly limit reached, provider down), the assistant replies
+  as it would without AI.
+- Taps, menu words, typed numbers and answers inside a booking or order never go to AI.
 
 ### Booking in the chat
 
@@ -121,6 +143,9 @@ switch them off.
   **Show your website's main photo** (hero photo, else logo; JPEG or PNG).
 - **Menu:** each item can be switched off. Items the business does not have are shown greyed with the
   reason (for example "Turn on online ordering in Order settings…"). **Talk to a person** is always offered.
+- **Answer typed questions with AI** (off by default; shown when the business has the AI module). If AI
+  is switched off or over its monthly limit, the page says so with a link to Settings → AI. Answers
+  count towards the monthly AI usage (feature "WhatsApp answers").
 - **When your team takes over:** pause hours and team e-mail alerts.
 - A live preview of the welcome. A warning lists active automations that also send WhatsApp messages
   when a lead is created or a message arrives (for example "Welcome new leads on WhatsApp"), because the
@@ -135,7 +160,8 @@ Stored in the `whatsapp_assistant` tenant setting; defaults in `config/chatbot.p
 ## Inbox and records
 
 Assistant replies show the sender **Assistant**, the photo, and the buttons or list items offered as
-chips. A customer's tap shows as **Tapped an option**. The timeline shows "via WhatsApp assistant".
+chips. AI answers show the footer "Automatic answer". A customer's tap shows as **Tapped an option**.
+The timeline shows "via WhatsApp assistant".
 Appointments, orders and reservations made in the chat show the source **WhatsApp** in their lists and
 timelines ("… on WhatsApp").
 
@@ -149,6 +175,9 @@ timelines ("… on WhatsApp").
   (`aw.bk.at.{service}.{resource}.{timestamp}`). The final step calls `OnlineBooking`,
   `OnlineReservations` or `OnlineShop` with source `whatsapp`, or `ScheduleDemo`, inside the reply's
   transaction.
+- AI answers: the engine returns `['ai' => …]`; `ReplyWithChatbot` commits, asks AI through
+  `ChatbotAI` → `AIService::answerCustomer()` (prompt `resources/prompts/whatsapp.md`, feature `chatbot`)
+  with no lock held, then checks the chat again and calls `ChatbotEngine::answered()`.
 - Buttons, lists and photos are stored in `outbound_messages.interactive` and sent as WhatsApp
   interactive messages; providers without buttons get numbered text.
 
@@ -184,10 +213,16 @@ ids to use. Turn the assistant on first in Settings → WhatsApp assistant.
   link, owner e-mail, double tap), auto-confirm, a time taken meanwhile, asking for the name, leaving a
   flow, another business's ids, table reservation with a large group, ordering for delivery and pickup,
   free demo class.
+- `tests/Feature/Chatbot/WhatsAppAssistantAiTest.php`: off by default, a grounded answer with buttons
+  and footer (prompt facts and rules, metering, inbox), first-message question with greeting, taps and
+  keywords never sent to AI, not sure → hand-over and alert, "Ask us" answered by AI, fallback when the
+  provider fails or the cap is reached, the setting and AI status.
+
+With `AI_PROVIDER=fake` (local, no key) AI answers are labelled sample text.
 
 ## Known limitations
 
-- Typed questions go to the team; AI answers are step 3.
+- AI answers cannot look up a customer's own bookings or orders; those questions go to the team.
 - Coupons, online payment and rescheduling or cancelling an existing booking in the chat are not
   offered yet; the customer can ask the team.
 - Instagram DMs are not answered by the assistant.

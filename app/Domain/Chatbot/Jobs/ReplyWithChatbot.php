@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\RateLimiter;
  * - a team member replied in this chat within the pause hours, or the contact asked for a person;
  * - the chat hit the per-minute reply limit.
  * The reply's idempotency key is the inbound message, so a retried job never answers twice.
+ * A typed question for AI (step 3) is asked between two short transactions, then the chat is checked again.
  */
 class ReplyWithChatbot implements ShouldQueue
 {
@@ -77,39 +78,70 @@ class ReplyWithChatbot implements ShouldQueue
                 return;
             }
 
-            DB::transaction(function () use ($conversation, $message) {
+            $engine = app(ChatbotEngine::class);
+
+            $pending = DB::transaction(function () use ($engine, $conversation, $message) {
                 $session = $this->session($conversation);
 
                 if ($session->isPaused()) {
                     if (! $this->resumes($session, $message)) {
-                        return;
+                        return null;
                     }
 
                     $session->forceFill(['paused_until' => null, 'data' => Arr::except($session->data ?? [], 'paused_by') ?: null]);
                 }
 
-                $reply = app(ChatbotEngine::class)->respond($session, $conversation, $message);
+                $reply = $engine->respond($session, $conversation, $message);
                 $session->save();
 
-                if ($reply === null) {
+                if (isset($reply['ai'])) {
+                    return $reply['ai'];
+                }
+
+                if ($reply !== null) {
+                    $this->send($conversation, $message, $reply);
+                }
+
+                return null;
+            });
+
+            if ($pending === null) {
+                return;
+            }
+
+            // AI can take seconds, so it is asked with no transaction or lock held; then the chat is checked again.
+            $result = $engine->consultAi($conversation, $pending);
+
+            DB::transaction(function () use ($engine, $conversation, $message, $pending, $result, $settings) {
+                $session = $this->session($conversation);
+
+                if ($session->isPaused() || $this->newerInboundExists($message) || $this->teamReplied($conversation, $settings['pause_hours'])) {
                     return;
                 }
 
-                app(MessagingService::class)->queue([
-                    'channel' => 'whatsapp',
-                    'recipient' => $conversation->contact_handle,
-                    'recipient_name' => $conversation->contact_name,
-                    'body' => $reply['body'],
-                    'interactive' => $reply['interactive'],
-                    'assistant' => true,
-                    'purpose' => MessagePurpose::System,
-                    'idempotency_key' => "assistant:{$message->id}",
-                    'conversation_id' => $conversation->id,
-                    'lead_id' => $conversation->lead_id,
-                    'customer_id' => $conversation->customer_id,
-                ]);
+                $reply = $engine->answered($session, $conversation, $pending, $result);
+                $session->save();
+                $this->send($conversation, $message, $reply);
             });
         });
+    }
+
+    /** @param  array{body: string, interactive: ?array<string, mixed>}  $reply */
+    private function send(Conversation $conversation, ConversationMessage $message, array $reply): void
+    {
+        app(MessagingService::class)->queue([
+            'channel' => 'whatsapp',
+            'recipient' => $conversation->contact_handle,
+            'recipient_name' => $conversation->contact_name,
+            'body' => $reply['body'],
+            'interactive' => $reply['interactive'],
+            'assistant' => true,
+            'purpose' => MessagePurpose::System,
+            'idempotency_key' => "assistant:{$message->id}",
+            'conversation_id' => $conversation->id,
+            'lead_id' => $conversation->lead_id,
+            'customer_id' => $conversation->customer_id,
+        ]);
     }
 
     /** The contact sent something newer; that message's job answers instead. */

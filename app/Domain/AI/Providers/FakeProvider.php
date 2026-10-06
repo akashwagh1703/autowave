@@ -35,6 +35,11 @@ class FakeProvider implements AIProvider
             'reply' => 'Thank you for your message! We will get back to you with the details shortly. '.self::NOTE,
             'copy' => 'Here is a suggestion for you: '.Str::limit(trim(Str::after($input, 'Instructions:')), 120).' '.self::NOTE,
             'assistant' => null,
+            'chatbot' => json_encode([
+                'answer' => 'Thanks for asking about “'.Str::limit(trim(Str::afterLast($input, "Customer's message to answer:")), 80).'”. '.self::NOTE,
+                'confident' => true,
+                'topic' => null,
+            ]),
             default => self::NOTE,
         };
 

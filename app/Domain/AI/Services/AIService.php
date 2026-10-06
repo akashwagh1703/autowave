@@ -5,6 +5,8 @@ namespace App\Domain\AI\Services;
 use App\Domain\Activity\Models\Activity;
 use App\Domain\AI\Assistant\AssistantTools;
 use App\Domain\AI\Data\ChatRequest;
+use App\Domain\AI\Exceptions\AIProviderException;
+use App\Domain\AI\Exceptions\AIUnavailable;
 use App\Domain\AI\Models\AIResult;
 use App\Domain\AI\Support\AISettings;
 use App\Domain\AI\Support\BusinessFacts;
@@ -228,6 +230,50 @@ class AIService
         ]), $user);
 
         return $this->clean($response->text(), $max);
+    }
+
+    /**
+     * An answer sent straight to a customer by the WhatsApp assistant (ADR-021 step 3, amends ADR-019).
+     * Grounded in the business facts plus `$extraFacts` (offers, FAQ, courses…); null answer when the model
+     * is not confident, so the caller hands the chat to the team.
+     *
+     * @param  list<string>  $topics  topics the caller can turn into a button
+     * @param  list<string>  $actions  button labels the customer can tap to book, reserve or order
+     * @return array{answer: ?string, topic: ?string}
+     *
+     * @throws AIUnavailable
+     * @throws AIProviderException
+     */
+    public function answerCustomer(Conversation $conversation, string $question, string $extraFacts, array $topics, array $actions, bool $firstMessage): array
+    {
+        $maxAnswer = (int) config('chatbot.ai.answer_max');
+        $name = Str::of($conversation->displayName())->trim()->explode(' ')->first();
+
+        $system = $this->prompts->render('whatsapp', [
+            'business_name' => $this->facts->name(),
+            'business_type' => $this->facts->type(),
+            'tone' => config('ai.tones.'.$this->settings->all()['tone']),
+            'answer_max' => $maxAnswer,
+            'actions' => $actions !== [] ? implode(', ', array_map(fn (string $label) => '"'.$label.'"', $actions)) : 'none: ask them to tap "Talk to us"',
+            'greeting' => $firstMessage ? 'This is the customer\'s first message: start with a short greeting by first name if it looks like a name.' : 'Do not greet again; the chat is already going.',
+            'topics' => implode(', ', array_map(fn (string $topic) => '"'.$topic.'"', $topics)),
+            'facts' => trim($this->facts->text()."\n".$extraFacts),
+        ]);
+
+        $response = $this->gateway->chat(ChatRequest::for('chatbot', [
+            ['role' => 'system', 'content' => $system],
+            ['role' => 'user', 'content' => "Customer name: {$name}\n\nRecent conversation:\n".($this->transcript->conversation($conversation) ?: '(none)')
+                ."\n\nCustomer's message to answer:\n".Str::limit(trim($question), (int) config('chatbot.ai.question_max'))],
+        ], json: true));
+
+        $data = $response->json();
+        $answer = is_string($data['answer'] ?? null) ? $this->clean($data['answer'], $maxAnswer) : '';
+        $topic = is_string($data['topic'] ?? null) && in_array($data['topic'], $topics, true) ? $data['topic'] : null;
+
+        return [
+            'answer' => ($data['confident'] ?? false) === true && $answer !== '' ? $answer : null,
+            'topic' => $topic,
+        ];
     }
 
     /**

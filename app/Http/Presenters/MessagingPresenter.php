@@ -58,6 +58,7 @@ class MessagingPresenter
             'simulated' => (bool) $outbound?->simulated,
             'template' => $message->meta['template'] ?? null,
             'options' => $message->meta['options'] ?? [],
+            'footer' => $message->meta['footer'] ?? null,
             'image' => $attachment ? null : ($message->meta['image'] ?? null),
             'sender' => $outbound?->sender?->name ?? match (true) {
                 (bool) $outbound?->automation_run_id => 'Automation',

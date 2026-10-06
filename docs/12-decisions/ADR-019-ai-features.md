@@ -119,6 +119,8 @@ both; receptionist and sales executive get `ai.use`. Backfilled once for existin
 
 - **Per-business API keys** — rejected for V1; one platform key keeps setup at zero for owners.
 - **Auto-reply to customers** — rejected for V1 (AI must not speak for the business unreviewed).
+  Amended by [ADR-021](ADR-021-whatsapp-assistant.md) step 3: the WhatsApp assistant may answer typed
+  questions with AI when the owner opts in, from the business facts only, and hands over when unsure.
 - **Storing assistant chats** — not needed yet; stateless keeps customer data out of another table.
 - **Requests as the cap unit** — tokens track cost better across features of very different sizes.
 
