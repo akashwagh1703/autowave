@@ -435,6 +435,12 @@ This document describes what **actually exists** in the repository today. Planne
   mobile menu) and footer. Search titles and descriptions are in `config/marketing.php`; page copy in
   `modules/marketing/industries.js` and the pages. Product illustrations are drawn in code
   (`modules/marketing/mockups.jsx`); they can be swapped for screenshots of the redesigned business sites.
+- **WhatsApp assistant and plain wording (2026-10-13):** home section `#whatsapp-assistant` and an
+  industry-page section (`AssistantMockup`: question, photo cards or time buttons, tap, confirmation;
+  per-industry text in `industries.js` → `assistant`). Copy avoids CRM / pipeline / leads / automations;
+  pricing uses `plainLimitLabel()` and a "Good for" line from the members limit (the app keeps
+  `limitLabel()`). "See a sample website" on `/for/{industry}` when `config('marketing.industries.*.sample')`
+  (`AUTOWAVE_SAMPLE_*`) is an http(s) URL. `public/favicon.ico` (16/32/48) and `apple-touch-icon.png`.
 - **Book a demo:** name, phone, email and business are required. Each request is saved in `demo_requests`,
   emailed to every active platform admin (`DemoRequested`, `notifications` queue), confirmed to the
   requester by email (`DemoRequestReceived`, with the trial link and sales WhatsApp), and copied as a website lead (interest "Demo: …", message with
@@ -446,7 +452,7 @@ This document describes what **actually exists** in the repository today. Planne
   and JSON-LD on the server (`app.blade.php`; `SoftwareApplication` on the home page, `LocalBusiness` on
   business sites); host-aware `/robots.txt` and `/sitemap.xml` (`SeoController`): marketing and live
   business sites open, app and admin hosts closed, draft or locked sites closed.
-- **Tests:** `Foundation/MarketingSiteTest` (10).
+- **Tests:** `Foundation/MarketingSiteTest` (11).
 
 ### Production (2026-09-29)
 

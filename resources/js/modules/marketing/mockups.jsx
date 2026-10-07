@@ -24,9 +24,9 @@ export function BrowserFrame({ url = 'yourbusiness.autowave.co.in', children, cl
     );
 }
 
-export function PhoneFrame({ children, className = '' }) {
+export function PhoneFrame({ children, className = 'w-56' }) {
     return (
-        <div aria-hidden="true" className={`w-56 rounded-[2rem] border-[6px] border-ink bg-white shadow-2xl shadow-brand-900/20 ${className}`}>
+        <div aria-hidden="true" className={`rounded-[2rem] border-[6px] border-ink bg-white shadow-2xl shadow-brand-900/20 ${className}`}>
             <div className="mx-auto mt-1.5 h-1.5 w-16 rounded-full bg-slate-200" />
             <div className="overflow-hidden rounded-b-[1.6rem] pt-1.5">{children}</div>
         </div>
@@ -103,7 +103,14 @@ export function DashboardMockup() {
 }
 
 /** A small business website as visitors see it on a phone. */
-export function SitePhoneMockup({ name = 'Glow Studio', tagline = 'Hair, skin and bridal studio', color = '#4f46e5', items = ['Haircut & styling', 'Classic facial', 'Bridal makeup'], cta = 'Book now' }) {
+export function SitePhoneMockup({
+    name = 'Glow Studio',
+    tagline = 'Hair, skin and bridal studio',
+    color = '#4f46e5',
+    items = ['Haircut & styling', 'Classic facial', 'Bridal makeup'],
+    prices = [600, 1500, 15000],
+    cta = 'Book now',
+}) {
     return (
         <PhoneFrame>
             <div className="px-3 pt-2 pb-1 text-[11px] font-bold" style={{ color }}>
@@ -120,7 +127,7 @@ export function SitePhoneMockup({ name = 'Glow Studio', tagline = 'Hair, skin an
                     <div key={item} className="flex items-center justify-between rounded-lg bg-white p-2 shadow-sm">
                         <span className="text-[10px] font-semibold text-ink">{item}</span>
                         <span className="text-[10px] font-bold" style={{ color }}>
-                            ₹{[600, 1500, 15000][index % 3].toLocaleString('en-IN')}
+                            ₹{prices[index % prices.length].toLocaleString('en-IN')}
                         </span>
                     </div>
                 ))}
@@ -251,10 +258,87 @@ export function ChatMockup() {
                     <span className="truncate text-slate-500">“Booked! You will get a reminder 2 hours before.”</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-slate-600">
-                    <CheckCircleIcon sx={{ fontSize: 12, color: '#0d9488' }} /> Automation: reminder scheduled for Sunday 3:30 pm
+                    <CheckCircleIcon sx={{ fontSize: 12, color: '#0d9488' }} /> Reminder will go out automatically on Sunday at 3:30 pm
                 </div>
             </div>
         </BrowserFrame>
+    );
+}
+
+function Bubble({ mine = false, children }) {
+    return (
+        <div className={`max-w-[82%] rounded-lg px-2.5 py-1.5 text-[10px] leading-snug text-slate-700 shadow-sm ${mine ? 'ml-auto rounded-tr-none bg-[#d9fdd3]' : 'rounded-tl-none bg-white'}`}>
+            {children}
+        </div>
+    );
+}
+
+/**
+ * The WhatsApp assistant as the customer sees it: a question, an instant reply with photo cards (or
+ * time buttons), a tap and the confirmation.
+ */
+export function AssistantMockup({
+    name = 'Glow Studio',
+    color = '#4f46e5',
+    items = ['Haircut & styling', 'Classic facial', 'Bridal makeup'],
+    prices = [600, 1500, 15000],
+    emoji = ['💇‍♀️', '🧖‍♀️', '👰'],
+    ask = 'Hi, what are your prices?',
+    reply = 'Hi Priya! 👋 Here is what we offer. Swipe to see more.',
+    button = 'Book this',
+    options = null,
+    done = 'Booked! Haircut on Sunday at 5:30 pm.',
+    className = '',
+}) {
+    return (
+        <PhoneFrame className={`w-64 ${className}`}>
+            <div className="flex items-center gap-2 bg-[#075e54] px-3 py-2 text-white">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold" style={{ backgroundColor: color }}>
+                    {name.charAt(0)}
+                </span>
+                <span className="min-w-0">
+                    <span className="block truncate text-[11px] font-semibold">{name}</span>
+                    <span className="block text-[8px] opacity-80">Replies instantly</span>
+                </span>
+            </div>
+            <div className="space-y-1.5 bg-[#efeae2] p-2.5">
+                <Bubble mine>{ask}</Bubble>
+                <Bubble>{reply}</Bubble>
+                {options ? (
+                    <div className="grid max-w-[82%] grid-cols-3 gap-1">
+                        {options.map((option) => (
+                            <span
+                                key={option}
+                                className={`rounded-md py-1 text-center text-[9px] font-semibold shadow-sm ${option === button ? 'bg-[#027eb5] text-white' : 'bg-white text-[#027eb5]'}`}
+                            >
+                                {option}
+                            </span>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex gap-1.5 overflow-hidden">
+                        {items.slice(0, 3).map((item, index) => (
+                            <div key={item} className="w-[6.5rem] shrink-0 overflow-hidden rounded-lg bg-white shadow-sm">
+                                <div className="flex h-12 items-center justify-center text-xl" style={{ background: `linear-gradient(135deg, ${color}55, ${color}18)` }}>
+                                    {emoji[index % emoji.length]}
+                                </div>
+                                <div className="px-2 py-1">
+                                    <p className="truncate text-[9px] font-semibold text-ink">{item}</p>
+                                    <p className="text-[9px] text-slate-500">₹{prices[index % prices.length].toLocaleString('en-IN')}</p>
+                                </div>
+                                <p className="border-t border-slate-100 py-1 text-center text-[9px] font-semibold text-[#027eb5]">{button}</p>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                <Bubble mine>{button}</Bubble>
+                <Bubble>
+                    <span className="flex items-start gap-1">
+                        <CheckCircleIcon sx={{ fontSize: 11, color: '#16a34a', mt: '1px' }} /> {done}
+                    </span>
+                </Bubble>
+            </div>
+        </PhoneFrame>
     );
 }
 

@@ -50,6 +50,15 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
   does (website, leads, WhatsApp and automation, bookings and orders), pages for salons, clinics, turfs,
   coaching centres, cafes and local stores, a **Book a demo** form whose requests arrive as leads in
   AutoWave's own CRM, and **Chat on WhatsApp** buttons (set `AUTOWAVE_SALES_WHATSAPP`).
+- **Marketing site: WhatsApp assistant and simpler wording.** The home page has a new **WhatsApp
+  assistant** section (also in the header and footer) with a phone showing a customer asking, getting
+  photo cards and booking by tapping, and each industry page shows how its customers book, order or
+  book a demo class on WhatsApp. The text now uses everyday words instead of CRM, pipeline, leads and
+  automations; new questions explain how WhatsApp is connected, that the assistant never messages
+  customers first, how it differs from the free WhatsApp Business app, AI credits and WhatsApp's own
+  fees. Pricing shows who each plan is good for and its limits in plain words. Industry pages can link to
+  a live sample website (`AUTOWAVE_SAMPLE_SALONS` … `AUTOWAVE_SAMPLE_STORES`), and browsers and phones
+  now get a proper `favicon.ico` and home-screen icon.
 - **Better Google results and link previews.** The marketing site and every business website now tell
   search engines what they are (business name, address, phone and links for business sites), have a
   `robots.txt` and `sitemap.xml`, and show a proper preview image when the link is shared on WhatsApp or

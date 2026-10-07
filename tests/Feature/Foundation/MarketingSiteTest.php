@@ -56,6 +56,17 @@ class MarketingSiteTest extends TestCase
         $this->get($this->marketingUrl('/for/spaceships'))->assertNotFound();
     }
 
+    public function test_an_industry_page_links_to_its_sample_website_only_when_it_is_a_web_address(): void
+    {
+        config(['marketing.industries.salons.sample' => 'https://glow-studio.autowave.co.in']);
+        $this->get($this->marketingUrl('/for/salons'))->assertInertia(fn (Assert $page) => $page->where('sampleUrl', 'https://glow-studio.autowave.co.in'));
+
+        foreach ([null, '', 'javascript:alert(1)', 'glow-studio.autowave.co.in'] as $sample) {
+            config(['marketing.industries.salons.sample' => $sample]);
+            $this->get($this->marketingUrl('/for/salons'))->assertInertia(fn (Assert $page) => $page->where('sampleUrl', null));
+        }
+    }
+
     public function test_the_whatsapp_link_uses_the_sales_number(): void
     {
         config(['marketing.whatsapp' => '+91 98765 43210']);

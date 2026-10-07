@@ -2,14 +2,14 @@ import { Link } from '@inertiajs/react';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PublicLayout from '@/layouts/PublicLayout';
-import { Container, CtaBand, CtaButtons, Eyebrow, Faq, SectionHeader, Steps, TrialNotes } from '@/modules/marketing/blocks';
+import { CheckList, Container, CtaBand, CtaButtons, Eyebrow, Faq, SectionHeader, Steps, TrialNotes } from '@/modules/marketing/blocks';
 import { INDUSTRIES } from '@/modules/marketing/industries';
-import { BookingMockup, ChatMockup, SiteMockup, SitePhoneMockup } from '@/modules/marketing/mockups';
+import { AssistantMockup, BookingMockup, SiteMockup, SitePhoneMockup } from '@/modules/marketing/mockups';
 import { rupees } from '@/utils/billing';
 
-export default function Industry({ industry: slug, startingPrice, billing }) {
+export default function Industry({ industry: slug, sampleUrl, startingPrice, billing }) {
     const industry = INDUSTRIES[slug];
-    const { mockup, color } = industry;
+    const { mockup, color, assistant } = industry;
     const others = Object.entries(INDUSTRIES).filter(([key]) => key !== slug);
 
     return (
@@ -26,6 +26,11 @@ export default function Industry({ industry: slug, startingPrice, billing }) {
                         <h1 className="font-display mt-6 text-4xl leading-[1.1] font-extrabold tracking-tight text-ink sm:text-5xl">{industry.headline}</h1>
                         <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600">{industry.intro}</p>
                         <CtaButtons className="mt-8" />
+                        {sampleUrl ? (
+                            <a href={sampleUrl} target="_blank" rel="noopener noreferrer" className="mt-5 inline-block text-sm font-semibold hover:underline" style={{ color }}>
+                                See a sample {industry.sampleLabel} website →
+                            </a>
+                        ) : null}
                         <TrialNotes trialDays={billing.trial_days} className="mt-6" />
                     </div>
                     <div className="relative mx-auto w-full max-w-xl">
@@ -81,9 +86,25 @@ export default function Industry({ industry: slug, startingPrice, billing }) {
                         ))}
                     </div>
 
-                    <div className="mt-20 grid items-center gap-10 lg:grid-cols-2">
-                        <BookingMockup title={industry.bookingTitle} color={color} />
-                        <ChatMockup />
+                </Container>
+            </section>
+
+            <section className="bg-gradient-to-b from-emerald-50/70 to-white py-20 sm:py-24">
+                <Container className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+                    <div>
+                        <Eyebrow>WhatsApp assistant</Eyebrow>
+                        <h2 className="font-display mt-2 text-3xl font-extrabold tracking-tight text-ink">{assistant.title}</h2>
+                        <p className="mt-4 text-lg text-slate-600">
+                            When someone messages your business on WhatsApp, they get a reply in seconds, with buttons to tap. Bookings and orders
+                            made in the chat appear in AutoWave, just like the ones from your website.
+                        </p>
+                        <CheckList items={[...assistant.points, 'The chat comes to you whenever a customer wants to talk to a person']} className="mt-6" />
+                    </div>
+                    <div className="flex items-end justify-center gap-4">
+                        <div className="mb-12 hidden min-w-0 flex-1 sm:block">
+                            <BookingMockup title={industry.bookingTitle} color={color} />
+                        </div>
+                        <AssistantMockup {...mockup} {...assistant} color={color} className="shrink-0" />
                     </div>
                 </Container>
             </section>

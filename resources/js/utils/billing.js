@@ -32,6 +32,26 @@ export const PAYMENT_STATUS_LABELS = {
     expired: 'Not completed',
 };
 
+/** Plan limits in everyday words, for the public pricing page. */
+export function plainLimitLabel(key, value) {
+    const unlimited = value === null || value === undefined;
+
+    switch (key) {
+        case 'members':
+            return unlimited ? 'Logins for all your staff' : `${value} ${value === 1 ? 'person' : 'people'} can log in`;
+        case 'storage_mb':
+            return unlimited ? 'Unlimited space for photos and files' : `${limitLabel(key, value).replace(' storage', '')} for photos and files`;
+        case 'ai_tokens':
+            return unlimited ? 'Unlimited AI help' : `AI help: ${new Intl.NumberFormat('en-IN').format(value)} credits a month`;
+        case 'automations':
+            return unlimited ? 'Unlimited automatic reminders and follow-ups' : `${value} automatic reminders and follow-ups`;
+        case 'instagram':
+            return value ? 'Instagram messages too' : 'WhatsApp and email messages (no Instagram)';
+        default:
+            return limitLabel(key, value);
+    }
+}
+
 export function limitLabel(key, value) {
     if (key === 'instagram') {
         return value ? 'Instagram inbox' : 'No Instagram';

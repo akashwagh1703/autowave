@@ -9,9 +9,17 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import CheckIcon from '@mui/icons-material/Check';
 import PublicLayout from '@/layouts/PublicLayout';
 import { Container, CtaBand, Eyebrow, Faq, SectionHeader } from '@/modules/marketing/blocks';
-import { LIMIT_ORDER, limitLabel, rupees } from '@/utils/billing';
+import { LIMIT_ORDER, plainLimitLabel, rupees } from '@/utils/billing';
 
 const linkClass = 'text-brand-700 hover:underline';
+
+function goodFor(members) {
+    if (members === null || members === undefined || members > 5) {
+        return 'Good for bigger teams and busy businesses';
+    }
+
+    return members <= 2 ? 'Good for an owner with one helper' : 'Good for a growing shop with a small team';
+}
 
 export default function Pricing({ plans, appUrl, billing }) {
     const [period, setPeriod] = useState('monthly');
@@ -58,6 +66,7 @@ export default function Pricing({ plans, appUrl, billing }) {
                                         <h2 className="font-display text-lg font-bold text-ink">{plan.name}</h2>
                                         {plan.code === popular ? <Chip size="small" color="primary" label="Most popular" /> : null}
                                     </div>
+                                    <p className="mt-1 text-sm font-medium text-brand-700">{goodFor(plan.limits.members)}</p>
                                     {plan.description ? <p className="mt-1 text-sm text-slate-600">{plan.description}</p> : null}
                                     <p className="mt-4">
                                         <span className="text-3xl font-bold text-slate-900">{rupees(price)}</span>
@@ -68,7 +77,7 @@ export default function Pricing({ plans, appUrl, billing }) {
                                         {LIMIT_ORDER.map((key) => (
                                             <li key={key} className="flex items-start gap-2">
                                                 <CheckIcon fontSize="small" className="mt-0.5 text-emerald-600" />
-                                                <span>{limitLabel(key, plan.limits[key])}</span>
+                                                <span>{plainLimitLabel(key, plan.limits[key])}</span>
                                             </li>
                                         ))}
                                     </ul>
@@ -82,7 +91,10 @@ export default function Pricing({ plans, appUrl, billing }) {
                 </div>
 
                 <div className="mx-auto mt-10 max-w-3xl space-y-2 text-center text-sm text-slate-600">
-                    <p>Every plan includes the business website, CRM, bookings, orders, the messaging inbox, automations and AI tools.</p>
+                    <p>
+                        Every plan includes your website, online bookings and orders, your customer list, the WhatsApp assistant, all your
+                        messages in one place, automatic reminders and AI help.
+                    </p>
                     <p>
                         {billing.gst ? `Prices exclude GST at ${billing.gst_rate}%, added on your tax invoice.` : 'No GST is charged at present.'}{' '}
                         {billing.online ? 'Pay online with UPI, card, net banking or wallet, or by UPI or bank transfer.' : 'Pay by UPI or bank transfer.'}{' '}
@@ -118,6 +130,14 @@ export default function Pricing({ plans, appUrl, billing }) {
                                 {
                                     q: 'What happens if my plan ends?',
                                     a: `You get ${billing.grace_days} days of grace to renew. After that the app becomes read-only, and after ${billing.lock_after_days} days your website goes offline until you renew. Your data is kept safe.`,
+                                },
+                                {
+                                    q: 'What are AI credits?',
+                                    a: 'AI uses credits each time it writes something for you, such as a reply, an offer or website text, or answers a customer on WhatsApp. Longer texts use more. You can see how many you have used in Settings → AI, where credits are shown as tokens.',
+                                },
+                                {
+                                    q: 'Do I pay WhatsApp for messages?',
+                                    a: 'Replies to customers who message you, including the assistant’s replies, are free on WhatsApp. Meta (the company behind WhatsApp) charges a small fee for some messages your business starts, such as reminders, billed to your own Meta account.',
                                 },
                             ]}
                         />

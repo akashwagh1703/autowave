@@ -17,11 +17,11 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import PublicLayout from '@/layouts/PublicLayout';
 import { CheckList, Container, CtaBand, CtaButtons, Eyebrow, Faq, SectionHeader, Steps, TrialNotes } from '@/modules/marketing/blocks';
 import { INDUSTRIES } from '@/modules/marketing/industries';
-import { BookingMockup, ChatMockup, DashboardMockup, PipelineMockup, SiteMockup, SitePhoneMockup, Toast } from '@/modules/marketing/mockups';
+import { AssistantMockup, BookingMockup, ChatMockup, DashboardMockup, PipelineMockup, SiteMockup, SitePhoneMockup, Toast } from '@/modules/marketing/mockups';
 import { rupees } from '@/utils/billing';
 
 const strengths = [
-    { icon: WhatsAppIcon, label: 'WhatsApp-first' },
+    { icon: WhatsAppIcon, label: 'Works with WhatsApp' },
     { icon: StorefrontIcon, label: 'Made for Indian businesses' },
     { icon: SmartphoneIcon, label: 'Works on any phone' },
     { icon: LockIcon, label: 'Your data stays private' },
@@ -37,57 +37,81 @@ const features = [
     {
         id: 'website',
         eyebrow: 'Business website',
-        title: 'A professional website that brings in customers',
-        body: 'Pick a design made for your industry and your site is live in minutes. Your services, prices, photos and offers update the moment you change them in the app.',
-        points: ['Online booking, ordering and enquiry forms built in', 'Looks great on phones, where your customers are', 'Ready for Google and WhatsApp link previews', 'Your own address: yourbusiness.autowave.co.in'],
+        title: 'A good-looking website that brings in customers',
+        body: 'Pick a design made for your type of business and your website is ready in minutes. Change a price or a photo in the app and your website updates straight away.',
+        points: ['Customers can book, order or send an enquiry from it', 'Looks great on phones, where your customers are', 'Shows your photo and name when you share the link on WhatsApp', 'Free web address: yourbusiness.autowave.co.in'],
         visual: <SiteMockup />,
     },
     {
         id: 'crm',
-        eyebrow: 'Leads and CRM',
-        title: 'Every enquiry in one place, followed up on time',
-        body: 'Leads from your website, WhatsApp, Instagram and walk-ins land in one pipeline. See who to call today, what they asked for and how much business is waiting.',
-        points: ['Pipeline stages that match how you sell', 'Follow-up reminders so no lead goes cold', 'Full customer history: visits, orders and chats'],
+        eyebrow: 'Enquiries and follow-ups',
+        title: 'Never forget to call back an enquiry',
+        body: 'Every enquiry from your website, WhatsApp, Instagram or a walk-in is saved in one list. See who to call today, what they asked for and who has already booked.',
+        points: ['See who is new, who you called and who booked', 'Reminders so you call back on time', 'Each customer’s visits, orders and chats in one place'],
         visual: <PipelineMockup />,
     },
     {
         id: 'messaging',
-        eyebrow: 'WhatsApp and automation',
-        title: 'Reply faster. Follow up automatically.',
-        body: 'Answer WhatsApp and Instagram messages from a shared inbox. Let automations send reminders, thank-you notes and offers while you focus on customers.',
-        points: ['Shared team inbox for WhatsApp, Instagram and email', 'Appointment reminders and follow-ups that run on their own', 'AI suggests replies and fills in lead details for you'],
+        eyebrow: 'Messages',
+        title: 'All customer messages on one screen',
+        body: 'WhatsApp, Instagram and email messages come to one place. You and your staff can reply from any phone or computer, while reminders and thank-you messages go out by themselves.',
+        points: ['WhatsApp, Instagram and email together', 'Reminders and thank-you messages sent automatically', 'AI helps you write replies'],
         visual: <ChatMockup />,
     },
     {
         id: 'bookings',
         eyebrow: 'Bookings and orders',
-        title: 'Customers book and order online, 24×7',
-        body: 'Appointments with staff, slots for turfs and courts, table reservations, demo classes and product orders, all from your website with live availability.',
-        points: ['No double bookings: only free slots are shown', 'Pickup and delivery orders with stock tracking', 'Payments, advances and dues tracked in one place'],
+        title: 'Customers book and order online, day and night',
+        body: 'Appointments with your staff, turf and court slots, table reservations, demo classes and product orders, all from your website. Only free times are shown.',
+        points: ['No double bookings', 'Pickup and delivery orders, with stock counted for you', 'See who has paid, who paid an advance and who still owes'],
         visual: <BookingMockup />,
     },
 ];
 
+const assistantPoints = [
+    'Replies in seconds, even when you are busy or closed',
+    'Customers book, order or reserve a table by tapping buttons',
+    'Shows your services and products as photo cards with prices',
+    'Answers questions about timings, location, prices and offers',
+    'Passes the chat to you when a customer wants a person',
+];
+
 const more = [
-    { icon: CardGiftcardIcon, title: 'Offers and coupons', body: 'Promote offers on your website and give coupon codes that bring customers back.' },
-    { icon: InsightsIcon, title: 'Live dashboard', body: 'Revenue, bookings, orders and new leads at a glance, every morning.' },
+    { icon: CardGiftcardIcon, title: 'Offers and coupons', body: 'Show offers on your website and give coupon codes that bring customers back.' },
+    { icon: InsightsIcon, title: 'Today at a glance', body: 'Sales, bookings, orders and new enquiries on one screen, every morning.' },
     { icon: SchoolIcon, title: 'Courses and fees', body: 'Batches, admissions, attendance and fee reminders for coaching centres.' },
     { icon: RestaurantIcon, title: 'Tables and kitchen', body: 'Table reservations, dine-in orders and a kitchen screen for cafes.' },
     { icon: Inventory2Icon, title: 'Stock tracking', body: 'Know what is in stock and get alerts before you run out.' },
-    { icon: AutoModeIcon, title: 'AI assistant', body: 'Write replies, offers and website text in seconds.' },
+    { icon: AutoModeIcon, title: 'AI writing help', body: 'AI writes replies, offers and website text for you in seconds.' },
 ];
 
 const steps = [
     { title: 'Sign up free', body: 'Create your account with your email. No card, no setup fee, no technical skills needed.' },
-    { title: 'Pick your business type', body: 'Choose salon, clinic, turf, coaching, cafe or store. We set up the right tools, pages and pipeline for you.' },
+    { title: 'Pick your business type', body: 'Choose salon, clinic, turf, coaching, cafe or store. We set up the right tools and website pages for you.' },
     { title: 'Go live and grow', body: 'Add your services and photos, share your website link on WhatsApp and Instagram, and start taking bookings.' },
 ];
 
 const faqs = [
     { q: 'Do I need any technical knowledge?', a: 'No. If you can use WhatsApp, you can use AutoWave. Your website is created for you, and you edit it with simple forms.' },
     { q: 'Can I use my own domain name?', a: 'Every business gets a free address like yourbusiness.autowave.co.in. Support for your own domain is coming soon.' },
-    { q: 'Does it work with WhatsApp?', a: 'Yes. Connect your WhatsApp Business number to reply from the shared inbox and send automatic reminders and follow-ups.' },
+    {
+        q: 'Does it work with WhatsApp?',
+        a: 'Yes. Connect your WhatsApp Business number once, and then reply to customers from AutoWave, let the assistant answer them automatically and send reminders.',
+    },
+    {
+        q: 'How do I connect WhatsApp?',
+        a: 'AutoWave uses WhatsApp’s official business platform from Meta. You set up your number there and enter its details once in Settings. If you need help, book a free demo and we will show you how.',
+    },
+    {
+        q: 'Will the assistant message my customers on its own?',
+        a: 'No. It only replies when a customer messages you first. It passes the chat to you whenever the customer asks for a person or it is not sure what they want.',
+    },
+    {
+        q: 'How is this different from the free WhatsApp Business app?',
+        a: 'The free app can send quick replies and show a catalogue. AutoWave also takes the booking or order inside the chat, checks free times and stock, saves every customer, lets your whole team reply from one screen and gives you a website.',
+    },
     { q: 'Can customers book and order from my website?', a: 'Yes. Depending on your business, customers can book appointments or slots, reserve tables, order products for pickup or delivery, or send an enquiry.' },
+    { q: 'Can my staff use it too?', a: 'Yes. Give each staff member their own login and choose what they can see and do.' },
     { q: 'Is my data safe?', a: 'Your data is stored securely and is never shared with other businesses. You can ask us to delete your account and data at any time.' },
     { q: 'What happens after the free trial?', a: 'Pick a plan that suits you and pay monthly or yearly. Plans never renew automatically, so there are no surprise charges.' },
 ];
@@ -126,8 +150,34 @@ export default function Welcome({ startingPrice, billing }) {
                         ))}
                     </div>
                     <p className="font-display mx-auto mt-12 max-w-2xl text-center text-xl font-bold text-ink sm:text-2xl">
-                        AutoWave brings your website, bookings, customers and messages together, so nothing falls through the cracks.
+                        AutoWave puts your website, bookings, customers and messages in one app, so you never miss a customer again.
                     </p>
+                </Container>
+            </section>
+
+            <section id="whatsapp-assistant" className="scroll-mt-20 bg-gradient-to-b from-emerald-50/80 to-white py-20 sm:py-24">
+                <Container className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+                    <div>
+                        <p className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                            <WhatsAppIcon sx={{ fontSize: 18, color: '#25D366' }} /> New: WhatsApp assistant
+                        </p>
+                        <h2 className="font-display mt-4 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">Your WhatsApp replies to customers by itself, day and night</h2>
+                        <p className="mt-4 text-lg text-slate-600">
+                            When a customer messages your business, they get an answer in seconds, with buttons to tap. They can see your prices and
+                            photos, book a time or place an order, even at midnight. Everything shows up in AutoWave for you.
+                        </p>
+                        <CheckList items={assistantPoints} className="mt-6" />
+                        <p className="mt-6 text-sm text-slate-500">It only replies to customers who message you first. It never sends messages on its own.</p>
+                    </div>
+                    <div className="relative mx-auto">
+                        <AssistantMockup />
+                        <Toast
+                            icon={<EventAvailableIcon fontSize="small" />}
+                            title="New booking on WhatsApp"
+                            body="Haircut · Sun 5:30 pm · Priya"
+                            className="absolute top-24 -left-24 hidden w-56 sm:flex"
+                        />
+                    </div>
                 </Container>
             </section>
 
@@ -169,7 +219,7 @@ export default function Welcome({ startingPrice, billing }) {
             <section className="py-20 sm:py-24">
                 <Container>
                     <SectionHeader eyebrow="Made for your industry" title="Set up for the way your business works">
-                        Choose your business type and AutoWave switches on the right tools, website sections and sales pipeline.
+                        Choose your business type and AutoWave switches on the right tools and website sections.
                     </SectionHeader>
                     <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {Object.entries(INDUSTRIES).map(([slug, industry]) => (
@@ -241,8 +291,8 @@ function Hero({ trialDays }) {
                         <span className="bg-gradient-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent">all in one place.</span>
                     </h1>
                     <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600">
-                        AutoWave gives salons, clinics, turfs, coaching centres, cafes and local stores a professional website, online bookings and
-                        orders, a lead CRM and automatic WhatsApp follow-ups. Set up in minutes. No tech skills needed.
+                        Get a website for your business, take bookings and orders online, and let WhatsApp reply to customers for you. For salons,
+                        clinics, turfs, coaching classes, cafes and shops. Ready in minutes, no tech skills needed.
                     </p>
                     <CtaButtons className="mt-8" />
                     <TrialNotes trialDays={trialDays} className="mt-6" />

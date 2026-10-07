@@ -50,8 +50,11 @@ class PageController extends Controller
     {
         abort_unless(array_key_exists($industry, config('marketing.industries')), 404);
 
+        $sample = (string) config("marketing.industries.{$industry}.sample");
+
         return $this->page('marketing/Industry', "industries.{$industry}", [
             'industry' => $industry,
+            'sampleUrl' => preg_match('#^https?://#i', $sample) && filter_var($sample, FILTER_VALIDATE_URL) ? $sample : null,
             'startingPrice' => $this->plans()->min('price_monthly'),
         ]);
     }

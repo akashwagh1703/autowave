@@ -48,6 +48,9 @@ export default function PublicLayout({ children }) {
                         <a href="/#features" className={navLink}>
                             Features
                         </a>
+                        <a href="/#whatsapp-assistant" className={navLink}>
+                            WhatsApp assistant
+                        </a>
                         <div className="group relative">
                             <button type="button" className={`${navLink} inline-flex items-center gap-0.5`} aria-haspopup="true">
                                 Industries <ExpandMoreIcon sx={{ fontSize: 18 }} />
@@ -97,6 +100,9 @@ export default function PublicLayout({ children }) {
                         <a href="/#features" className={navLink}>
                             Features
                         </a>
+                        <a href="/#whatsapp-assistant" className={navLink}>
+                            WhatsApp assistant
+                        </a>
                         <Link href="/pricing" className={navLink}>
                             Pricing
                         </Link>
@@ -130,7 +136,7 @@ export default function PublicLayout({ children }) {
                     <div className="lg:col-span-2">
                         <BrandLogo name={app.name} tone="light" />
                         <p className="mt-4 max-w-sm text-sm leading-relaxed">
-                            Website, bookings, orders, CRM and WhatsApp automation for local businesses in India — in one simple app.
+                            Website, bookings, orders, customers and WhatsApp for local businesses in India, in one simple app.
                         </p>
                         {whatsappUrl ? (
                             <a
@@ -147,6 +153,7 @@ export default function PublicLayout({ children }) {
                         title="Product"
                         links={[
                             { href: '/#features', label: 'Features', plain: true },
+                            { href: '/#whatsapp-assistant', label: 'WhatsApp assistant', plain: true },
                             { href: '/pricing', label: 'Pricing' },
                             { href: '/demo', label: 'Book a demo' },
                             { href: `${appUrl}/login`, label: 'Log in', plain: true },

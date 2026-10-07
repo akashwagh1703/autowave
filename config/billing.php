@@ -116,7 +116,7 @@ return [
         ],
         'starter' => [
             'name' => 'Starter',
-            'description' => 'Website, CRM, bookings and the WhatsApp inbox for a small team.',
+            'description' => 'Website, bookings, customer list and WhatsApp for a small shop.',
             'price_monthly' => 49900,
             'price_yearly' => 499000,
             'public' => true,
@@ -125,7 +125,7 @@ return [
         ],
         'growth' => [
             'name' => 'Growth',
-            'description' => 'Unlimited automations, Instagram and more AI for a growing business.',
+            'description' => 'Unlimited automatic reminders, Instagram messages and more AI help.',
             'price_monthly' => 149900,
             'price_yearly' => 1499000,
             'public' => true,
@@ -134,7 +134,7 @@ return [
         ],
         'business' => [
             'name' => 'Business',
-            'description' => 'A larger team, 20 GB of storage and the most AI.',
+            'description' => 'More staff logins, 20 GB for photos and files, and the most AI help.',
             'price_monthly' => 399900,
             'price_yearly' => 3999000,
             'public' => true,
