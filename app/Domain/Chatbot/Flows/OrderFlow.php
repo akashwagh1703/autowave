@@ -16,7 +16,8 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Ordering in the chat: products (by category when there are many) → quantity → cart → pickup or
+ * Ordering in the chat: products (by category when there are many; up to 10 with photos as swipeable
+ * cards, else a list) → quantity → cart → pickup or
  * delivery (+ address) → confirm. Same rules as the website cart (OnlineShop: server prices, stock,
  * minimum order, delivery fee, auto-confirm). The cart lives in the session (`order`), so it is cleared
  * when the chat goes quiet for a while. Coupons are only on the website for now.
@@ -120,6 +121,13 @@ class OrderFlow extends ChatFlow
             $products = $category === '0' ? $products->whereNull('category') : $products->where('category.id', self::int($category));
         }
 
+        $cards = $page === 0 ? $this->productCards($products) : null;
+
+        if ($cards) {
+            return $this->reply($this->cartLine($session).__('What would you like to order? Swipe through the items and tap *Add to cart*.')
+                .$this->websiteLine('#products', __('See everything on our website:')), $cards);
+        }
+
         $rows = $products->map(fn (Product $product) => [
             'id' => $this->id('p', $product->id),
             'title' => $product->name,
@@ -131,6 +139,26 @@ class OrderFlow extends ChatFlow
             $this->page($rows, $page, fn (int $next) => $this->id('cat', $category, $next), __('More items')),
             $this->title(),
         ));
+    }
+
+    /**
+     * @param  Collection<int, Product>  $products
+     * @return array<string, mixed>|null
+     */
+    private function productCards(Collection $products): ?array
+    {
+        return $this->cards($products->map(fn (Product $product) => [
+            'id' => $this->id('p', $product->id),
+            'title' => $product->name,
+            'text' => '*'.$product->name.'*'."\n".$this->content->money($product->price)
+                .($this->orderable($product) ? '' : ' · '.__('Not available now'))
+                .(filled($product->description) ? "\n".Str::limit(Str::squish((string) $product->description), 90) : ''),
+            'image' => $product->image,
+            'buttons' => [
+                ['id' => $this->id('add', $product->id), 'title' => __('Add to cart')],
+                ['id' => $this->id('p', $product->id), 'title' => __('Details')],
+            ],
+        ])->values()->all());
     }
 
     private function product(ChatbotSession $session, int $id): array

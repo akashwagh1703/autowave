@@ -4,6 +4,7 @@ namespace App\Domain\Chatbot\Flows;
 
 use App\Domain\Chatbot\Models\ChatbotSession;
 use App\Domain\Chatbot\Services\ChatbotContent;
+use App\Domain\Media\Models\Media;
 use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Messaging\Support\Interactive;
 use App\Support\TenantTime;
@@ -66,6 +67,17 @@ abstract class ChatFlow
     protected function reply(string $body, ?array $interactive): array
     {
         return ['body' => Str::limit($body, Interactive::BODY_MAX - 4), 'interactive' => $interactive];
+    }
+
+    /**
+     * Cards with photos (WhatsApp carousel) when the items can be shown that way, else null (use a list).
+     *
+     * @param  list<array{id: string, title: string, text: string, image: ?Media, buttons: list<array{id: string, title: string}>}>  $cards
+     * @return array<string, mixed>|null
+     */
+    protected function cards(array $cards): ?array
+    {
+        return Interactive::carousel($cards, $this->content->cardImage());
     }
 
     protected function id(string|int ...$parts): string

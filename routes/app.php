@@ -129,6 +129,8 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
                 Route::get('/services/{service}/edit', [ServiceController::class, 'edit'])->name('services.edit');
                 Route::put('/services/{service}', [ServiceController::class, 'update'])->name('services.update');
                 Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
+                Route::post('/services/{service}/image', [ServiceController::class, 'uploadImage'])->middleware('throttle:60,1')->name('services.image.store');
+                Route::delete('/services/{service}/image', [ServiceController::class, 'removeImage'])->name('services.image.destroy');
                 Route::post('/services/{service}/attachments', [AttachmentController::class, 'storeForService'])->middleware('throttle:60,1')->name('services.attachments.store');
 
                 Route::post('/service-categories', [ServiceCategoryController::class, 'store'])->name('service-categories.store');
@@ -225,6 +227,8 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
                 Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
                 Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
                 Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->name('courses.destroy');
+                Route::post('/courses/{course}/image', [CourseController::class, 'uploadImage'])->middleware('throttle:60,1')->name('courses.image.store');
+                Route::delete('/courses/{course}/image', [CourseController::class, 'removeImage'])->name('courses.image.destroy');
                 Route::post('/courses/{course}/attachments', [AttachmentController::class, 'storeForCourse'])->middleware('throttle:60,1')->name('courses.attachments.store');
 
                 Route::get('/batches/create', [BatchController::class, 'create'])->name('batches.create');

@@ -1,8 +1,8 @@
 # WhatsApp assistant
 
 - **Status:** ✅ Step 1 (menu, information, enquiries, hand-over, settings), step 2 (booking,
-  reservations, ordering and demo classes inside the chat) and step 3 (AI answers to typed questions,
-  opt-in).
+  reservations, ordering and demo classes inside the chat), step 3 (AI answers to typed questions,
+  opt-in) and photo cards (products, services and courses as a swipeable carousel).
 - **Decision:** [ADR-021](../12-decisions/ADR-021-whatsapp-assistant.md) (builds on ADR-018, amends ADR-019)
 - **Last updated:** 2026-10-12
 
@@ -37,6 +37,25 @@ answers messages the customer sends; it never starts a conversation.
 Customers can also type: a number picks from the last options offered, and short messages such as
 "price", "timings", "offers", "book" or "talk to someone" open the matching item. "menu", "hi" or
 "back" always goes back to the start.
+
+### Photo cards
+
+Products (ordering), services (**Services & prices** and booking) and courses come as swipeable cards,
+each with its photo, name and price and two buttons, when:
+
+- there are 2 to 10 to show (a category with up to 10 items; more than 10 stay a list with **More**),
+- at least one of them has its own JPG or PNG photo (on its product, service or course page). Items
+  without one show the business logo, else the website's main photo; with neither, the list is used.
+
+| Where | Buttons on each card |
+|---|---|
+| Ordering | **Add to cart**, **Details** |
+| Services & prices | **Details**, **Book this** (when booking is on) |
+| Booking | **Book this**, **Ask about this** |
+| Courses | **Details**, **Free demo class** |
+
+A typed number picks the card in that position. Channels without carousels get the names as numbered
+lines.
 
 ### AI answers to typed questions (optional)
 
@@ -160,7 +179,7 @@ Stored in the `whatsapp_assistant` tenant setting; defaults in `config/chatbot.p
 ## Inbox and records
 
 Assistant replies show the sender **Assistant**, the photo, and the buttons or list items offered as
-chips. AI answers show the footer "Automatic answer". A customer's tap shows as **Tapped an option**.
+chips; photo cards show as a row of small cards. AI answers show the footer "Automatic answer". A customer's tap shows as **Tapped an option**.
 The timeline shows "via WhatsApp assistant".
 Appointments, orders and reservations made in the chat show the source **WhatsApp** in their lists and
 timelines ("… on WhatsApp").
@@ -178,13 +197,18 @@ timelines ("… on WhatsApp").
 - AI answers: the engine returns `['ai' => …]`; `ReplyWithChatbot` commits, asks AI through
   `ChatbotAI` → `AIService::answerCustomer()` (prompt `resources/prompts/whatsapp.md`, feature `chatbot`)
   with no lock held, then checks the chat again and calls `ChatbotEngine::answered()`.
-- Buttons, lists and photos are stored in `outbound_messages.interactive` and sent as WhatsApp
-  interactive messages; providers without buttons get numbered text.
+- Buttons, lists, photos and cards are stored in `outbound_messages.interactive` and sent as WhatsApp
+  interactive messages; providers without buttons get numbered text. Cards (`Interactive::carousel()`,
+  kind `carousel`) go out as an interactive `carousel` with quick-reply buttons; their photos are sent
+  by link (`APP_URL` + the media URL), so storage must be reachable from the internet. Taps come back
+  as ordinary button replies.
 
 ## Database
 
 - `chatbot_sessions` (tenant-owned, one per conversation).
 - `outbound_messages.interactive` (jsonb) and `outbound_messages.assistant` (boolean).
+- `services.image_media_id` and `courses.image_media_id` (nullable, from 2026-10-12), like
+  `products.image_media_id`: the card photos.
 - Source `whatsapp` on `appointments`, `orders` and `reservations` (the reservations check constraint
   allows it from 2026-10-11).
 
@@ -217,6 +241,10 @@ ids to use. Turn the assistant on first in Settings → WhatsApp assistant.
   and footer (prompt facts and rules, metering, inbox), first-message question with greeting, taps and
   keywords never sent to AI, not sure → hand-over and alert, "Ask us" answered by AI, fallback when the
   provider fails or the cap is reached, the setting and AI status.
+- `tests/Feature/Chatbot/WhatsAppAssistantCardsTest.php`: product cards through the Cloud API (photo
+  link, logo for items without a photo, inbox cards, typed number, tap), when the list stays, service
+  cards in services and booking, course cards with the demo button, card limits and numbered fallback,
+  uploading and removing service and course photos.
 
 With `AI_PROVIDER=fake` (local, no key) AI answers are labelled sample text.
 

@@ -2,10 +2,12 @@
 
 namespace App\Domain\Education\Models;
 
+use App\Domain\Media\Models\Media;
 use App\Domain\Tenant\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -31,6 +33,12 @@ class Course extends Model
     public function batches(): HasMany
     {
         return $this->hasMany(Batch::class);
+    }
+
+    /** Optional photo (SetRecordImage, collection `course`), shown as a card in the WhatsApp assistant. */
+    public function image(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'image_media_id');
     }
 
     public function scopeActive(Builder $query): void

@@ -401,6 +401,16 @@ This document describes what **actually exists** in the repository today. Planne
   call), setting `ai_answers`, inbox footer.
 - **Tests:** `Chatbot/WhatsAppAssistantAiTest` (8).
 
+### WhatsApp assistant photo cards (2026-10-12, ADR-021)
+
+- **What it does:** products (ordering), services (Services & prices, booking) and courses come as a
+  WhatsApp carousel of 2–10 photo cards with two buttons each, when at least one item has a JPG/PNG
+  photo; otherwise the list stays. Items without a photo use the logo.
+- **New:** optional photo on services (edit page) and courses (course dialog); migration
+  `2026_10_12_100000` (`image_media_id` on both); shared `RecordImage` upload component and
+  `SetRecordImage` action (products use it too); inbox shows sent cards.
+- **Tests:** `Chatbot/WhatsAppAssistantCardsTest` (6).
+
 ### Business website redesign (2026-10-06)
 
 - **Templates with their own layout:** modern (split hero), premium (full-screen dark hero), elegant (arch

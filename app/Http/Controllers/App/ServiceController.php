@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\App;
 
 use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Media\Actions\SetRecordImage;
 use App\Domain\Service\Actions\DeleteService;
 use App\Domain\Service\Actions\SaveService;
 use App\Domain\Service\Models\Service;
@@ -109,7 +110,7 @@ class ServiceController extends Controller
 
     public function edit(Request $request, Service $service): Response
     {
-        $service->load(['category', 'resources:id']);
+        $service->load(['category', 'resources:id', 'image']);
 
         return Inertia::render('business/services/Edit', [
             'service' => BookingPresenter::service($service),
@@ -125,6 +126,21 @@ class ServiceController extends Controller
         $saveService->handle($request->serviceData(), $service, $request->user());
 
         return to_route('services.index')->with('success', __('Service updated.'));
+    }
+
+    public function uploadImage(Request $request, Service $service, SetRecordImage $images): RedirectResponse
+    {
+        $request->validate(['image' => ['required', 'file']]);
+        $images->upload($service, $request->file('image'), 'service', $request->user());
+
+        return back()->with('success', __('Photo updated.'));
+    }
+
+    public function removeImage(Service $service, SetRecordImage $images): RedirectResponse
+    {
+        $images->remove($service);
+
+        return back()->with('success', __('Photo removed.'));
     }
 
     public function destroy(Service $service, DeleteService $deleteService): RedirectResponse

@@ -77,7 +77,7 @@ class OnlineBooking
 
         $offered = $this->resources()->flatMap(fn (BookingResource $resource) => $resource->services->pluck('id'))->unique()->all();
 
-        return Service::query()->active()->ordered()->with('category')->whereKey($offered)->get();
+        return Service::query()->active()->ordered()->with(['category', 'image'])->whereKey($offered)->get();
     }
 
     /** @return array{first: string, last: string} local dates visitors can book */

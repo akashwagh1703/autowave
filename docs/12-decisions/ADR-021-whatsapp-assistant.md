@@ -44,11 +44,20 @@ Decisions taken with the product owner:
 - New provider-neutral payload `outbound_messages.interactive` (`App\Domain\Messaging\Support\Interactive`):
   - `buttons`: up to 3 reply buttons (title ≤ 20 characters), optional header image;
   - `list`: up to 10 rows (title ≤ 24, description ≤ 72) behind one button;
-  - `image`: an image with the text as caption.
+  - `image`: an image with the text as caption;
+  - `carousel` (photo cards, 2026-10-12): 2–10 cards, each with a JPEG/PNG photo, text (≤ 160
+    characters, ≤ 2 line breaks) and the same number (1–2) of quick-reply buttons. Built only when at
+    least one item has its own photo; items without one use the logo, else the hero photo. Otherwise
+    the flow sends its list.
   Text that is too long is cut with "…".
 - `MetaWhatsAppProvider` sends these as Cloud API interactive messages. Images (the website hero photo,
   else the logo, JPEG or PNG) are uploaded once and the media id is cached for 25 days. Providers that
-  cannot send buttons (Instagram, the log provider) send the text with numbered options.
+  cannot send buttons (Instagram, the log provider) send the text with numbered options. Carousel cards
+  take their photo by public link (Meta's documented form), not by uploaded media id.
+- Products, services and courses get one optional photo each (`image_media_id`, `SetRecordImage`).
+  Cards are a non-template interactive message inside the 24-hour window, so no template approval and
+  no marketing charge; catalogue (Commerce Manager) product messages were rejected because they need
+  a synced Meta catalogue and WhatsApp's own cart beside ours.
 - Inbound taps arrive as `meta.reply_id` (`button_reply.id`, `list_reply.id`, or template button
   payload). Option ids are `aw.<item>[.<id>]`, e.g. `aw.menu`, `aw.svc.12`, `aw.ask.book`.
 

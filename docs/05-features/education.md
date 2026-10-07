@@ -28,6 +28,7 @@ The `education` engine is on for the **Coaching Centre** business type.
 ## User flow
 
 1. **Courses → Add course.** Then **Add batch**: days, times, teacher, capacity, start and end dates.
+   Editing a course also takes an optional **Photo**, shown as a card in the WhatsApp assistant.
 2. **Leads → an enquiry → Schedule demo.** The lead moves to "Demo scheduled" (when the tenant has that
    stage). After the class, mark it attended or no-show.
 3. **Admit** from the lead card, from **Students → Admit**, or for a new walk-in. Choose the batch,
@@ -86,7 +87,7 @@ completed students get no reminders.
 | Route | Permission |
 |---|---|
 | `GET /courses` | `courses.view` |
-| `POST/PUT/DELETE /courses…`, `/batches/create`, `POST/PUT/DELETE /batches…` | `courses.manage` |
+| `POST/PUT/DELETE /courses…` (including `/courses/{course}/image`), `/batches/create`, `POST/PUT/DELETE /batches…` | `courses.manage` |
 | `GET /batches/{batch}` | `courses.view` |
 | `POST /batches/{batch}/attendance` | `students.attendance` |
 | `GET /students`, `GET /students/{enrolment}` | `students.view` |

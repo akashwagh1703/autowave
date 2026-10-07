@@ -6,6 +6,7 @@ use App\Domain\Education\Actions\DeleteCourse;
 use App\Domain\Education\Actions\SaveCourse;
 use App\Domain\Education\Models\Batch;
 use App\Domain\Education\Models\Course;
+use App\Domain\Media\Actions\SetRecordImage;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\EducationPresenter;
@@ -26,7 +27,7 @@ class CourseController extends Controller
         $courses = Course::query()
             ->ordered()
             ->when(! $showInactive, fn ($query) => $query->active())
-            ->with(['batches' => fn ($query) => $query
+            ->with(['image', 'batches' => fn ($query) => $query
                 ->when(! $showInactive, fn ($batches) => $batches->active())
                 ->with('teacher.user')
                 ->withCount('activeEnrolments')
@@ -59,6 +60,21 @@ class CourseController extends Controller
         $saveCourse->handle($this->validated($request), $course);
 
         return back()->with('success', __('Course updated.'));
+    }
+
+    public function uploadImage(Request $request, Course $course, SetRecordImage $images): RedirectResponse
+    {
+        $request->validate(['image' => ['required', 'file']]);
+        $images->upload($course, $request->file('image'), 'course', $request->user());
+
+        return back()->with('success', __('Photo updated.'));
+    }
+
+    public function removeImage(Course $course, SetRecordImage $images): RedirectResponse
+    {
+        $images->remove($course);
+
+        return back()->with('success', __('Photo removed.'));
     }
 
     public function destroy(Course $course, DeleteCourse $deleteCourse): RedirectResponse

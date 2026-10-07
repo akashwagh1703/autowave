@@ -127,6 +127,14 @@ class ConversationRecorder
             return null;
         }
 
+        if (($interactive['kind'] ?? null) === 'carousel') {
+            return ['cards' => array_map(fn (array $card) => [
+                'image' => $card['image']['url'] ?? null,
+                'text' => $card['text'] ?? null,
+                'buttons' => array_column($card['buttons'] ?? [], 'title'),
+            ], $interactive['cards'] ?? [])];
+        }
+
         return array_filter([
             'options' => array_column(Interactive::options($interactive), 'title') ?: null,
             'button' => $interactive['button'] ?? null,

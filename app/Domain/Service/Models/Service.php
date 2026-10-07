@@ -4,6 +4,7 @@ namespace App\Domain\Service\Models;
 
 use App\Domain\Booking\Models\Appointment;
 use App\Domain\Booking\Models\BookingResource;
+use App\Domain\Media\Models\Media;
 use App\Domain\Tenant\Concerns\BelongsToTenant;
 use Database\Factories\ServiceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -47,6 +48,12 @@ class Service extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ServiceCategory::class, 'service_category_id');
+    }
+
+    /** Optional photo (SetRecordImage, collection `service`), shown as a card in the WhatsApp assistant. */
+    public function image(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'image_media_id');
     }
 
     public function resources(): BelongsToMany

@@ -108,6 +108,20 @@ class ChatbotContent
         return null;
     }
 
+    /** The photo for a card whose item has none: the logo, else the website's hero photo (JPEG or PNG). */
+    public function cardImage(): ?Media
+    {
+        foreach (['logo', 'hero'] as $collection) {
+            $media = Media::query()->inCollection($collection)->whereIn('mime_type', Interactive::IMAGE_TYPES)->first();
+
+            if ($media) {
+                return $media;
+            }
+        }
+
+        return null;
+    }
+
     /** @return Collection<int, Service> */
     public function services(): Collection
     {
@@ -115,7 +129,7 @@ class ChatbotContent
             return collect();
         }
 
-        return Service::query()->active()->ordered()->with('category:id,name,sort_order')->limit(100)->get();
+        return Service::query()->active()->ordered()->with(['category:id,name,sort_order', 'image'])->limit(100)->get();
     }
 
     public function service(int $id): ?Service
@@ -150,7 +164,7 @@ class ChatbotContent
         }
 
         return Course::query()->active()->ordered()
-            ->with(['batches' => fn ($query) => $query->active()->orderBy('name')])
+            ->with(['image', 'batches' => fn ($query) => $query->active()->orderBy('name')])
             ->limit(50)
             ->get();
     }

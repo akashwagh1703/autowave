@@ -65,6 +65,23 @@ function Bubble({ message, timezone }) {
                         ))}
                     </ul>
                 ) : null}
+                {message.cards?.length ? (
+                    <ul className="mt-2 flex snap-x gap-2 overflow-x-auto pb-1" aria-label="Cards sent">
+                        {message.cards.map((card, index) => (
+                            <li key={index} className="w-40 shrink-0 snap-start overflow-hidden rounded-lg bg-white text-slate-900">
+                                {card.image ? <img src={card.image} alt="" loading="lazy" className="h-24 w-full object-cover" /> : null}
+                                {card.text ? <p className="px-2 pt-1 text-xs break-words whitespace-pre-line">{card.text}</p> : null}
+                                <div className="space-y-1 p-2">
+                                    {card.buttons.map((button, buttonIndex) => (
+                                        <p key={buttonIndex} className="rounded-md bg-slate-100 px-2 py-1 text-center text-xs font-medium">
+                                            {button}
+                                        </p>
+                                    ))}
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                ) : null}
                 {message.media_status === 'pending' ? <p className="mt-1 text-xs italic opacity-75">Saving the file…</p> : null}
                 {message.media_status === 'skipped' ? <p className="mt-1 text-xs opacity-75">File not saved: {message.media_error}</p> : null}
                 <div className={`mt-1 flex items-center justify-end gap-1 text-[11px] ${outbound ? 'text-brand-100' : 'text-slate-500'}`}>

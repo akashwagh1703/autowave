@@ -17,6 +17,8 @@ no services, so there it books resources by duration.
   "Uncategorised"), a status filter and sorting (category, name, price, duration, newest).
 - Create or edit a service with: name, category, duration, price, active flag, description, and who offers
   it (resources, shown with the tenant's resource label).
+- The edit page has an optional **Photo** (JPG, PNG or WebP; one per service, replaced or removed there).
+  JPG and PNG photos show as cards in the WhatsApp assistant.
 - Categories are managed inline on the list page: add, rename, delete.
 - Bulk actions: activate, deactivate, delete.
 - "Book" on a service opens the booking form with the service preselected.
@@ -51,6 +53,7 @@ All routes return 404 when the tenant has no `service` engine.
 | `GET /services` | `services.view` |
 | `GET /services/create`, `POST /services`, `POST /services/bulk` | `services.manage` |
 | `GET /services/{service}/edit`, `PUT /services/{service}`, `DELETE /services/{service}` | `services.manage` |
+| `POST/DELETE /services/{service}/image` (photo) | `services.manage` |
 | `POST /service-categories`, `PUT/DELETE /service-categories/{category}` | `services.manage` |
 
 ## Audit

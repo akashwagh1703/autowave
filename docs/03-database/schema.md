@@ -100,7 +100,7 @@ All tables are tenant-owned, like the CRM tables. Every cross-row reference is a
 | Table | Key columns |
 |---|---|
 | `service_categories` | `name` (80, unique per tenant), `sort_order` |
-| `services` | `service_category_id` (nullable), `name` (120), `description`, `duration_minutes`, `price` numeric(12,2), `is_active`, `sort_order`, `created_by_user_id`, timestamps, soft deletes |
+| `services` | `service_category_id` (nullable), `name` (120), `description`, `duration_minutes`, `price` numeric(12,2), `image_media_id` (nullable, from 2026-10-12, like `products.image_media_id`), `is_active`, `sort_order`, `created_by_user_id`, timestamps, soft deletes |
 | `booking_resources` | `tenant_user_id` (nullable; the linked team member), `name` (120), `description`, `color` (hex), `is_active`, `sort_order`, timestamps, soft deletes. Partial unique `booking_resources_member_unique (tenant_id, tenant_user_id) WHERE deleted_at IS NULL AND tenant_user_id IS NOT NULL` |
 | `booking_resource_service` | PK (`booking_resource_id`, `service_id`), `tenant_id`; both FKs composite and cascading |
 | `resource_working_hours` | `booking_resource_id` (cascade), `weekday` (ISO 1–7), `starts_at` / `ends_at` (`time`, tenant-local). Check `resource_working_hours_valid`: weekday 1–7 and end > start. No timestamps |
@@ -213,7 +213,8 @@ deleted and keep their order items (the FK has no cascade).
 
 `products.image_media_id` references `media.id` alone with `ON DELETE SET NULL`. PostgreSQL 11 cannot null
 one column of a composite key, so the application links only images of the same tenant (`ManageMedia` in
-the tenant context).
+the tenant context). `services.image_media_id` and `courses.image_media_id` (2026-10-12) work the same
+way (media collections `service` and `course`).
 
 Other changes:
 
@@ -306,7 +307,7 @@ All new tables are tenant-owned (`BelongsToTenant`, `tenant_id` cascade on tenan
 
 | Table | Key columns |
 |---|---|
-| `courses` | `name` (120, unique lower(name) per tenant among live rows), `description`, `fee` (≥ 0, null), `duration_label` (60), `is_active`, `sort_order`, soft deletes |
+| `courses` | `name` (120, unique lower(name) per tenant among live rows), `description`, `fee` (≥ 0, null), `duration_label` (60), `image_media_id` (nullable, from 2026-10-12, like `products.image_media_id`), `is_active`, `sort_order`, soft deletes |
 | `batches` | `course_id`, `name`, `starts_on`/`ends_on`, `weekdays` jsonb, `start_time`/`end_time`, `capacity` (> 0, null), `teacher_tenant_user_id` (composite FK to `tenant_users`), `room` (60), `fee` (null = course fee), `is_active`, soft deletes; CHECK dates and times ordered |
 | `enrolments` | `customer_id`, `batch_id`, `lead_id` (null), `status` (`active\|completed\|dropped`), `enrolled_on`, `fee_total`, `discount` (≤ fee), `amount_paid` (≤ fee − discount), `notes`, `completed_at`, `dropped_at`, `created_by_user_id`. Partial unique (`tenant_id`, `batch_id`, `customer_id`) WHERE active |
 | `fee_instalments` | `enrolment_id` (cascade), `sequence` (unique per enrolment), `due_on`, `amount` (> 0), `amount_paid` (≤ amount), `reminded_at`, `overdue_notified_at` |

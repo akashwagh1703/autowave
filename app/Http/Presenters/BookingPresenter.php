@@ -33,6 +33,9 @@ final class BookingPresenter
                 : null,
             'resource_ids' => $service->relationLoaded('resources') ? $service->resources->modelKeys() : null,
             'resources_count' => $service->resources_count ?? null,
+            'image' => $service->relationLoaded('image') && $service->image
+                ? ['id' => $service->image->id, 'url' => $service->image->url()]
+                : null,
             'deleted' => $service->trashed(),
         ];
     }

@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * WhatsApp Cloud API, with the tenant's own number and token (Settings → Messaging). Text, template,
- * reply buttons or a list (the WhatsApp assistant), or one file from the inbox: files are uploaded to
+ * reply buttons, a list or photo cards (the WhatsApp assistant), or one file from the inbox: files are uploaded to
  * Meta first, then sent by media id with the text as its caption.
  */
 class MetaWhatsAppProvider implements MessagingProvider
@@ -96,7 +96,7 @@ class MetaWhatsAppProvider implements MessagingProvider
     }
 
     /**
-     * Reply buttons, a list, or a photo with the text as caption (Messaging\Support\Interactive).
+     * Reply buttons, a list, cards with photos, or a photo with the text as caption (Messaging\Support\Interactive).
      *
      * @param  array<string, mixed>  $interactive
      * @return array<string, mixed>
@@ -129,6 +129,23 @@ class MetaWhatsAppProvider implements MessagingProvider
                     fn (array $button) => ['type' => 'reply', 'reply' => ['id' => $button['id'], 'title' => $button['title']]],
                     $interactive['buttons'] ?? [],
                 )],
+            ]];
+        }
+
+        if ($kind === 'carousel') {
+            return ['type' => 'interactive', 'interactive' => [
+                'type' => 'carousel',
+                'body' => ['text' => $body],
+                'action' => ['cards' => array_map(fn (array $card, int $index) => [
+                    'card_index' => $index,
+                    'type' => 'cta_url',
+                    'header' => ['type' => 'image', 'image' => ['link' => $this->publicUrl($card['image']['url'])]],
+                    ...(isset($card['text']) ? ['body' => ['text' => $card['text']]] : []),
+                    'action' => ['buttons' => array_map(
+                        fn (array $button) => ['type' => 'quick_reply', 'quick_reply' => ['id' => $button['id'], 'title' => $button['title']]],
+                        $card['buttons'],
+                    )],
+                ], $interactive['cards'], array_keys($interactive['cards']))],
             ]];
         }
 
@@ -167,6 +184,14 @@ class MetaWhatsAppProvider implements MessagingProvider
 
             return $this->client->uploadWhatsAppMedia((string) $channel->external_id, (string) $channel->credential('access_token'), $contents, $image['mime'], basename($image['path']));
         });
+    }
+
+    /** Carousel cards take their photo by link, so Meta must be able to fetch it from the internet. */
+    private function publicUrl(string $url): string
+    {
+        return str_starts_with($url, 'http://') || str_starts_with($url, 'https://')
+            ? $url
+            : rtrim((string) config('app.url'), '/').'/'.ltrim($url, '/');
     }
 
     /** @return array<string, mixed> */

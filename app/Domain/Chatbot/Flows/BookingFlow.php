@@ -72,7 +72,7 @@ class BookingFlow extends ChatFlow
     }
 
     /**
-     * Services to choose from; by category when there are many.
+     * Services to choose from; by category when there are many. Up to 10 with photos come as swipeable cards.
      *
      * @param  string|null  $category  null to decide, `all`, `0` for services without a category, or a category id
      */
@@ -104,6 +104,21 @@ class BookingFlow extends ChatFlow
 
         if ($category !== 'all') {
             $services = $category === '0' ? $services->whereNull('category') : $services->where('category.id', self::int($category));
+        }
+
+        $cards = $page === 0 ? $this->cards($services->map(fn (Service $service) => [
+            'id' => $this->id('svc', $service->id),
+            'title' => $service->name,
+            'text' => '*'.$service->name.'*'."\n".$this->content->serviceSummary($service),
+            'image' => $service->image,
+            'buttons' => [
+                ['id' => $this->id('svc', $service->id), 'title' => __('Book this')],
+                ['id' => self::PREFIX.'ask.svc.'.$service->id, 'title' => __('Ask about this')],
+            ],
+        ])->values()->all()) : null;
+
+        if ($cards) {
+            return $this->reply(__('What would you like to book? Swipe through and tap *Book this*.').$this->websiteLine('#booking', __('You can also book on our website:')), $cards);
         }
 
         $rows = $services->map(fn (Service $service) => [

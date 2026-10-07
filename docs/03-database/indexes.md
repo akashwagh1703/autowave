@@ -107,6 +107,7 @@ Phase 7 (commerce):
 | `products (tenant_id, product_category_id)`, `(tenant_id, name)` | Category filter and counts; name uniqueness check; name sort |
 | `products_sku_unique` partial unique `(tenant_id, lower(sku))` live rows with a SKU | One live product per SKU, case-insensitive; a deleted product's SKU can be reused |
 | `products.product_category_id`, `.image_media_id`, `.created_by_user_id` | FK side (category delete, image delete sets null) |
+| `services.image_media_id`, `courses.image_media_id` | FK side (image delete sets null) |
 | `orders (tenant_id, number)` unique | Order number lookup and search; next number (`max + 1` under a tenant lock) |
 | `orders (tenant_id, created_at)` | Order list sort and date range; "orders today" metric |
 | `orders (tenant_id, status)` | Status tabs and counts |

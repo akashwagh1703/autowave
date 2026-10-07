@@ -293,7 +293,7 @@ class ChatbotEngine
             $item === 'services' && $offered('services') => $this->servicesList($id),
             $item === 'svc' && $offered('services') && $id !== null => $this->serviceDetail($id),
             $item === 'rates' && $offered('rates') => $this->rates(),
-            $item === 'courses' && $offered('courses') => $this->coursesList(),
+            $item === 'courses' && $offered('courses') => $this->coursesList($conversation),
             $item === 'course' && $offered('courses') && $id !== null => $this->courseDetail($id, $conversation),
             $item === 'offers' && $offered('offers') => $this->offers(),
             $item === 'faq' && $offered('faq') => $id !== null ? $this->faqAnswer($id) : $this->faqList(),
@@ -401,6 +401,21 @@ class ChatbotEngine
             ]))));
         }
 
+        $cards = Interactive::carousel($services->map(fn ($service) => [
+            'id' => 'aw.svc.'.$service->id,
+            'title' => $service->name,
+            'text' => '*'.$service->name.'*'."\n".$this->content->serviceSummary($service),
+            'image' => $service->image,
+            'buttons' => array_values(array_filter([
+                ['id' => 'aw.svc.'.$service->id, 'title' => __('Details')],
+                in_array('book', $this->items, true) ? ['id' => 'aw.book.'.$service->id, 'title' => __('Book this')] : null,
+            ])),
+        ])->values()->all(), $this->content->cardImage());
+
+        if ($cards) {
+            return $this->reply(__('Here is what we offer. Swipe through to see everything.'), $cards);
+        }
+
         $rows = $services->map(fn ($service) => ['id' => 'aw.svc.'.$service->id, 'title' => $service->name, 'description' => $this->content->serviceSummary($service)])->values()->all();
 
         return $this->reply(__('Here is what we offer. Tap a service to see the details.'), Interactive::list(__('See services'), $rows, __('Services & prices')));
@@ -439,9 +454,25 @@ class ChatbotEngine
         ]))));
     }
 
-    private function coursesList(): array
+    private function coursesList(Conversation $conversation): array
     {
-        $rows = $this->content->courses()->take(Interactive::MAX_ROWS)
+        $courses = $this->content->courses()->take(Interactive::MAX_ROWS);
+        $cards = Interactive::carousel($courses->map(fn ($course) => [
+            'id' => 'aw.course.'.$course->id,
+            'title' => $course->name,
+            'text' => '*'.$course->name.'*'.(($summary = $this->content->courseSummary($course)) !== '' ? "\n".$summary : ''),
+            'image' => $course->image,
+            'buttons' => [
+                ['id' => 'aw.course.'.$course->id, 'title' => __('Details')],
+                ['id' => ($this->demo->offers($course, $conversation) ? 'aw.dm.c.' : 'aw.ask.demo.').$course->id, 'title' => __('Free demo class')],
+            ],
+        ])->values()->all(), $this->content->cardImage());
+
+        if ($cards) {
+            return $this->reply(__('Here are our courses. Swipe through, and tap *Free demo class* to try one.'), $cards);
+        }
+
+        $rows = $courses
             ->map(fn ($course) => ['id' => 'aw.course.'.$course->id, 'title' => $course->name, 'description' => $this->content->courseSummary($course)])
             ->values()->all();
 

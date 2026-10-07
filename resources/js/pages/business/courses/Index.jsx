@@ -22,6 +22,7 @@ import AppLayout from '@/layouts/AppLayout';
 import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import RecordImage from '@/components/RecordImage';
 import AttachmentsCard from '@/modules/files/AttachmentsCard';
 import useTenant from '@/hooks/useTenant';
 import { formatPrice } from '@/utils/format';
@@ -98,6 +99,18 @@ function CourseDialog({ course, open, onClose }) {
                         control={<Switch checked={form.data.is_active} onChange={(event) => form.setData('is_active', event.target.checked)} />}
                         label="Open for admissions"
                     />
+                    {course ? (
+                        <RecordImage
+                            image={course.image}
+                            alt={course.name}
+                            endpoint={`/courses/${course.id}/image`}
+                            title="Photo"
+                            className="aspect-video w-full max-w-xs"
+                            help="JPG or PNG. Shown as a card when customers browse courses in the WhatsApp assistant."
+                        />
+                    ) : (
+                        <p className="text-xs text-slate-500">You can add a photo after saving the course.</p>
+                    )}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={onClose} color="inherit">
@@ -250,7 +263,14 @@ export default function Index({ courses, showInactive, counts, files }) {
                 </div>
             )}
 
-            {editing ? <CourseDialog key={editing.id ?? 'new'} course={editing.id ? editing : null} open onClose={() => setEditing(null)} /> : null}
+            {editing ? (
+                <CourseDialog
+                    key={editing.id ?? 'new'}
+                    course={editing.id ? (courses.find((course) => course.id === editing.id) ?? editing) : null}
+                    open
+                    onClose={() => setEditing(null)}
+                />
+            ) : null}
 
             {filesOf && files?.[filesOf.id] ? (
                 <Dialog open onClose={() => setFilesOf(null)} fullWidth maxWidth="sm">

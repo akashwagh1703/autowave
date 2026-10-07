@@ -265,6 +265,9 @@ return [
             'gallery' => ['label' => 'Gallery', 'max' => 24, 'path' => 'website'],
             // One image per product (products.image_media_id); managed on the product page.
             'product' => ['label' => 'Product image', 'max' => 2000, 'path' => 'products', 'website' => false],
+            // One photo per service and course (image_media_id); shown as cards in the WhatsApp assistant.
+            'service' => ['label' => 'Service photo', 'max' => 2000, 'path' => 'services', 'website' => false],
+            'course' => ['label' => 'Course photo', 'max' => 2000, 'path' => 'courses', 'website' => false],
         ],
     ],
 

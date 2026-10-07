@@ -18,7 +18,9 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
   "Answer typed questions with AI" and questions like "Do you have parking?" get an instant answer from
   your own services, prices, offers, FAQ and notes, marked "Automatic answer", with buttons to book or
   talk to you. It never confirms bookings, orders or payments, and passes anything it is unsure about
-  to your team. It uses your live services, prices and website, so it is always up to
+  to your team. **Photo cards:** products, services and courses now come as swipeable cards with their
+  photo, price and buttons such as **Add to cart**, **Book this** or **Free demo class**. Services and
+  courses can now have a photo too (on the service page and in the course editor). It uses your live services, prices and website, so it is always up to
   date, and shows your website's main photo with the welcome. Customers can also type a number or a word
   like "price" or "timings". It goes quiet when your team replies or a customer asks for a person, and
   starts again after the hours you choose (12 by default); owners get an email when a customer is

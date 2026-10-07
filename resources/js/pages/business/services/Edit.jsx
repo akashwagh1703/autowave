@@ -7,6 +7,7 @@ import { useState } from 'react';
 import AppLayout from '@/layouts/AppLayout';
 import PageHeader from '@/components/PageHeader';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import RecordImage from '@/components/RecordImage';
 import ServiceForm from '@/modules/services/ServiceForm';
 import AttachmentsCard from '@/modules/files/AttachmentsCard';
 import useTenant from '@/hooks/useTenant';
@@ -50,24 +51,36 @@ export default function Edit({ service, categories, resources, upcomingCount, fi
                     </Button>
                 }
             />
-            <Card variant="outlined" className="max-w-3xl">
-                <CardContent>
-                    <ServiceForm
-                        form={form}
-                        onSubmit={submit}
-                        submitLabel="Save changes"
-                        cancelHref="/services"
-                        categories={categories}
-                        resources={resources}
-                    />
-                </CardContent>
-            </Card>
-
-            {files ? (
-                <div className="mt-6 max-w-3xl">
-                    <AttachmentsCard documents={files} timezone={timezone} title="Video and brochures" namePlaceholder="e.g. Package details, Before and after" />
+            <div className="grid max-w-5xl gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+                <div className="space-y-6">
+                    <Card variant="outlined">
+                        <CardContent>
+                            <ServiceForm
+                                form={form}
+                                onSubmit={submit}
+                                submitLabel="Save changes"
+                                cancelHref="/services"
+                                categories={categories}
+                                resources={resources}
+                            />
+                        </CardContent>
+                    </Card>
+                    {files ? <AttachmentsCard documents={files} timezone={timezone} title="Video and brochures" namePlaceholder="e.g. Package details, Before and after" /> : null}
                 </div>
-            ) : null}
+                <div>
+                    <Card variant="outlined">
+                        <CardContent>
+                            <RecordImage
+                                image={service.image}
+                                alt={service.name}
+                                endpoint={`/services/${service.id}/image`}
+                                title="Photo"
+                                help="JPG or PNG. Shown as a card when customers browse services in the WhatsApp assistant."
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
 
             <ConfirmDialog
                 open={confirmDelete}

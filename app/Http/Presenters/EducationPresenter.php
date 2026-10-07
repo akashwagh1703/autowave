@@ -30,6 +30,9 @@ final class EducationPresenter
             'is_active' => $course->is_active,
             'batches_count' => $course->batches_count ?? null,
             'students_count' => $course->students_count ?? null,
+            'image' => $course->relationLoaded('image') && $course->image
+                ? ['id' => $course->image->id, 'url' => $course->image->url()]
+                : null,
             'deleted' => $course->trashed(),
         ];
     }

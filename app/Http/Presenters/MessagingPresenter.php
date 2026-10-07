@@ -59,6 +59,7 @@ class MessagingPresenter
             'template' => $message->meta['template'] ?? null,
             'options' => $message->meta['options'] ?? [],
             'footer' => $message->meta['footer'] ?? null,
+            'cards' => $message->meta['cards'] ?? [],
             'image' => $attachment ? null : ($message->meta['image'] ?? null),
             'sender' => $outbound?->sender?->name ?? match (true) {
                 (bool) $outbound?->automation_run_id => 'Automation',
