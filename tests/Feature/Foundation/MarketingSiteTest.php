@@ -87,7 +87,7 @@ class MarketingSiteTest extends TestCase
         $this->assertStringContainsString('Sitemap: '.$this->marketingUrl('/sitemap.xml'), $robots->getContent());
 
         $sitemap = $this->get($this->marketingUrl('/sitemap.xml'))->assertOk()->assertHeader('Content-Type', 'application/xml; charset=UTF-8')->getContent();
-        foreach (['/', '/pricing', '/demo', '/for/salons', '/for/stores', '/privacy'] as $path) {
+        foreach (['/', '/pricing', '/demo', '/for/salons', '/for/studios', '/for/stores', '/privacy'] as $path) {
             $this->assertStringContainsString('<loc>'.$this->marketingUrl($path).'</loc>', $sitemap);
         }
 

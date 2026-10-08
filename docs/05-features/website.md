@@ -62,7 +62,7 @@ business can edit it without help: design, content, images, publishing, the enqu
 | about | Heading and text (falls back to the business description) | — |
 | services | Active services by category, prices, durations, **Book** buttons | service engine |
 | products | Active products by category, optional prices, "Out of stock", **Add to cart** when online ordering is open ([commerce.md](commerce.md)) | commerce engine, at least one active product |
-| packages | Hidden until packages exist | service engine |
+| packages | Active packages (`is_package`); hidden while none | service engine |
 | gallery | Uploaded photos with a lightbox | — |
 | video | Up to three uploaded videos (MP4 or WebM, 50 MB each) played on the page, with optional captions | at least one video; not in any default layout, added from the editor |
 | downloads | Up to ten uploaded files (PDF, Word, Excel, JPG, PNG, 10 MB each) as download cards | at least one file; added from the editor |
@@ -192,6 +192,6 @@ business can edit it without help: design, content, images, publishing, the enqu
 
 ## Known limitations
 
-See `docs/00-overview/known-issues.md` (AW-034 to AW-040, AW-045): packages and reviews stay hidden until
+See `docs/00-overview/known-issues.md` (AW-034 to AW-040, AW-045): reviews stay hidden until
 their phases; carts don't reserve stock; images are not resized; the section content isn't server-rendered; there's no customer
 self-cancel or reschedule; there's no captcha; there are no custom domains yet.

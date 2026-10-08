@@ -27,12 +27,25 @@ final class BookingPresenter
             'duration_minutes' => $service->duration_minutes,
             'price' => $service->price,
             'is_active' => $service->is_active,
+            'is_package' => $service->is_package,
             'service_category_id' => $service->service_category_id,
             'category' => $service->relationLoaded('category') && $service->category
                 ? ['id' => $service->category->id, 'name' => $service->category->name]
                 : null,
             'resource_ids' => $service->relationLoaded('resources') ? $service->resources->modelKeys() : null,
             'resources_count' => $service->resources_count ?? null,
+            'included_service_ids' => $service->relationLoaded('packageItems')
+                ? $service->packageItems->pluck('included_service_id')->filter()->values()->all()
+                : null,
+            'product_ids' => $service->relationLoaded('packageItems')
+                ? $service->packageItems->pluck('product_id')->filter()->values()->all()
+                : null,
+            'includes' => $service->relationLoaded('packageItems')
+                ? $service->packageItems->map(fn ($item) => [
+                    'type' => $item->included_service_id ? 'service' : 'product',
+                    'name' => $item->includedService?->name ?? $item->product?->name,
+                ])->filter(fn (array $row) => filled($row['name']))->values()->all()
+                : null,
             'image' => $service->relationLoaded('image') && $service->image
                 ? ['id' => $service->image->id, 'url' => $service->image->url()]
                 : null,

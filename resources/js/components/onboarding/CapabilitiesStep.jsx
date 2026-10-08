@@ -30,7 +30,7 @@ export default function CapabilitiesStep({ modules, modulesByCode, businessType,
         <div>
             <StepHeading
                 title="Choose your capabilities"
-                description="We've ticked what most businesses like yours use. Anything you skip can be switched on later."
+                description="We've ticked what most businesses like yours use. Required features stay locked. You can leave optional ones off for now."
             />
 
             {businessType?.engines?.length ? (

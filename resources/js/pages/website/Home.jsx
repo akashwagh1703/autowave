@@ -8,15 +8,16 @@ import { Downloads, Videos } from '@/modules/website/FileSections';
 import Hero from '@/modules/website/Hero';
 import ReservationSection from '@/modules/website/ReservationSection';
 import { CartDrawer, Products, useCart } from '@/modules/website/ShopSection';
-import { About, CtaBand, Faq, Footer, Gallery, Header, MobileActionBar, Offers, Services, Team, Testimonials, shouldShowMobileBar } from '@/modules/website/sections';
+import { About, CtaBand, Faq, Footer, Gallery, Header, MobileActionBar, Offers, Packages, Services, Team, Testimonials, shouldShowMobileBar } from '@/modules/website/sections';
 import { SectionMeta, SiteContext, scrollToSection, siteTheme, themeVariables } from '@/modules/website/site';
 
-// Section types without a renderer (packages, reviews) never reach the page while they have no data.
+// Section types without a renderer (reviews) never reach the page while they have no data.
 const RENDERERS = {
     header: Header,
     hero: Hero,
     about: About,
     services: Services,
+    packages: Packages,
     products: Products,
     courses: CoursesSection,
     team: Team,

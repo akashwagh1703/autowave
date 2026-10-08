@@ -30,7 +30,7 @@ const navigation = [
     { label: 'Customers', href: '/customers', permission: 'customers.view', module: 'customers' },
     { label: 'Services', href: '/services', permission: 'services.view', engine: 'service' },
     { label: 'Products', href: '/products', permission: 'products.view', engine: 'commerce' },
-    { label: 'Offers', href: '/offers', permission: 'offers.view', module: 'offers' },
+    { label: 'Offers', href: '/offers', permission: 'offers.view', module: 'offers', engine: 'commerce' },
     { label: (tenant) => tenant?.resource_label?.plural ?? 'Staff', href: '/resources', permission: 'resources.view', engine: 'booking' },
     { label: 'Automations', href: '/automations', permission: 'automation.view', module: 'automation' },
     { label: 'Website', href: '/website', permission: 'website.view', module: 'website' },

@@ -21,6 +21,12 @@ class ServiceFactory extends Factory
             'duration_minutes' => fake()->randomElement([30, 45, 60]),
             'price' => fake()->randomElement([300, 500, 800, 1200]),
             'is_active' => true,
+            'is_package' => false,
         ];
+    }
+
+    public function package(): static
+    {
+        return $this->state(fn () => ['is_package' => true]);
     }
 }

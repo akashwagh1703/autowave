@@ -10,11 +10,18 @@ import useTenant from '@/hooks/useTenant';
 
 const DURATION_PRESETS = [15, 30, 45, 60, 90, 120];
 
-export default function ServiceForm({ form, onSubmit, submitLabel, cancelHref, categories, resources }) {
+export default function ServiceForm({ form, onSubmit, submitLabel, cancelHref, categories, resources, packageOptions = { services: [], products: [] }, lockPackage = false }) {
     const { currency, resourceLabel } = useTenant();
     const selected = form.data.resource_ids ?? [];
+    const includedServices = form.data.included_service_ids ?? [];
+    const includedProducts = form.data.product_ids ?? [];
+    const isPackage = Boolean(form.data.is_package);
     const toggleResource = (id) =>
         form.setData('resource_ids', selected.includes(id) ? selected.filter((value) => value !== id) : [...selected, id]);
+    const toggleIncluded = (field, id) => {
+        const current = form.data[field] ?? [];
+        form.setData(field, current.includes(id) ? current.filter((value) => value !== id) : [...current, id]);
+    };
 
     return (
         <form onSubmit={onSubmit} noValidate className="space-y-6">
@@ -56,7 +63,7 @@ export default function ServiceForm({ form, onSubmit, submitLabel, cancelHref, c
                     value={form.data.price}
                     onChange={(event) => form.setData('price', event.target.value)}
                     error={Boolean(form.errors.price)}
-                    helperText={form.errors.price ?? 'Default price; you can change it on each appointment.'}
+                    helperText={form.errors.price ?? (isPackage ? 'Package price shown to customers.' : 'Default price; you can change it on each appointment.')}
                     slotProps={{ htmlInput: { min: 0, step: '0.01' }, input: { startAdornment: <InputAdornment position="start">{currency}</InputAdornment> } }}
                 />
                 <div className="sm:col-span-2">
@@ -92,8 +99,27 @@ export default function ServiceForm({ form, onSubmit, submitLabel, cancelHref, c
                     value={form.data.description ?? ''}
                     onChange={(event) => form.setData('description', event.target.value)}
                     error={Boolean(form.errors.description)}
-                    helperText={form.errors.description ?? 'Shown to customers on your website in a later release.'}
+                    helperText={form.errors.description ?? 'Shown on your website and WhatsApp assistant.'}
                     slotProps={{ htmlInput: { maxLength: 2000 } }}
+                    className="sm:col-span-2"
+                />
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={isPackage}
+                            disabled={lockPackage}
+                            onChange={(event) => {
+                                const next = event.target.checked;
+                                form.setData({
+                                    ...form.data,
+                                    is_package: next,
+                                    included_service_ids: next ? form.data.included_service_ids ?? [] : [],
+                                    product_ids: next ? form.data.product_ids ?? [] : [],
+                                });
+                            }}
+                        />
+                    }
+                    label="Package — bundle of services and products"
                     className="sm:col-span-2"
                 />
                 <FormControlLabel
@@ -103,9 +129,50 @@ export default function ServiceForm({ form, onSubmit, submitLabel, cancelHref, c
                 />
             </section>
 
+            {isPackage ? (
+                <section className="space-y-4">
+                    <div>
+                        <h2 className="font-semibold text-slate-900">What is included</h2>
+                        <p className="text-sm text-slate-600">Shown on your website Packages section. Booking still uses this package’s duration and price.</p>
+                    </div>
+                    {form.errors.included_service_ids ? <p className="text-sm text-red-600">{form.errors.included_service_ids}</p> : null}
+                    {form.errors.product_ids ? <p className="text-sm text-red-600">{form.errors.product_ids}</p> : null}
+                    {packageOptions.services.length ? (
+                        <div>
+                            <h3 className="text-sm font-medium text-slate-800">Services</h3>
+                            <div className="mt-2 grid gap-1 sm:grid-cols-2">
+                                {packageOptions.services.map((service) => (
+                                    <FormControlLabel
+                                        key={service.id}
+                                        control={<Checkbox checked={includedServices.includes(service.id)} onChange={() => toggleIncluded('included_service_ids', service.id)} />}
+                                        label={service.name}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-slate-500">Add standalone services first, then include them here.</p>
+                    )}
+                    {packageOptions.products.length ? (
+                        <div>
+                            <h3 className="text-sm font-medium text-slate-800">Products</h3>
+                            <div className="mt-2 grid gap-1 sm:grid-cols-2">
+                                {packageOptions.products.map((product) => (
+                                    <FormControlLabel
+                                        key={product.id}
+                                        control={<Checkbox checked={includedProducts.includes(product.id)} onChange={() => toggleIncluded('product_ids', product.id)} />}
+                                        label={product.name}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    ) : null}
+                </section>
+            ) : null}
+
             {resources.length ? (
                 <section>
-                    <h2 className="font-semibold text-slate-900">Who offers this service</h2>
+                    <h2 className="font-semibold text-slate-900">{isPackage ? 'Who offers this package' : 'Who offers this service'}</h2>
                     <p className="text-sm text-slate-600">Only the selected {resourceLabel.plural.toLowerCase()} can be booked for it.</p>
                     {form.errors.resource_ids ? <p className="mt-1 text-sm text-red-600">{form.errors.resource_ids}</p> : null}
                     <div className="mt-2 grid gap-1 sm:grid-cols-2">

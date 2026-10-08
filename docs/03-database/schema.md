@@ -100,7 +100,8 @@ All tables are tenant-owned, like the CRM tables. Every cross-row reference is a
 | Table | Key columns |
 |---|---|
 | `service_categories` | `name` (80, unique per tenant), `sort_order` |
-| `services` | `service_category_id` (nullable), `name` (120), `description`, `duration_minutes`, `price` numeric(12,2), `image_media_id` (nullable, from 2026-10-12, like `products.image_media_id`), `is_active`, `sort_order`, `created_by_user_id`, timestamps, soft deletes |
+| `services` | `service_category_id` (nullable), `name` (120), `description`, `duration_minutes`, `price` numeric(12,2), `image_media_id` (nullable, from 2026-10-12, like `products.image_media_id`), `is_active`, `is_package` (bool, default false; from 2026-10-13), `sort_order`, `created_by_user_id`, timestamps, soft deletes. Index `(tenant_id, is_package)`. Packages are bookable service rows; included items live in `package_items`. |
+| `package_items` | `tenant_id`, `package_service_id`, `included_service_id` (nullable), `product_id` (nullable), `sort_order`; composite FKs to `services` / `products`. One of included_service_id or product_id is set per row. Migration `2026_10_13_100000`. |
 | `booking_resources` | `tenant_user_id` (nullable; the linked team member), `name` (120), `description`, `color` (hex), `is_active`, `sort_order`, timestamps, soft deletes. Partial unique `booking_resources_member_unique (tenant_id, tenant_user_id) WHERE deleted_at IS NULL AND tenant_user_id IS NOT NULL` |
 | `booking_resource_service` | PK (`booking_resource_id`, `service_id`), `tenant_id`; both FKs composite and cascading |
 | `resource_working_hours` | `booking_resource_id` (cascade), `weekday` (ISO 1–7), `starts_at` / `ends_at` (`time`, tenant-local). Check `resource_working_hours_valid`: weekday 1–7 and end > start. No timestamps |

@@ -75,12 +75,62 @@ class ProvisionWebsite
         return $this->context->run($tenant, function (Tenant $tenant) {
             $branding = $this->context->setting('branding', []);
 
-            return $this->handle($tenant, $tenant->businessType, null, [
+            $config = $this->handle($tenant, $tenant->businessType, null, [
                 'primary_color' => $branding['primary_color'] ?? null,
                 'tagline' => $branding['tagline'] ?? null,
                 'about' => $this->context->setting('business_profile', [])['description'] ?? null,
             ]);
+
+            $this->ensureSections($tenant);
+
+            return $config;
         });
+    }
+
+    /**
+     * Adds section types from the business type preset that the tenant is missing (e.g. packages
+     * after a catalogue update). Does not reorder or remove existing sections.
+     * Must run inside TenantContext for the tenant (or call via ensureFor).
+     */
+    public function ensureSections(Tenant $tenant): void
+    {
+        if ($this->context->id() !== $tenant->id) {
+            $this->context->run($tenant, fn () => $this->ensureSections($tenant));
+
+            return;
+        }
+
+        if (! WebsiteConfig::query()->exists()) {
+            return;
+        }
+
+        $wanted = array_values($tenant->businessType?->configuration['website_sections'] ?? []);
+        $existing = WebsiteSection::query()->pluck('type')->all();
+        $missing = array_values(array_diff($wanted, $existing));
+
+        if ($missing === []) {
+            return;
+        }
+
+        $bookable = in_array('booking', $this->engines->enabledCodes($tenant), true);
+        $footer = WebsiteSection::query()->where('type', 'footer')->first();
+        $sort = $footer
+            ? max(10, (int) $footer->sort_order - (count($missing) * 10))
+            : ((int) WebsiteSection::query()->max('sort_order') + 10);
+
+        foreach ($missing as $type) {
+            WebsiteSection::query()->create([
+                'type' => $type,
+                'sort_order' => $sort,
+                'enabled' => true,
+                'configuration' => $this->defaults($type, $tenant, [], $bookable),
+            ]);
+            $sort += 10;
+        }
+
+        if ($footer && $footer->sort_order <= $sort - 10) {
+            $footer->update(['sort_order' => $sort]);
+        }
     }
 
     private function template(?string $code): WebsiteTemplate

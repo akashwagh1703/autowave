@@ -12,7 +12,7 @@ import ServiceForm from '@/modules/services/ServiceForm';
 import AttachmentsCard from '@/modules/files/AttachmentsCard';
 import useTenant from '@/hooks/useTenant';
 
-export default function Edit({ service, categories, resources, upcomingCount, files }) {
+export default function Edit({ service, categories, resources, packageOptions, upcomingCount, files }) {
     const { timezone } = useTenant();
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -23,7 +23,10 @@ export default function Edit({ service, categories, resources, upcomingCount, fi
         price: service.price,
         description: service.description ?? '',
         is_active: service.is_active,
+        is_package: service.is_package ?? false,
         resource_ids: service.resource_ids ?? [],
+        included_service_ids: service.included_service_ids ?? [],
+        product_ids: service.product_ids ?? [],
     });
 
     const submit = (event) => {
@@ -36,6 +39,8 @@ export default function Edit({ service, categories, resources, upcomingCount, fi
             onStart: () => setDeleting(true),
             onFinish: () => setDeleting(false),
         });
+
+    const noun = service.is_package ? 'package' : 'service';
 
     return (
         <AppLayout title={`Edit ${service.name}`}>
@@ -62,6 +67,7 @@ export default function Edit({ service, categories, resources, upcomingCount, fi
                                 cancelHref="/services"
                                 categories={categories}
                                 resources={resources}
+                                packageOptions={packageOptions}
                             />
                         </CardContent>
                     </Card>
@@ -87,8 +93,8 @@ export default function Edit({ service, categories, resources, upcomingCount, fi
                 title={`Delete ${service.name}?`}
                 description={
                     upcomingCount > 0
-                        ? `${upcomingCount} upcoming ${upcomingCount === 1 ? 'appointment keeps' : 'appointments keep'} this service. It can no longer be booked.`
-                        : 'It can no longer be booked. Past appointments keep showing it.'
+                        ? `${upcomingCount} upcoming ${upcomingCount === 1 ? 'appointment keeps' : 'appointments keep'} this ${noun}. It can no longer be booked.`
+                        : `It can no longer be booked. Past appointments keep showing it.`
                 }
                 confirmLabel="Delete"
                 destructive

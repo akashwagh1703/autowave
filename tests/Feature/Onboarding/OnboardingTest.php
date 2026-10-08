@@ -55,6 +55,17 @@ class OnboardingTest extends TestCase
         $this->assertSame(0, Tenant::query()->where('slug', 'glow-studio')->count());
     }
 
+    public function test_the_wizard_offers_photo_studio_and_hides_draft_modules(): void
+    {
+        $this->actingAs($this->user())->get($this->appUrl('/onboarding'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('catalog.business_types', fn ($types) => collect($types)->contains(fn ($type) => $type['code'] === 'photo_studio'))
+                ->where('catalog.modules', fn ($modules) => collect($modules)->pluck('code')->doesntContain('reviews')
+                    && collect($modules)->pluck('code')->doesntContain('forms')
+                    && collect($modules)->pluck('code')->contains('website')));
+    }
+
     public function test_the_wizard_offers_public_business_types_modules_and_templates(): void
     {
         $user = User::factory()->create();
@@ -67,7 +78,7 @@ class OnboardingTest extends TestCase
                 ->where('limitReached', false)
                 ->where('hasWorkspaces', false)
                 ->where('defaults.email', $user->email)
-                ->has('catalog.business_types', 6)
+                ->has('catalog.business_types', 7)
                 ->where('catalog.business_types.0.code', 'beauty_salon')
                 ->where('catalog.business_types.0.icon', 'spa')
                 ->where('catalog.business_types.0.templates', ['elegant', 'modern', 'premium'])

@@ -7,6 +7,7 @@ use App\Domain\Tenant\Support\TenantContext;
 use App\Domain\Website\Models\WebsiteConfig;
 use App\Domain\Website\Models\WebsiteSection;
 use App\Http\Controllers\Controller;
+use App\Support\Enums\CatalogStatus;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -40,7 +41,8 @@ class SettingsController extends Controller
                 'status' => $domain->status->value,
                 'is_primary' => $domain->is_primary,
             ]),
-            'modules' => Module::query()->orderBy('sort_order')->get(['code', 'name', 'description'])
+            // Only catalogue-active modules (draft/coming-soon modules are hidden until built).
+            'modules' => Module::query()->where('status', CatalogStatus::Active)->orderBy('sort_order')->get(['code', 'name', 'description'])
                 ->map(fn (Module $module) => [
                     'code' => $module->code,
                     'name' => $module->name,

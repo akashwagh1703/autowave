@@ -87,7 +87,7 @@ const more = [
 
 const steps = [
     { title: 'Sign up free', body: 'Create your account with your email. No card, no setup fee, no technical skills needed.' },
-    { title: 'Pick your business type', body: 'Choose salon, clinic, turf, coaching, cafe or store. We set up the right tools and website pages for you.' },
+    { title: 'Pick your business type', body: 'Choose salon, photo studio, clinic, turf, coaching, cafe or store. We set up the right tools and website pages for you.' },
     { title: 'Go live and grow', body: 'Add your services and photos, share your website link on WhatsApp and Instagram, and start taking bookings.' },
 ];
 
@@ -292,7 +292,7 @@ function Hero({ trialDays }) {
                     </h1>
                     <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600">
                         Get a website for your business, take bookings and orders online, and let WhatsApp reply to customers for you. For salons,
-                        clinics, turfs, coaching classes, cafes and shops. Ready in minutes, no tech skills needed.
+                        photo studios, clinics, turfs, coaching classes, cafes and shops. Ready in minutes, no tech skills needed.
                     </p>
                     <CtaButtons className="mt-8" />
                     <TrialNotes trialDays={trialDays} className="mt-6" />

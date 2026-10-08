@@ -64,10 +64,16 @@ All routes return 404 when the tenant has no `service` engine.
 
 `tests/Feature/Booking/ServiceTest.php`, `BookingIsolationTest.php`, `BookingProvisioningTest.php`.
 
+## Packages
+
+A package is a service with `is_package=true`. It has its own name, duration and price (used for booking)
+and optional `package_items` (included standalone services and/or products) shown on the website Packages
+section. Create via **Services → Add package**. Packages stay out of the WhatsApp “services & prices”
+list so they do not duplicate the Packages website section; they remain bookable like any other service.
+
 ## Known limitations
 
-- No packages or memberships (bundles of services) yet.
+- No memberships yet (Phase 5 of the modules plan).
 - No per-resource price or duration: every resource offering a service uses the service defaults. Staff can
   override the price on the appointment.
-- No service images or online visibility settings until the website booking flow (Phase 6).
 - If a tenant deletes every category, the defaults come back on the next deploy backfill (AW-023).

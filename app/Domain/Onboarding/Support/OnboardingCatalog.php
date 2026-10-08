@@ -62,7 +62,10 @@ class OnboardingCatalog
                 'description' => $type->description,
                 'icon' => $type->configuration['icon'] ?? 'business',
                 'engines' => $type->engines->map(fn (Engine $engine) => ['code' => $engine->code, 'name' => $engine->name])->values(),
-                'modules' => $type->modules->filter(fn (Module $module) => $module->pivot->enabled)->pluck('code')->values(),
+                'modules' => $type->modules
+                    ->filter(fn (Module $module) => $module->pivot->enabled && $module->isActive())
+                    ->pluck('code')
+                    ->values(),
                 'required_modules' => $type->engines->flatMap->requiredModuleCodes()->unique()->values(),
                 'templates' => array_values($type->configuration['website_templates'] ?? []),
             ]),

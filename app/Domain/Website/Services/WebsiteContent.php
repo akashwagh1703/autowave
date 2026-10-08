@@ -133,6 +133,7 @@ class WebsiteContent
             default => match ($source) {
                 'courses' => $this->courses(),
                 'services' => $this->services(),
+                'packages' => $this->packages(),
                 'team' => $this->team(),
                 'gallery' => Media::query()->inCollection('gallery')->get()
                     ->map(fn (Media $media) => ['url' => $media->url(), 'alt' => $media->alt, 'width' => $media->width, 'height' => $media->height])
@@ -141,8 +142,8 @@ class WebsiteContent
                 'products' => $this->products(),
                 'videos' => $this->sectionFiles($section, 'video')->map(fn (Attachment $file) => self::video($file))->all(),
                 'downloads' => $this->sectionFiles($section, 'document')->map(fn (Attachment $file) => self::brochure($file))->all(),
-                // Filled by later phases; until then these sections stay hidden.
-                'packages', 'reviews' => [],
+                // Filled by a later phase; until then this section stays hidden.
+                'reviews' => [],
                 default => [],
             },
         };
@@ -154,7 +155,7 @@ class WebsiteContent
     private function services(): array
     {
         $bookable = $this->booking->isOpen() ? $this->booking->services()->pluck('id')->all() : [];
-        $services = Service::query()->active()->with('category')->get();
+        $services = Service::query()->active()->standalone()->with('category')->get();
         $files = $this->files(Service::class, $services->modelKeys());
 
         return $services
@@ -173,6 +174,43 @@ class WebsiteContent
                 ])->values()->all(),
             ])
             ->values()
+            ->all();
+    }
+
+    /**
+     * Active packages (bookable services with is_package), with included service/product names.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function packages(): array
+    {
+        if (! $this->context->hasEngine('service')) {
+            return [];
+        }
+
+        $bookable = $this->booking->isOpen() ? $this->booking->services()->pluck('id')->all() : [];
+        $packages = Service::query()->active()->packages()
+            ->with(['category', 'packageItems.includedService:id,name', 'packageItems.product:id,name'])
+            ->ordered()
+            ->get();
+        $files = $this->files(Service::class, $packages->modelKeys());
+
+        return $packages
+            ->map(fn (Service $package) => [
+                'id' => $package->id,
+                'name' => $package->name,
+                'description' => $package->description,
+                'category' => $package->category?->name,
+                'duration_minutes' => $package->duration_minutes,
+                'price' => $package->price !== null ? (float) $package->price : null,
+                'bookable' => in_array($package->id, $bookable, true),
+                'includes' => $package->packageItems
+                    ->map(fn ($item) => $item->includedService?->name ?? $item->product?->name)
+                    ->filter()
+                    ->values()
+                    ->all(),
+                ...($files[$package->id] ?? self::NO_FILES),
+            ])
             ->all();
     }
 

@@ -129,7 +129,18 @@ class ChatbotContent
             return collect();
         }
 
-        return Service::query()->active()->ordered()->with(['category:id,name,sort_order', 'image'])->limit(100)->get();
+        // Packages have their own website section; keep the WhatsApp services catalogue to standalone items.
+        return Service::query()->active()->standalone()->ordered()->with(['category:id,name,sort_order', 'image'])->limit(100)->get();
+    }
+
+    /** @return Collection<int, Service> */
+    public function packages(): Collection
+    {
+        if (! $this->context->hasEngine('service')) {
+            return collect();
+        }
+
+        return Service::query()->active()->packages()->ordered()->with(['category:id,name,sort_order', 'image', 'packageItems.includedService:id,name', 'packageItems.product:id,name'])->limit(50)->get();
     }
 
     public function service(int $id): ?Service

@@ -128,6 +128,47 @@ class ServiceTest extends TestCase
         $this->assertSoftDeleted('services', ['id' => $service->id]);
     }
 
+    public function test_a_package_can_include_services_and_is_bookable(): void
+    {
+        $tenant = $this->createTenant();
+        $resource = $this->makeResource($tenant);
+        $haircut = $this->makeService($tenant, ['name' => 'Haircut'], [$resource]);
+        $facial = $this->makeService($tenant, ['name' => 'Facial'], [$resource]);
+        $this->actingAs($this->ownerOf($tenant));
+
+        $this->post($this->appUrl('/services'), [
+            'name' => 'Bridal day',
+            'duration_minutes' => 180,
+            'price' => 15000,
+            'is_active' => true,
+            'is_package' => true,
+            'resource_ids' => [$resource->id],
+            'included_service_ids' => [$haircut->id, $facial->id],
+            'product_ids' => [],
+        ])->assertSessionHasNoErrors()->assertRedirect($this->appUrl('/services'));
+
+        $package = $this->inTenant($tenant, fn () => Service::query()->where('name', 'Bridal day')->sole());
+        $this->assertTrue($package->is_package);
+        $this->assertEqualsCanonicalizing(
+            [$haircut->id, $facial->id],
+            $this->inTenant($tenant, fn () => $package->packageItems()->pluck('included_service_id')->all()),
+        );
+
+        $this->assertRejected('included_service_ids', fn () => $this->makeService($tenant, [
+            'name' => 'Nested package',
+            'is_package' => true,
+            'included_service_ids' => [$package->id],
+            'resource_ids' => [$resource->id],
+        ]));
+
+        $this->get($this->appUrl('/services?status=packages'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('services.meta.total', 1)
+                ->where('services.data.0.name', 'Bridal day')
+                ->where('services.data.0.is_package', true));
+    }
+
     private function assertRejected(string $field, callable $callback): void
     {
         try {

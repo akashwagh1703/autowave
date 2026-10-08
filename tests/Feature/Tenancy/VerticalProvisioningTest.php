@@ -9,6 +9,7 @@ use App\Domain\Module\Services\ModuleManager;
 use App\Domain\RBAC\Actions\ProvisionTenantRoles;
 use App\Domain\RBAC\Models\Permission;
 use App\Domain\RBAC\Models\Role;
+use App\Domain\Service\Models\ServiceCategory;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Tenant\Models\TenantSetting;
 use App\Domain\Tenant\Support\TenantContext;
@@ -37,6 +38,37 @@ class VerticalProvisioningTest extends TestCase
             'modules' => $this->context()->enabledModules(),
             'sections' => WebsiteSection::query()->orderBy('sort_order')->pluck('type')->all(),
         ]);
+    }
+
+    public function test_a_photo_studio_gets_service_booking_and_commerce_like_a_salon(): void
+    {
+        $tenant = $this->createTenant('Lens & Light', 'photo_studio');
+        $workspace = $this->workspace($tenant);
+
+        $this->assertEqualsCanonicalizing(['service', 'booking', 'commerce'], $workspace['engines']);
+        $this->assertContains('customers', $workspace['modules']);
+        $this->assertContains('offers', $workspace['modules']);
+        $this->assertContains('payments', $workspace['modules']);
+        $this->assertNotContains('reviews', $workspace['modules']);
+        $this->assertNotContains('loyalty', $workspace['modules']);
+        $this->assertContains('services', $workspace['sections']);
+        $this->assertContains('packages', $workspace['sections']);
+        $this->assertContains('products', $workspace['sections']);
+        $this->assertContains('booking', $workspace['sections']);
+
+        $this->inTenant($tenant, function () {
+            $this->assertSame('Photographer', app(TenantContext::class)->setting('booking_resource_label'));
+            $this->assertSame(
+                config('catalog.business_types.photo_studio.configuration.service_categories'),
+                ServiceCategory::query()->ordered()->pluck('name')->all(),
+            );
+        });
+
+        $this->actingAs($this->ownerOf($tenant))->get($this->appUrl('/dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('metrics.appointments_today.value', 0)
+                ->where('metrics.new_leads.value', 0));
     }
 
     public function test_a_coaching_centre_gets_the_education_engine_and_admission_pipeline(): void

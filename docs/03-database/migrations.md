@@ -39,6 +39,7 @@ php artisan migrate:fresh --seed           # local only — destroys data
 | 2026-10-10 | `2026_10_10_100000` chatbot sessions; `outbound_messages.interactive` and `assistant` | WhatsApp assistant | New table and nullable / defaulted columns only; safe while the previous release runs. No seeder needed: the assistant is off until an owner turns it on |
 | 2026-10-11 | `2026_10_11_100000` reservations source check allows `whatsapp` | WhatsApp assistant step 2 | Drops and re-adds the `reservations_valid` check with the wider source list; brief lock on `reservations` only. Deploy the migration before the code (the old code never writes `whatsapp`). The down migration turns `whatsapp` reservations into `website` before restoring the old check. No seeder needed |
 | 2026-10-12 | `2026_10_12_100000` `services.image_media_id`, `courses.image_media_id` | WhatsApp assistant photo cards | Nullable single-column FKs to `media.id` (null on delete) with an index, like `products.image_media_id`. Adding nullable columns is instant; no backfill or seeder. Deploy the migration before the code |
+| 2026-10-13 | `2026_10_13_100000` `services.is_package`, `package_items` | Packages (Phase 2) | Additive boolean (default false) + new table with composite FKs. Safe while the previous release runs. After deploy: `CatalogSeeder` (salon/studio website_sections include packages) and `TenantBackfillSeeder` (`ProvisionWebsite::ensureSections` adds the section to existing tenants) |
 
 ## Compatibility
 

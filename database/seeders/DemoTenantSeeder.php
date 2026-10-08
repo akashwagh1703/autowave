@@ -29,6 +29,10 @@ class DemoTenantSeeder extends Seeder
             'branding' => ['primary_color' => '#db2777', 'tagline' => 'Hair, skin and nails in the heart of Pune'],
             'profile' => ['phone' => '+91 98765 43210', 'city' => 'Pune', 'description' => 'A neighbourhood salon offering haircuts, colour, facials and bridal packages.'],
         ]);
+        $this->tenant($createTenant, 'owner@abc-studio.test', 'Arjun Owner', 'ABC Studio', 'abc-studio', 'photo_studio', [
+            'branding' => ['primary_color' => '#0f766e', 'tagline' => 'Weddings, portraits and product shoots'],
+            'profile' => ['phone' => '+91 90000 44444', 'city' => 'Pune', 'description' => 'A photo studio for weddings, maternity, portraits, products and passport photos.'],
+        ]);
         $turf = $this->tenant($createTenant, 'owner@abc-turf.test', 'Tarun Owner', 'ABC Turf', 'abc-turf', 'turf', [
             'branding' => ['primary_color' => '#16a34a', 'tagline' => 'Floodlit 5-a-side football, open till midnight'],
             'profile' => ['phone' => '+91 91234 56789', 'city' => 'Pune'],
@@ -56,7 +60,7 @@ class DemoTenantSeeder extends Seeder
         $this->member($context, $assignRole, $salon, $manager, 'manager');
         $this->member($context, $assignRole, $turf, $manager, 'manager');
 
-        $this->command?->info('Demo tenants: abc-salon, abc-turf, abc-coaching, abc-cafe, abc-store. Owners: owner@<slug>.test; also staff@abc-salon.test, teacher@abc-coaching.test, manager@autowave.test (password: password).');
+        $this->command?->info('Demo tenants: abc-salon, abc-studio, abc-turf, abc-coaching, abc-cafe, abc-store. Owners: owner@<slug>.test; also staff@abc-salon.test, teacher@abc-coaching.test, manager@autowave.test (password: password).');
     }
 
     private function tenant(CreateTenant $createTenant, string $email, string $name, string $business, string $slug, string $type, array $options): Tenant

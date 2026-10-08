@@ -114,7 +114,7 @@ return [
             'description' => 'Bundles of services and products.',
             'engine' => 'service',
             'data' => 'packages',
-            'empty_hint' => 'Packages are not available yet; this section stays hidden until they are.',
+            'empty_hint' => 'Add a package under Services (Add package). This section stays hidden until you have one.',
             'fields' => [
                 'heading' => ['type' => 'text', 'label' => 'Heading', 'max' => 80, 'default' => 'Packages'],
                 'intro' => ['type' => 'textarea', 'label' => 'Introduction', 'max' => 300, 'ai' => true],

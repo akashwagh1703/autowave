@@ -89,12 +89,51 @@ class PublicWebsiteTest extends TestCase
                 ->where('enquiry.interests', ['Haircut']));
     }
 
+    public function test_packages_appear_on_the_site_and_stay_out_of_the_services_section(): void
+    {
+        $this->travelToBookingDay();
+        $tenant = $this->createTenant();
+        $this->details($tenant);
+        $stylist = $this->makeResource($tenant, ['name' => 'Sana']);
+        $haircut = $this->makeService($tenant, ['name' => 'Haircut', 'price' => 450], [$stylist]);
+        $this->makeService($tenant, [
+            'name' => 'Bridal package',
+            'price' => 15000,
+            'duration_minutes' => 180,
+            'is_package' => true,
+            'included_service_ids' => [$haircut->id],
+            'resource_ids' => [$stylist->id],
+        ], [$stylist]);
+
+        $this->get($this->siteUrl(self::SALON))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('sections', function ($sections) {
+                $sections = collect($sections)->all();
+                $services = collect($this->section($sections, 'services')['data'])->pluck('services')->flatten(1)->pluck('name')->all();
+                $packages = $this->section($sections, 'packages')['data'];
+
+                $this->assertSame(['Haircut'], $services);
+                $this->assertSame('Bridal package', $packages[0]['name']);
+                $this->assertSame(['Haircut'], $packages[0]['includes']);
+                $this->assertTrue($packages[0]['bookable']);
+
+                return true;
+            })->where('booking.services', function ($services) {
+                $names = collect($services)->pluck('name')->all();
+                $this->assertContains('Haircut', $names);
+                $this->assertContains('Bridal package', $names);
+
+                return true;
+            }));
+    }
+
     public function test_sections_without_content_are_hidden_including_products_until_commerce(): void
     {
         $tenant = $this->createTenant();
 
         $this->inTenant($tenant, function () {
             $this->assertTrue(WebsiteSection::query()->where('type', 'products')->sole()->enabled);
+            $this->assertTrue(WebsiteSection::query()->where('type', 'packages')->sole()->enabled);
         });
 
         $this->get($this->siteUrl(self::SALON))

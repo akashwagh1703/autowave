@@ -389,9 +389,8 @@ with the date and commit/PR reference; do not delete it.
   content builder reads them. But the records they display (products, packages, reviews, online orders) come
   in later phases, so these sections are never shown on the site. The editor lists them with a hint instead.
 - **Impact:** Milestone 4 (master prompt §115) is complete except for products on the public site.
-- **Status:** Partly resolved 2026-10-01 (Phase 7). The Products section now shows active products, with
-  the cart when online ordering is on; the separate Shop section was removed because the cart lives in
-  Products. Packages and Reviews stay hidden until their modules exist.
+- **Status:** Partly resolved 2026-10-01 (Phase 7 products) and 2026-10-13 (Phase 2 packages). Products and
+  Packages sections show live data when the tenant has any; Reviews stay hidden until that module ships.
 - **Affected:** `config/website.php`, `WebsiteContent`
 - **Created:** 2026-09-30
 

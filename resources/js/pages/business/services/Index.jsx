@@ -41,6 +41,8 @@ const statuses = [
     { value: 'all', label: 'All' },
     { value: 'active', label: 'Active' },
     { value: 'inactive', label: 'Inactive' },
+    { value: 'services', label: 'Services only' },
+    { value: 'packages', label: 'Packages only' },
 ];
 
 function BulkBar({ selected, onDone }) {
@@ -122,12 +124,19 @@ export default function Index({ services, filters: initialFilters, categories, c
         <AppLayout title="Services">
             <PageHeader
                 title="Services"
-                description="Your service menu: durations and prices used when booking."
+                description="Your service menu and packages: durations and prices used when booking."
                 actions={
                     canManage ? (
                         <>
                             <Button startIcon={<CategoryIcon />} color="inherit" onClick={() => setManaging(true)}>
                                 Categories
+                            </Button>
+                            <Button
+                                component={Link}
+                                href={filters.category && filters.category !== 'none' ? `/services/create?package=1&category=${filters.category}` : '/services/create?package=1'}
+                                color="inherit"
+                            >
+                                Add package
                             </Button>
                             <Button
                                 component={Link}
@@ -241,7 +250,10 @@ export default function Index({ services, filters: initialFilters, categories, c
                                             ) : (
                                                 <span className="font-medium text-slate-900">{service.name}</span>
                                             )}
-                                            {service.description ? <p className="max-w-md truncate text-xs text-slate-500">{service.description}</p> : null}
+                                            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                                {service.is_package ? <Chip size="small" label="Package" variant="outlined" color="primary" /> : null}
+                                                {service.description ? <p className="max-w-md truncate text-xs text-slate-500">{service.description}</p> : null}
+                                            </div>
                                         </TableCell>
                                         <TableCell className="hidden md:table-cell">{service.category?.name ?? <span className="text-slate-400">—</span>}</TableCell>
                                         <TableCell>{formatDuration(service.duration_minutes)}</TableCell>

@@ -426,6 +426,15 @@ This document describes what **actually exists** in the repository today. Planne
 - **No schema or route changes.** Code in `pages/website/Home.jsx`, `modules/website/*` and
   `utils/websiteTheme.js`.
 
+### Photo Studio + module hygiene (2026-10-08)
+
+- **New business type `photo_studio`:** engines service + booking + commerce; modules customers, crm,
+  leads, messaging, offers, automation, website, ai (+ payments via commerce). Photographer resource
+  label; wedding/maternity/portrait/product/events/passport categories. Marketing `/for/studios`. Demo
+  `abc-studio`. Plan: [photo-studio-and-modules-plan.md](photo-studio-and-modules-plan.md).
+- **Draft modules:** marketing, forms, qr, reviews, loyalty, membership, analytics are `draft` in
+  `config/catalog.php` (hidden from onboarding and Settings until built). Presets no longer enable them.
+
 ### Marketing site and search (2026-10-05)
 
 - **Brand:** AutoWave mark and wordmark (`components/BrandLogo.jsx`, `public/favicon.svg`,
@@ -485,9 +494,9 @@ This document describes what **actually exists** in the repository today. Planne
   (AW-044), stock reservation for carts (AW-045), receptionist order updates (AW-046), editing orders
   (AW-047), customer order messages and tracking (AW-048), delivery zones (AW-049).
 - **CRM gaps:** kanban board, own-leads visibility, campaigns, import/export.
-- **Booking gaps:** buffers, recurring or group bookings, week view, packages, scoped staff visibility,
+- **Booking gaps:** buffers, recurring or group bookings, week view, scoped staff visibility,
   customer self-cancel and reschedule (AW-037).
-- **Website gaps:** packages and reviews content (AW-034), image resizing (AW-035), server
+- **Website gaps:** reviews content (AW-034), image resizing (AW-035), server
   rendering of section content (AW-036), captcha (AW-038), custom domains (AW-039).
 - **Automation gaps:**
   - branches;

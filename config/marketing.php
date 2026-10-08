@@ -15,7 +15,7 @@ return [
     'pages' => [
         'home' => [
             'title' => 'Website, online bookings and WhatsApp for local businesses',
-            'description' => 'Get a website for your business, take bookings and orders online, and let WhatsApp reply to customers for you. Made for salons, clinics, turfs, coaching centres, cafes and local stores. Free 14-day trial.',
+            'description' => 'Get a website for your business, take bookings and orders online, and let WhatsApp reply to customers for you. Made for salons, photo studios, clinics, turfs, coaching centres, cafes and local stores. Free 14-day trial.',
         ],
         'pricing' => [
             'title' => 'Pricing',
@@ -51,6 +51,12 @@ return [
             'title' => 'Salon software with online booking and WhatsApp reminders',
             'description' => 'A beautiful salon website with online appointments, staff calendars, client history, offers and WhatsApp reminders. Free 14-day trial.',
             'sample' => env('AUTOWAVE_SAMPLE_SALONS'),
+        ],
+        'studios' => [
+            'name' => 'Photo studios',
+            'title' => 'Photo studio software with shoot booking and WhatsApp',
+            'description' => 'A portfolio website for your studio, online shoot booking with photographers, albums and prints for sale, and WhatsApp that answers and books for you. Free 14-day trial.',
+            'sample' => env('AUTOWAVE_SAMPLE_STUDIOS'),
         ],
         'clinics' => [
             'name' => 'Clinics',

@@ -8,6 +8,14 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **Service packages.** Bundle services and products into a bookable package (own duration and price).
+  Manage under Services → Add package; the website Packages section shows includes and a Book button.
+  Salon and photo studio presets include the Packages section; WhatsApp “services & prices” lists
+  standalone services only so packages are not duplicated.
+- **Photo Studio business type.** Sign up as a photo studio: shoot booking with photographers, packages
+  as services (wedding, maternity, portrait, product, events, passport), sell albums and prints, WhatsApp
+  assistant, portfolio website, and a `/for/studios` marketing page. Local demo: `abc-studio`
+  (`owner@abc-studio.test` / password).
 - **WhatsApp assistant.** Turn it on in Settings → WhatsApp assistant and every customer who messages
   you on WhatsApp gets an instant reply with buttons: book, reserve or order, services and prices, turf
   rates, courses and free demo classes, offers, common questions, timings and location, or talk to a
@@ -303,6 +311,15 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 - Placeholder AutoWave welcome page.
 - GitHub Actions CI (Pint, PHPUnit on PostgreSQL, frontend build).
 - Project documentation structure, `AGENTS.md`, Cursor rules and initial ADRs.
+
+### Changed
+
+- **Unfinished catalogue modules are draft.** Marketing, forms, QR, reviews, loyalty, membership and
+  analytics stay in the catalogue as `draft` so they are not offered in onboarding or shown as Active in
+  Settings until they have real features. New salon, clinic, store and internal presets no longer enable
+  them; salon and cafe website presets no longer include empty Packages/Reviews sections. Offers in the
+  app menu needs the commerce engine as well as the offers module. Onboarding no longer promises that
+  skipped modules can be switched on later (that screen is not built yet).
 
 ### Fixed
 

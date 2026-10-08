@@ -31,6 +31,7 @@ import { ActionButton, Card, Reveal, Section, SectionHeading, headingStyle, init
 const NAV = [
     { type: 'about', label: 'About' },
     { type: 'services', label: 'Services' },
+    { type: 'packages', label: 'Packages' },
     { type: 'products', label: 'Shop' },
     { type: 'courses', label: 'Courses' },
     { type: 'team', label: 'Team' },
@@ -390,6 +391,64 @@ export function Services({ config, data }) {
                 </>
             )}
         </Section>
+    );
+}
+
+export function Packages({ config, data }) {
+    return (
+        <Section id="packages" tone="muted">
+            <SectionHeading title={config.heading} intro={config.intro} />
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {data.map((pkg) => (
+                    <PackageCard key={pkg.id} pkg={pkg} />
+                ))}
+            </div>
+        </Section>
+    );
+}
+
+function PackageCard({ pkg }) {
+    const { locale, bookService, has, theme } = useSite();
+
+    return (
+        <Card hover className="group flex flex-col">
+            {pkg.category ? (
+                <span className="mb-3 text-xs font-semibold tracking-wide uppercase" style={{ color: theme.color }}>
+                    {pkg.category}
+                </span>
+            ) : null}
+            <h3 className="text-lg text-slate-900" style={headingStyle(theme, { fontWeight: Math.min(theme.headingWeight, 700) })}>
+                {pkg.name}
+            </h3>
+            {pkg.description ? <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-600">{pkg.description}</p> : null}
+            {pkg.includes?.length ? (
+                <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
+                    {pkg.includes.map((item) => (
+                        <li key={item} className="flex gap-2">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: theme.color }} aria-hidden="true" />
+                            <span>{item}</span>
+                        </li>
+                    ))}
+                </ul>
+            ) : null}
+            <ItemFiles item={pkg} className="mt-3" />
+            <div className="mt-auto flex items-end justify-between gap-3 pt-6">
+                <div>
+                    {pkg.price !== null ? <p className="text-xl font-bold text-slate-900">{formatMoney(pkg.price, locale.currency)}</p> : null}
+                    {pkg.duration_minutes ? (
+                        <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
+                            <ScheduleIcon sx={{ fontSize: 14 }} />
+                            {formatDuration(pkg.duration_minutes)}
+                        </p>
+                    ) : null}
+                </div>
+                {pkg.bookable && has('booking') ? (
+                    <ActionButton variant="secondary" size="sm" onClick={() => bookService(pkg.id)} aria-label={`Book ${pkg.name}`}>
+                        Book
+                    </ActionButton>
+                ) : null}
+            </div>
+        </Card>
     );
 }
 

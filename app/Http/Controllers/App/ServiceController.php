@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\App;
 
 use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Commerce\Models\Product;
 use App\Domain\Media\Actions\SetRecordImage;
 use App\Domain\Service\Actions\DeleteService;
 use App\Domain\Service\Actions\SaveService;
@@ -26,7 +27,7 @@ use Inertia\Response;
 
 class ServiceController extends Controller
 {
-    public const STATUSES = ['all', 'active', 'inactive'];
+    public const STATUSES = ['all', 'active', 'inactive', 'packages', 'services'];
 
     public const SORTS = ['category', 'name', 'price', 'duration', 'newest'];
 
@@ -64,6 +65,8 @@ class ServiceController extends Controller
         match ($filters['status']) {
             'active' => $query->where('is_active', true),
             'inactive' => $query->where('is_active', false),
+            'packages' => $query->packages(),
+            'services' => $query->standalone(),
             default => null,
         };
 
@@ -87,6 +90,7 @@ class ServiceController extends Controller
             'counts' => [
                 'all' => Service::query()->count(),
                 'active' => Service::query()->where('is_active', true)->count(),
+                'packages' => Service::query()->packages()->count(),
                 'uncategorised' => Service::query()->whereNull('service_category_id')->count(),
             ],
         ]);
@@ -97,7 +101,9 @@ class ServiceController extends Controller
         return Inertia::render('business/services/Create', [
             'categories' => $this->options->categories(),
             'resources' => $this->bookingResources(),
+            'packageOptions' => $this->packageOptions(),
             'defaultCategoryId' => $request->integer('category') ?: null,
+            'asPackage' => $request->boolean('package'),
         ]);
     }
 
@@ -110,12 +116,13 @@ class ServiceController extends Controller
 
     public function edit(Request $request, Service $service): Response
     {
-        $service->load(['category', 'resources:id', 'image']);
+        $service->load(['category', 'resources:id', 'image', 'packageItems.includedService:id,name', 'packageItems.product:id,name']);
 
         return Inertia::render('business/services/Edit', [
             'service' => BookingPresenter::service($service),
             'categories' => $this->options->categories(),
             'resources' => $this->bookingResources(),
+            'packageOptions' => $this->packageOptions($service->id),
             'upcomingCount' => $service->appointments()->whereIn('status', ['pending', 'confirmed'])->where('starts_at', '>', now())->count(),
             'files' => FilesPresenter::card($service, 'service', route('services.attachments.store', $service), $request->user(), $this->context->tenant()),
         ]);
@@ -125,7 +132,7 @@ class ServiceController extends Controller
     {
         $saveService->handle($request->serviceData(), $service, $request->user());
 
-        return to_route('services.index')->with('success', __('Service updated.'));
+        return to_route('services.index')->with('success', $service->fresh()->is_package ? __('Package updated.') : __('Service updated.'));
     }
 
     public function uploadImage(Request $request, Service $service, SetRecordImage $images): RedirectResponse
@@ -145,9 +152,10 @@ class ServiceController extends Controller
 
     public function destroy(Service $service, DeleteService $deleteService): RedirectResponse
     {
+        $wasPackage = (bool) $service->is_package;
         $deleteService->handle($service);
 
-        return to_route('services.index')->with('success', __('Service deleted.'));
+        return to_route('services.index')->with('success', $wasPackage ? __('Package deleted.') : __('Service deleted.'));
     }
 
     public function bulk(Request $request, DeleteService $deleteService, AuditLogger $audit): RedirectResponse
@@ -178,5 +186,30 @@ class ServiceController extends Controller
     private function bookingResources(): array
     {
         return $this->context->hasEngine('booking') ? $this->options->resources() : [];
+    }
+
+    /**
+     * Standalone services and products that can be listed inside a package.
+     *
+     * @return array{services: list<array{id: int, name: string}>, products: list<array{id: int, name: string}>}
+     */
+    private function packageOptions(?int $excludeId = null): array
+    {
+        $services = Service::query()
+            ->standalone()
+            ->active()
+            ->when($excludeId, fn ($query) => $query->whereKeyNot($excludeId))
+            ->ordered()
+            ->get(['id', 'name'])
+            ->map(fn (Service $service) => ['id' => $service->id, 'name' => $service->name])
+            ->all();
+
+        $products = $this->context->hasEngine('commerce')
+            ? Product::query()->active()->ordered()->get(['id', 'name'])
+                ->map(fn (Product $product) => ['id' => $product->id, 'name' => $product->name])
+                ->all()
+            : [];
+
+        return ['services' => $services, 'products' => $products];
     }
 }

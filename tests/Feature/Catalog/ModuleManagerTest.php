@@ -33,15 +33,22 @@ class ModuleManagerTest extends TestCase
     {
         $this->expectException(ModuleDependencyException::class);
 
-        $this->modules->enable($this->tenant, 'forms');
+        $this->modules->enable($this->tenant, 'leads');
     }
 
     public function test_dependencies_are_enabled_in_order(): void
     {
-        $enabled = $this->modules->enableWithDependencies($this->tenant, ['forms']);
+        $enabled = $this->modules->enableWithDependencies($this->tenant, ['leads']);
 
-        $this->assertSame(['customers', 'leads', 'forms'], $enabled);
+        $this->assertSame(['customers', 'leads'], $enabled);
         $this->assertTrue($this->modules->isEnabled($this->tenant, 'leads'));
+    }
+
+    public function test_draft_modules_cannot_be_enabled(): void
+    {
+        $this->expectException(CatalogItemUnavailable::class);
+
+        $this->modules->enableWithDependencies($this->tenant, ['forms']);
     }
 
     public function test_enabling_is_idempotent(): void

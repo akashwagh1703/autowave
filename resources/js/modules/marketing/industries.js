@@ -1,5 +1,6 @@
 import LocalCafeIcon from '@mui/icons-material/LocalCafe';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import SchoolIcon from '@mui/icons-material/School';
 import SpaIcon from '@mui/icons-material/Spa';
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
@@ -43,6 +44,55 @@ export const INDUSTRIES = {
             { q: 'Can I block time for breaks or leave?', a: 'Yes. Set working hours for each stylist and block time off, and online booking respects it.' },
             { q: 'Can I sell products on my website?', a: 'Yes. Add products with photos and prices, and clients can order them for pickup.' },
             { q: 'Can clients book on WhatsApp?', a: 'Yes. Turn on the WhatsApp assistant and clients who message you can see your services and book a stylist, day and time by tapping buttons.' },
+        ],
+    },
+    studios: {
+        name: 'Photo studios',
+        sampleLabel: 'photo studio',
+        icon: PhotoCameraIcon,
+        color: '#0f766e',
+        summary: 'Book shoots with your photographers, show your portfolio, sell albums and prints, and reply on WhatsApp.',
+        headline: 'Fill your calendar with online shoot bookings and WhatsApp',
+        intro: 'Give clients a portfolio website where they can see your packages and book a photographer, while AutoWave sends reminders and answers WhatsApp for you.',
+        mockup: {
+            name: 'Lens & Light',
+            tagline: 'Weddings, portraits and product shoots',
+            items: ['Wedding shoot', 'Maternity session', 'Passport photos'],
+            prices: [45000, 8000, 300],
+            cta: 'Book a shoot',
+        },
+        bookingTitle: 'Book with Arjun',
+        assistant: {
+            title: 'Clients book shoots on WhatsApp',
+            points: [
+                'Clients see your shoot packages as photo cards with prices',
+                'They pick a photographer, day and time by tapping buttons',
+                'Questions about packages, albums and location get an instant answer',
+            ],
+            emoji: ['📸', '🤰', '🪪'],
+            ask: 'Hi, how much is a maternity shoot?',
+            reply: 'Hi! 👋 Here are our packages. Swipe to see more.',
+            button: 'Book this',
+            done: 'Booked! Maternity session on Saturday at 10:00 am with Arjun.',
+        },
+        pains: [
+            'Clients call while you are mid-shoot and the booking is lost',
+            'Quotes and follow-ups live in WhatsApp chats and get forgotten',
+            'Your portfolio is strong, but you have no simple booking website',
+        ],
+        features: [
+            { title: 'Book shoots by photographer', body: 'Clients pick a package, a photographer and a free time. Each photographer only gets the shoots they do.' },
+            { title: 'Packages and prices online', body: 'Wedding, maternity, portrait, product and passport shoots with clear prices on your website.' },
+            { title: 'Sell albums and prints', body: 'List albums, frames and prints. Clients order for pickup after the shoot.' },
+            { title: 'Portfolio gallery', body: 'Show your best work on a gallery that looks great on phones.' },
+            { title: 'Reminders that cut no-shows', body: 'Automatic WhatsApp or email reminders before every shoot.' },
+            { title: 'Every enquiry saved', body: 'Website and WhatsApp enquiries stay in one list so you can send quotes and follow up.' },
+        ],
+        faqs: [
+            { q: 'Can clients choose their photographer?', a: 'Yes. Clients can pick a photographer or choose “anyone available”, and only free slots are shown.' },
+            { q: 'Can I sell albums and prints?', a: 'Yes. Add products with photos and prices, and clients can order them for pickup.' },
+            { q: 'Can clients book on WhatsApp?', a: 'Yes. Turn on the WhatsApp assistant and clients who message you can see your packages and book a shoot by tapping buttons.' },
+            { q: 'Can I show my portfolio?', a: 'Yes. Upload photos to your gallery section and they appear on your public website.' },
         ],
     },
     clinics: {
