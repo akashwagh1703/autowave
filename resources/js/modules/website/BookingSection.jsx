@@ -69,6 +69,13 @@ function Confirmation({ confirmation, message, onAgain }) {
             <p className="mt-3 text-sm text-slate-500">
                 {confirmation.status === 'pending' ? 'We will confirm your booking shortly.' : 'Your booking is confirmed. See you soon!'}
             </p>
+            {confirmation.manage_url ? (
+                <p className="mt-4 text-sm">
+                    <a href={confirmation.manage_url} className="font-semibold underline-offset-4 hover:underline" style={{ color: 'inherit' }}>
+                        Change or cancel this booking
+                    </a>
+                </p>
+            ) : null}
             <ActionButton variant="secondary" className="mt-6" onClick={onAgain}>
                 Make another booking
             </ActionButton>

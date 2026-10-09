@@ -128,7 +128,6 @@ items), plus the commerce widgets. The assistant has a `reservations` tool.
 
 ## Known limitations
 
-- Website requests do not check table availability (AW-063).
 - No per-item kitchen notes in the UI (AW-061).
 - No split bills or table transfers.
 - Older cafe websites do not get the `reservation` section automatically (AW-059).

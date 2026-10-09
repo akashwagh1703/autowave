@@ -7,7 +7,7 @@ export default function BusinessTypeStep({ types, value, onChange, error }) {
         <div>
             <StepHeading
                 title="What kind of business do you run?"
-                description="We'll set up the right features, website sections and dashboard for you. You can change features later."
+                description="We'll set up the right features, website sections and dashboard for this business type. Choose carefully — your setup follows this type."
             />
 
             <div role="radiogroup" aria-label="Business type" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

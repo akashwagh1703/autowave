@@ -17,9 +17,17 @@ class ReservationController extends Controller
     {
         abort_unless($reservations->isOpen(), 404);
 
-        $data = $request->validate(['date' => ['required', 'date_format:Y-m-d']]);
+        $data = $request->validate([
+            'date' => ['required', 'date_format:Y-m-d'],
+            'party_size' => ['nullable', 'integer', 'min:1'],
+        ]);
 
-        return response()->json(['slots' => $reservations->slots($data['date'])]);
+        return response()->json([
+            'slots' => $reservations->slots(
+                $data['date'],
+                isset($data['party_size']) ? (int) $data['party_size'] : null,
+            ),
+        ]);
     }
 
     public function store(Request $request, TenantContext $context, OnlineReservations $reservations): RedirectResponse

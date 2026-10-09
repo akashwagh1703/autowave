@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Website;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Domain\Website\Models\WebsiteSection;
 use App\Domain\Website\Services\OnlineBooking;
+use App\Domain\Website\Support\ManageBookingLink;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -50,6 +51,7 @@ class BookingController extends Controller
             'service' => $appointment->service?->name,
             'resource' => $appointment->resource?->name,
             'status' => $appointment->status->value,
+            'manage_url' => ManageBookingLink::url($appointment, $context->tenant()),
         ]);
     }
 

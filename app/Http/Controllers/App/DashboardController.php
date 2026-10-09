@@ -7,6 +7,7 @@ use App\Domain\Commerce\Services\CommerceMetrics;
 use App\Domain\Education\Services\EducationMetrics;
 use App\Domain\Food\Services\FoodMetrics;
 use App\Domain\Lead\Services\CrmMetrics;
+use App\Domain\Tenant\Support\GoLiveChecklist;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -23,9 +24,11 @@ class DashboardController extends Controller
         CommerceMetrics $commerceMetrics,
         EducationMetrics $educationMetrics,
         FoodMetrics $foodMetrics,
+        GoLiveChecklist $checklist,
     ): Response {
         $tenant = $context->tenant()->loadMissing(['businessType:id,code,name', 'primaryDomain']);
         $widgets = $context->setting('dashboard_widgets', []);
+        $goLive = $checklist->items();
 
         return Inertia::render('business/Dashboard', [
             'workspace' => [
@@ -44,6 +47,11 @@ class DashboardController extends Controller
                 ),
                 ...$educationMetrics->for($request->user(), $widgets),
                 ...$foodMetrics->for($request->user(), $widgets),
+            ],
+            'goLive' => [
+                'items' => $goLive,
+                'done' => count(array_filter($goLive, fn (array $item) => $item['done'])),
+                'total' => count($goLive),
             ],
         ]);
     }

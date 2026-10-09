@@ -177,6 +177,7 @@ export default function Settings({ business, branding, profile, website, domains
             <Card variant="outlined" className="mt-4">
                 <CardContent>
                     <h2 className="font-semibold text-slate-900">Modules</h2>
+                    <p className="mt-1 text-sm text-slate-600">Features included with your business type. Contact support if you need a change.</p>
                     <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {modules.map((module) => (
                             <li

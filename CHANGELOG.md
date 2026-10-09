@@ -6,8 +6,20 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ## [Unreleased]
 
+### Changed
+
+- **Online table reservations hold a free table.** Website and WhatsApp reservation requests assign a
+  fitting free table so busy evenings cannot over-collect requests. Slot lists can filter by party size.
+- **Honest setup copy.** Onboarding no longer promises “change features later”; Settings explains modules
+  are included with the business type; dashboard widget footnote no longer implies unfinished modules.
+
 ### Added
 
+- **Customer booking self-service.** After an online or WhatsApp booking, customers get a signed link to
+  change the time or cancel (within your online notice window). Shown on the website confirmation and in
+  the WhatsApp booking reply.
+- **Go-live checklist on the dashboard.** Clear next steps: resources/hours, services, publish website,
+  connect WhatsApp — so owners finish the loops that already exist.
 - **Service packages.** Bundle services and products into a bookable package (own duration and price).
   Manage under Services → Add package; the website Packages section shows includes and a Book button.
   Salon and photo studio presets include the Packages section; WhatsApp “services & prices” lists

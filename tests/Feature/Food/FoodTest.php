@@ -134,8 +134,9 @@ class FoodTest extends TestCase
     public function test_visitors_request_tables_on_the_website(): void
     {
         $tenant = $this->cafe();
+        $table = $this->table($tenant, 'T1', 4);
 
-        $slots = $this->getJson($this->siteUrl(self::CAFE, '/reservations/slots?date=2026-10-05'))->assertOk()->json('slots');
+        $slots = $this->getJson($this->siteUrl(self::CAFE, '/reservations/slots?date=2026-10-05&party_size=3'))->assertOk()->json('slots');
         $this->assertSame(['11:00', '11:30'], array_slice(array_column($slots, 'time'), 0, 2));
         $this->assertSame('21:30', last($slots)['time']);
 
@@ -152,11 +153,14 @@ class FoodTest extends TestCase
         $request([])->assertSessionHasNoErrors()->assertRedirect($this->siteUrl(self::CAFE));
 
         $reservation = $this->inTenant($tenant, fn () => Reservation::query()->with('customer')->sole());
-        $this->assertSame([ReservationStatus::Pending, 'website', null, 3, 'Meera Joshi'], [$reservation->status, $reservation->source, $reservation->dining_table_id, $reservation->party_size, $reservation->customer->name]);
+        $this->assertSame([ReservationStatus::Pending, 'website', $table->id, 3, 'Meera Joshi'], [$reservation->status, $reservation->source, $reservation->dining_table_id, $reservation->party_size, $reservation->customer->name]);
         $this->get($this->siteUrl(self::CAFE))->assertInertia(fn (Assert $page) => $page
             ->where('reservationConfirmation.party_size', 3)
             ->where('reservationConfirmation.status', 'pending')
             ->where('reservation.max_party_size', 12));
+
+        // The only table is held — further requests for that time are refused.
+        $request(['phone' => '99887 76656', 'name' => 'Other Guest'])->assertSessionHasErrors('starts_at');
 
         $this->actingAs($this->ownerOf($tenant));
         $this->put($this->appUrl('/settings/food'), [

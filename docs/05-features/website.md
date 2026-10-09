@@ -186,6 +186,7 @@ business can edit it without help: design, content, images, publishing, the enqu
   gates, isolation.
 - `OnlineBookingTest`: slots, notice and window, "Any available", pending vs auto-confirm, rules, turf
   without services, switch-off, honeypot and throttle, the `appointment.source` condition.
+- `ManageBookingTest`: signed manage link cancel/reschedule; unsigned links rejected.
 - `WebsiteProvisioningTest`: provisioning.
 - `OnlineShopTest` (Phase 7): products section, cart quote, website orders, delivery rules, honeypot and
   throttle, owner alert.
@@ -193,5 +194,6 @@ business can edit it without help: design, content, images, publishing, the enqu
 ## Known limitations
 
 See `docs/00-overview/known-issues.md` (AW-034 to AW-040, AW-045): reviews stay hidden until
-their phases; carts don't reserve stock; images are not resized; the section content isn't server-rendered; there's no customer
-self-cancel or reschedule; there's no captcha; there are no custom domains yet.
+their phases; carts don't reserve stock; images are not resized; the section content isn't server-rendered;
+there's no captcha; there are no custom domains yet. Customers can cancel or reschedule via a signed
+manage link after booking (AW-037 resolved).

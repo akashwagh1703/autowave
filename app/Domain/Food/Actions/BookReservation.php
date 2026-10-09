@@ -12,6 +12,7 @@ use App\Domain\Food\Models\DiningTable;
 use App\Domain\Food\Models\Reservation;
 use App\Domain\Food\Support\FoodSettings;
 use App\Domain\Food\Support\ReservationSlots;
+use App\Domain\Food\Support\TableAvailability;
 use App\Models\User;
 use App\Support\OnlineSource;
 use Carbon\CarbonImmutable;
@@ -24,8 +25,9 @@ use Illuminate\Validation\ValidationException;
  * Books a table reservation (ADR-020), from the team (`manual`), the website (`website`) or a WhatsApp chat
  * (`whatsapp`, same rules as the website).
  *
- * - Website requests must fit the tenant's reservation hours, notice and horizon and never pick a
- *   table; they start pending unless auto-confirm is on.
+ * - Website/WhatsApp requests must fit the tenant's reservation hours, notice and horizon. A free
+ *   table that seats the party is assigned so evenings cannot over-collect requests (AW-063).
+ *   They start pending unless auto-confirm is on.
  * - The team can pick a table (checked against the tenant, active) and book any time; the
  *   database refuses two live reservations overlapping on one table (reservations_no_overlap).
  */
@@ -74,7 +76,7 @@ class BookReservation
                 throw ValidationException::withMessages(['reserved_at' => __('Online table booking is not available right now.')]);
             }
 
-            if (! ReservationSlots::isBookable($start, $settings)) {
+            if (! ReservationSlots::isBookable($start, $settings, $party)) {
                 throw ValidationException::withMessages(['reserved_at' => __('Choose one of the available times.')]);
             }
         } elseif ($start < CarbonImmutable::now()->subDay()) {
@@ -83,7 +85,10 @@ class BookReservation
 
         $table = null;
 
-        if (! $online && ! empty($data['dining_table_id'])) {
+        if ($online) {
+            $table = TableAvailability::freeTable($party, $start, $start->addMinutes($duration))
+                ?? throw ValidationException::withMessages(['reserved_at' => __('Sorry, no table is free for that party size at this time. Please choose another time.')]);
+        } elseif (! empty($data['dining_table_id'])) {
             $table = DiningTable::query()->active()->find($data['dining_table_id'])
                 ?? throw ValidationException::withMessages(['dining_table_id' => __('Choose an active table.')]);
         }

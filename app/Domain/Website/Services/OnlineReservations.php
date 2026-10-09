@@ -19,7 +19,7 @@ use Illuminate\Validation\ValidationException;
 /**
  * Table reservation requests from the public website (ADR-020). Open when the tenant has the food
  * engine, the reservation section is on and online reservations are enabled. Visitors pick a date,
- * a time from ReservationSlots and a party size; the team assigns a table.
+ * a time from ReservationSlots and a party size; a free fitting table is held (AW-063).
  */
 class OnlineReservations
 {
@@ -37,9 +37,9 @@ class OnlineReservations
     }
 
     /** @return list<array{starts_at: string, time: string}> */
-    public function slots(string $date): array
+    public function slots(string $date, ?int $partySize = null): array
     {
-        return ReservationSlots::forDate($date, $this->settings->reservations());
+        return ReservationSlots::forDate($date, $this->settings->reservations(), $partySize);
     }
 
     /** @return array<string, mixed> public settings for the reservation form */

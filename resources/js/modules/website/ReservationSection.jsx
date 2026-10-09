@@ -48,14 +48,15 @@ export default function ReservationSection({ config }) {
         form.setData('starts_at', '');
         let cancelled = false;
         setSlots((current) => ({ ...current, loading: true, failed: false }));
-        getJson('/reservations/slots', { date })
+        getJson('/reservations/slots', { date, party_size: form.data.party_size })
             .then((data) => !cancelled && setSlots({ loading: false, items: data.slots, failed: false }))
             .catch(() => !cancelled && setSlots({ loading: false, items: [], failed: true }));
 
         return () => {
             cancelled = true;
         };
-    }, [date, refresh]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [date, refresh, form.data.party_size]);
 
     const submit = (event) => {
         event.preventDefault();

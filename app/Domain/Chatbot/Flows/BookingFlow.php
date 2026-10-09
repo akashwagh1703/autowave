@@ -11,6 +11,7 @@ use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Messaging\Support\Interactive;
 use App\Domain\Service\Models\Service;
 use App\Domain\Website\Services\OnlineBooking;
+use App\Domain\Website\Support\ManageBookingLink;
 use App\Support\TenantTime;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -329,6 +330,10 @@ class BookingFlow extends ChatFlow
         $body = $appointment->status === AppointmentStatus::Confirmed
             ? __('✅ You are booked! :what on :when. See you then!', ['what' => $what, 'when' => $when])
             : __('🙏 Thank you, :name! We have your booking request for :what on :when. We will confirm it here shortly.', ['name' => $name, 'what' => $what, 'when' => $when]);
+
+        if ($manageUrl = ManageBookingLink::url($appointment)) {
+            $body .= "\n\n".__('Manage or cancel: :url', ['url' => $manageUrl]);
+        }
 
         return $this->reply(preg_replace('/ {2,}/', ' ', $body) ?? $body, Interactive::buttons([
             ['id' => self::PREFIX.'menu', 'title' => __('Main menu')],

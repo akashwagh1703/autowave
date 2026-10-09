@@ -424,7 +424,8 @@ with the date and commit/PR reference; do not delete it.
 - **Description:** Online booking creates the appointment and shows a confirmation. There is no link or page
   for the customer to cancel or change it.
 - **Impact:** Customers must call or message the business, which changes the appointment in the app.
-- **Status:** Open — add signed manage-booking links with notifications.
+- **Status:** Resolved 2026-10-09 — signed manage link on website confirmation and WhatsApp booking reply
+  (`ManageBookingLink`, `/booking/manage/{appointment}`) for cancel and reschedule within online notice rules.
 - **Affected:** Online booking
 - **Created:** 2026-09-30
 
@@ -713,8 +714,9 @@ with the date and commit/PR reference; do not delete it.
   table of the right size is free. The team assigns a table when confirming, and the database refuses
   overlapping reservations on one table.
 - **Impact:** A busy evening can collect more requests than tables; staff decline or move them.
-- **Status:** Open — by design for V1 (ADR-020).
-- **Affected:** `ReservationSlots`, `BookReservation`
+- **Status:** Resolved 2026-10-09 — online/WhatsApp reservations assign a free fitting table (`TableAvailability`);
+  slots can filter by party size. Without a free table the request is refused.
+- **Affected:** `ReservationSlots`, `BookReservation`, `TableAvailability`
 - **Created:** 2026-10-04
 
 ### AW-064 — Fee reminders use the tenant's local date, checked hourly

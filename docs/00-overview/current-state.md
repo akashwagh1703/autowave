@@ -488,14 +488,14 @@ This document describes what **actually exists** in the repository today. Planne
 - **AI gaps:** redaction of customer text (AW-055), plan-based allowances and INR cost (AW-056), streaming
   and saved assistant chats (AW-057).
 - **Vertical gaps:** website sections not added to existing sites (AW-059), discounts not recomputed when
-  items are added (AW-060), per-item kitchen notes (AW-061), kitchen access for Staff (AW-062), table
-  availability for website reservations (AW-063), fee reminder sending hour (AW-064).
+  items are added (AW-060), per-item kitchen notes (AW-061), kitchen access for Staff (AW-062),
+  fee reminder sending hour (AW-064). Table availability for online reservations is checked (AW-063 resolved).
 - **Commerce gaps:** online payments (AW-041), variants (AW-042), returns and refunds (AW-043), taxes
   (AW-044), stock reservation for carts (AW-045), receptionist order updates (AW-046), editing orders
   (AW-047), customer order messages and tracking (AW-048), delivery zones (AW-049).
 - **CRM gaps:** kanban board, own-leads visibility, campaigns, import/export.
-- **Booking gaps:** buffers, recurring or group bookings, week view, scoped staff visibility,
-  customer self-cancel and reschedule (AW-037).
+- **Booking gaps:** buffers, recurring or group bookings, week view, scoped staff visibility.
+  Customer self-cancel/reschedule via signed manage links is available (AW-037 resolved).
 - **Website gaps:** reviews content (AW-034), image resizing (AW-035), server
   rendering of section content (AW-036), captcha (AW-038), custom domains (AW-039).
 - **Automation gaps:**

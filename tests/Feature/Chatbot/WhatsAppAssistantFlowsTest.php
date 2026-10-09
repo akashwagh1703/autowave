@@ -10,6 +10,7 @@ use App\Domain\Chatbot\Models\ChatbotSession;
 use App\Domain\Chatbot\Support\ChatbotSettings;
 use App\Domain\Commerce\Models\Order;
 use App\Domain\Education\Models\DemoClass;
+use App\Domain\Food\Actions\SaveDiningTable;
 use App\Domain\Food\Models\Reservation;
 use App\Domain\Messaging\Models\Conversation;
 use App\Domain\Messaging\Models\OutboundMessage;
@@ -189,6 +190,7 @@ class WhatsAppAssistantFlowsTest extends TestCase
     {
         $cafe = $this->createTenant('ABC Cafe', 'cafe');
         $this->enable($cafe);
+        $this->inTenant($cafe, fn () => app(SaveDiningTable::class)->handle(['name' => 'Banquet', 'seats' => 12]));
 
         $this->tap($cafe, 'Reserve a table', 'aw.reserve', 'Rohan Mehta');
         $days = $this->lastReply();
