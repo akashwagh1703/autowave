@@ -4,9 +4,11 @@ namespace Database\Seeders;
 
 use App\Domain\RBAC\Actions\AssignRole;
 use App\Domain\RBAC\Models\Role;
+use App\Domain\Booking\Support\BookingSettings;
 use App\Domain\Tenant\Actions\CreateTenant;
 use App\Domain\Tenant\Enums\MembershipStatus;
 use App\Domain\Tenant\Models\Tenant;
+use App\Domain\Tenant\Models\TenantSetting;
 use App\Domain\Tenant\Models\TenantUser;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Models\User;
@@ -14,11 +16,27 @@ use Illuminate\Database\Seeder;
 use RuntimeException;
 
 /**
- * Local demo data: two tenants to exercise isolation by hand. Password for all: "password".
+ * Local demo data: sample tenants to exercise isolation by hand. Password for all: "password".
  * Refuses to run in production.
  */
 class DemoTenantSeeder extends Seeder
 {
+    /** Saffron Arena Sports Turf, Nashik (public Google listing details for a realistic turf demo). */
+    private const TURF_DEMO = [
+        'name' => 'Saffron Arena',
+        'branding' => [
+            'primary_color' => '#c2410c',
+            'tagline' => 'Cricket, football and more — floodlit turf in Nashik Road',
+        ],
+        'profile' => [
+            'phone' => '+91 75584 30055',
+            'email' => 'hello@abc-turf.test',
+            'city' => 'Nashik',
+            'address' => 'STP Road, Pushpak Nagar, Lokhande Mala, Nashik Road, Nashik, Maharashtra 422006',
+            'description' => 'Multisport turf near Sandip University: cricket and football pitches, pickleball, parking and Saffron Sip cafe. Open 24 hours.',
+        ],
+    ];
+
     public function run(CreateTenant $createTenant, AssignRole $assignRole, TenantContext $context): void
     {
         if (app()->isProduction()) {
@@ -33,10 +51,19 @@ class DemoTenantSeeder extends Seeder
             'branding' => ['primary_color' => '#0f766e', 'tagline' => 'Weddings, portraits and product shoots'],
             'profile' => ['phone' => '+91 90000 44444', 'city' => 'Pune', 'description' => 'A photo studio for weddings, maternity, portraits, products and passport photos.'],
         ]);
-        $turf = $this->tenant($createTenant, 'owner@abc-turf.test', 'Tarun Owner', 'ABC Turf', 'abc-turf', 'turf', [
-            'branding' => ['primary_color' => '#16a34a', 'tagline' => 'Floodlit 5-a-side football, open till midnight'],
-            'profile' => ['phone' => '+91 91234 56789', 'city' => 'Pune'],
-        ]);
+        $turf = $this->tenant(
+            $createTenant,
+            'owner@abc-turf.test',
+            'Tarun Owner',
+            self::TURF_DEMO['name'],
+            'abc-turf',
+            'turf',
+            [
+                'branding' => self::TURF_DEMO['branding'],
+                'profile' => self::TURF_DEMO['profile'],
+            ],
+        );
+        $this->refreshTurfDemo($context, $turf);
         $coaching = $this->tenant($createTenant, 'owner@abc-coaching.test', 'Kiran Owner', 'ABC Coaching', 'abc-coaching', 'coaching', [
             'branding' => ['primary_color' => '#2563eb', 'tagline' => 'Maths and science coaching for classes 8 to 12'],
             'profile' => ['phone' => '+91 90000 11111', 'city' => 'Pune', 'description' => 'Small batches, weekly tests and personal doubt-solving for school and board exams.'],
@@ -60,7 +87,38 @@ class DemoTenantSeeder extends Seeder
         $this->member($context, $assignRole, $salon, $manager, 'manager');
         $this->member($context, $assignRole, $turf, $manager, 'manager');
 
-        $this->command?->info('Demo tenants: abc-salon, abc-studio, abc-turf, abc-coaching, abc-cafe, abc-store. Owners: owner@<slug>.test; also staff@abc-salon.test, teacher@abc-coaching.test, manager@autowave.test (password: password).');
+        $this->command?->info('Demo tenants: abc-salon, abc-studio, abc-turf (Saffron Arena, Nashik), abc-coaching, abc-cafe, abc-store. Owners: owner@<slug>.test; also staff@abc-salon.test, teacher@abc-coaching.test, manager@autowave.test (password: password).');
+    }
+
+    /** Keep the turf demo aligned with the Saffron Arena listing when the seeder is re-run. */
+    private function refreshTurfDemo(TenantContext $context, Tenant $turf): void
+    {
+        $turf->forceFill(['name' => self::TURF_DEMO['name']])->save();
+
+        $context->run($turf, function () use ($context) {
+            $existingBranding = $context->setting('branding', []);
+            $existingProfile = $context->setting('business_profile', []);
+
+            TenantSetting::query()->updateOrCreate(['key' => 'branding'], ['value' => [
+                ...(is_array($existingBranding) ? $existingBranding : []),
+                'business_name' => self::TURF_DEMO['name'],
+                'primary_color' => self::TURF_DEMO['branding']['primary_color'],
+                'tagline' => self::TURF_DEMO['branding']['tagline'],
+            ]]);
+
+            TenantSetting::query()->updateOrCreate(['key' => 'business_profile'], ['value' => [
+                ...(is_array($existingProfile) ? $existingProfile : []),
+                ...self::TURF_DEMO['profile'],
+            ]]);
+
+            $hours = collect(range(1, 7))->map(fn (int $day) => [
+                'weekday' => $day,
+                'starts_at' => '00:00',
+                'ends_at' => '23:59',
+            ])->all();
+
+            app(BookingSettings::class)->update(['default_hours' => $hours]);
+        });
     }
 
     private function tenant(CreateTenant $createTenant, string $email, string $name, string $business, string $slug, string $type, array $options): Tenant

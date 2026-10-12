@@ -81,7 +81,7 @@ php artisan migrate --seed   # catalogue, RBAC templates, platform admin, AutoWa
   | Tenant | Business type | Users |
   |---|---|---|
   | `abc-salon` | Beauty & Salon | `owner@abc-salon.test`, `staff@abc-salon.test` |
-  | `abc-turf` | Turf (rates and an advance) | `owner@abc-turf.test` |
+  | `abc-turf` | Saffron Arena (Nashik turf — cricket/football/pickleball, rates, advance) | `owner@abc-turf.test` |
   | `abc-coaching` | Coaching Centre | `owner@abc-coaching.test`, `teacher@abc-coaching.test` (Staff) |
   | `abc-cafe` | Cafe & Restaurant | `owner@abc-cafe.test` |
   | `abc-store` | Local Commerce | `owner@abc-store.test` |

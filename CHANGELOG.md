@@ -8,6 +8,9 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Changed
 
+- **Local turf demo is Saffron Arena (Nashik).** `abc-turf` uses the public Google listing details:
+  Nashik Road address, 24-hour hours, Instagram, cricket/football/pickleball resources and rates.
+  Login unchanged: `owner@abc-turf.test` / `password`.
 - **Online table reservations hold a free table.** Website and WhatsApp reservation requests assign a
   fitting free table so busy evenings cannot over-collect requests. Slot lists can filter by party size.
 - **Honest setup copy.** Onboarding no longer promises “change features later”; Settings explains modules

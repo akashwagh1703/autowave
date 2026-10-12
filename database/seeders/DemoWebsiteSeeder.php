@@ -42,16 +42,35 @@ class DemoWebsiteSeeder extends Seeder
         ],
         'abc-turf' => [
             'profile' => [
-                'whatsapp' => '+91 91234 56789',
-                'address' => 'Survey 42, Baner Road',
-                'opening_hours' => 'Every day: 6 am – midnight',
-                'description' => 'Two floodlit 5-a-side turfs with changing rooms and parking.',
+                'phone' => '+91 75584 30055',
+                'whatsapp' => '+91 75584 30055',
+                'email' => 'hello@abc-turf.test',
+                'city' => 'Nashik',
+                'address' => 'STP Road, Pushpak Nagar, Lokhande Mala, Nashik Road, Nashik, Maharashtra 422006',
+                'opening_hours' => 'Open 24 hours, every day',
+                'description' => 'We provide cricket and football turf, plus pickleball and a cafe with quality food. Floodlights, parking and a recreational hub near Sandip University, Nashik Road.',
+                'social' => ['instagram' => 'https://instagram.com/saffron.arena'],
             ],
             'sections' => [
-                'hero' => ['headline' => 'Book your game in 30 seconds', 'cta' => 'book'],
+                'hero' => [
+                    'headline' => 'Book your slot at Saffron Arena',
+                    'subheadline' => 'Cricket, football and more — open 24 hours on Nashik Road',
+                    'cta' => 'book',
+                ],
+                'about' => [
+                    'headline' => 'Play hard. Stay longer.',
+                    'body' => 'Saffron Arena is a multisport turf in Pushpak Nagar, Nashik Road — cricket and football pitches, pickleball, ample parking and Saffron Sip cafe on site.',
+                ],
+                'testimonials' => ['items' => [
+                    ['quote' => 'One thing I really liked is the positive and energetic atmosphere here.', 'author' => 'Google review', 'detail' => '5.0 · Saffron Arena'],
+                    ['quote' => 'Definitely a great place for sports lovers.', 'author' => 'Google review', 'detail' => 'Nashik'],
+                    ['quote' => 'Ample space for parking.', 'author' => 'Google review', 'detail' => 'Nashik Road'],
+                ]],
                 'faq' => ['items' => [
-                    ['question' => 'How many players per side?', 'answer' => 'Our turfs are sized for 5-a-side, up to 7 players per team.'],
-                    ['question' => 'Do you provide balls and bibs?', 'answer' => 'Yes, both are free with every booking.'],
+                    ['question' => 'What sports can we play?', 'answer' => 'Cricket and football turfs are available, plus pickleball. Ask us when you book if you need a specific pitch.'],
+                    ['question' => 'Are you open late?', 'answer' => 'Yes — we are open 24 hours, every day, with floodlights for night games.'],
+                    ['question' => 'Is parking available?', 'answer' => 'Yes, there is ample parking on site.'],
+                    ['question' => 'Is there food on site?', 'answer' => 'Yes — Saffron Sip cafe serves food and drinks at the venue.'],
                 ]],
             ],
         ],
@@ -110,13 +129,26 @@ class DemoWebsiteSeeder extends Seeder
                 continue;
             }
 
-            $context->run($tenant, function () use ($context, $content) {
+            $context->run($tenant, function () use ($context, $content, $slug) {
                 $profile = $context->setting('business_profile', []);
-                TenantSetting::query()->updateOrCreate(['key' => 'business_profile'], ['value' => self::fill($profile, $content['profile'])]);
+                $profile = is_array($profile) ? $profile : [];
+                // Turf demo tracks a real Nashik listing — always refresh those fields on re-seed.
+                $mergedProfile = $slug === 'abc-turf'
+                    ? [...$profile, ...$content['profile']]
+                    : self::fill($profile, $content['profile']);
+                TenantSetting::query()->updateOrCreate(['key' => 'business_profile'], ['value' => $mergedProfile]);
 
                 foreach ($content['sections'] as $type => $values) {
                     $section = WebsiteSection::query()->where('type', $type)->first();
-                    $section?->update(['configuration' => self::fill($section->configuration ?? [], $values)]);
+                    if (! $section) {
+                        continue;
+                    }
+                    $config = $section->configuration ?? [];
+                    $section->update([
+                        'configuration' => $slug === 'abc-turf'
+                            ? self::replaceDemo($config, $values)
+                            : self::fill($config, $values),
+                    ]);
                 }
             });
         }
@@ -133,6 +165,20 @@ class DemoWebsiteSeeder extends Seeder
             if (blank($current[$key] ?? null)) {
                 $current[$key] = $value;
             }
+        }
+
+        return $current;
+    }
+
+    /**
+     * @param  array<string, mixed>  $current
+     * @param  array<string, mixed>  $demo
+     * @return array<string, mixed>
+     */
+    private static function replaceDemo(array $current, array $demo): array
+    {
+        foreach ($demo as $key => $value) {
+            $current[$key] = $value;
         }
 
         return $current;
