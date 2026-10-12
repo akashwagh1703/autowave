@@ -19,13 +19,15 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Booking an appointment or a slot in the chat: service (with the service engine) → who or which resource
- * (when there is a choice) → day → time → confirm. Same rules as booking on the website (OnlineBooking:
- * notice, how far ahead, "any available", auto-confirm).
+ * (when there is a choice) → day → time → (turf: how long) → confirm. Same rules as booking on the
+ * website (OnlineBooking: notice, how far ahead, "any available", auto-confirm). WhatsApp list messages
+ * only allow one tap, so multi-hour turf bookings pick a start time then a length (1–6 free hours).
  *
  * Options: `aw.bk.cat.{category}.{page}`, `aw.bk.svc.{service}`, `aw.bk.res.{service}.{resource}`,
  * `aw.bk.days.{service}.{resource}.{offset}`, `aw.bk.day.{service}.{resource}.{Ymd}`,
  * `aw.bk.part.{service}.{resource}.{Ymd}.{part}.{page}`, `aw.bk.at.{service}.{resource}.{timestamp}`,
- * `aw.bk.ok.…` (book), `aw.bk.no` (cancel). 0 means no service / any resource.
+ * `aw.bk.dur.{service}.{resource}.{timestamp}.{minutes}`, `aw.bk.ok.…` (book), `aw.bk.no` (cancel).
+ * 0 means no service / any resource.
  */
 class BookingFlow extends ChatFlow
 {
@@ -65,8 +67,9 @@ class BookingFlow extends ChatFlow
             'days' => $this->days($service, $resource, self::int($args[3] ?? null)),
             'day' => $this->times($service, $resource, self::date($args[3] ?? null), null, 0),
             'part' => $this->times($service, $resource, self::date($args[3] ?? null), in_array($args[4] ?? null, ['m', 'a', 'e'], true) ? $args[4] : null, self::int($args[5] ?? null)),
-            'at' => $this->confirm($session, $conversation, $service, $resource, self::int($args[3] ?? null)),
-            'ok' => $this->book($session, $conversation, $service, $resource, self::int($args[3] ?? null)),
+            'at' => $this->afterTime($session, $conversation, $service, $resource, self::int($args[3] ?? null)),
+            'dur' => $this->confirm($session, $conversation, $service, $resource, self::int($args[3] ?? null), self::int($args[4] ?? null)),
+            'ok' => $this->book($session, $conversation, $service, $resource, self::int($args[3] ?? null), self::int($args[4] ?? null)),
             'no' => $this->cancelled(__('No problem, nothing was booked.')),
             default => null,
         };
@@ -242,7 +245,52 @@ class BookingFlow extends ChatFlow
         return $this->reply(__('What time on :day?', ['day' => $this->day($date)]), Interactive::list(__('Choose a time'), $rows, $this->label()));
     }
 
-    private function confirm(ChatbotSession $session, Conversation $conversation, int $serviceId, int $resourceId, int $timestamp): array
+    /** After a start time: turf asks how many hours; salons go straight to confirm. */
+    private function afterTime(ChatbotSession $session, Conversation $conversation, int $serviceId, int $resourceId, int $timestamp): array
+    {
+        if ($serviceId || $this->booking->usesServices()) {
+            return $this->confirm($session, $conversation, $serviceId, $resourceId, $timestamp, null);
+        }
+
+        return $this->lengths($session, $conversation, $serviceId, $resourceId, $timestamp);
+    }
+
+    private function lengths(ChatbotSession $session, Conversation $conversation, int $serviceId, int $resourceId, int $timestamp): array
+    {
+        $start = $timestamp ? CarbonImmutable::createFromTimestamp($timestamp) : null;
+
+        if (! $start) {
+            return $this->start(null);
+        }
+
+        $date = $this->local($start)->toDateString();
+        $options = $this->booking->lengths($resourceId ?: null, $start);
+
+        if ($options === []) {
+            $times = $this->times($serviceId, $resourceId, $date, null, 0);
+
+            return [...$times, 'body' => __('Sorry, that time is no longer free.')."\n\n".$times['body']];
+        }
+
+        if (count($options) === 1) {
+            return $this->confirm($session, $conversation, $serviceId, $resourceId, $timestamp, $options[0]['duration_minutes']);
+        }
+
+        $rows = array_map(fn (array $option) => array_filter([
+            'id' => $this->id('dur', $serviceId, $resourceId, $timestamp, $option['duration_minutes']),
+            'title' => $this->lengthLabel($option['duration_minutes']),
+            'description' => $option['price']
+                ? $this->content->money($option['price']).($option['price_varies'] ? ' '.__('or more') : '')
+                : null,
+        ], fn ($value) => $value !== null), $options);
+
+        return $this->reply(
+            __('How long from :time?', ['time' => $this->time($start)]),
+            Interactive::list(__('Choose length'), $rows, $this->label()),
+        );
+    }
+
+    private function confirm(ChatbotSession $session, Conversation $conversation, int $serviceId, int $resourceId, int $timestamp, ?int $durationMinutes): array
     {
         $start = $timestamp ? CarbonImmutable::createFromTimestamp($timestamp) : null;
         $service = $serviceId ? $this->service($serviceId) : null;
@@ -252,50 +300,86 @@ class BookingFlow extends ChatFlow
         }
 
         $date = $this->local($start)->toDateString();
-        $slot = collect($this->safeSlots($serviceId, $resourceId, $date))->first(fn (array $slot) => CarbonImmutable::parse($slot['starts_at'])->equalTo($start));
 
-        if (! $slot) {
-            $times = $this->times($serviceId, $resourceId, $date, null, 0);
+        try {
+            $duration = $this->booking->duration($service, $durationMinutes);
+        } catch (ValidationException) {
+            return $this->afterTime($session, $conversation, $serviceId, $resourceId, $timestamp);
+        }
 
-            return [...$times, 'body' => __('Sorry, that time is no longer free.')."\n\n".$times['body']];
+        if (! $service) {
+            $length = collect($this->booking->lengths($resourceId ?: null, $start))
+                ->firstWhere('duration_minutes', $duration);
+
+            if (! $length) {
+                $times = $this->times($serviceId, $resourceId, $date, null, 0);
+
+                return [...$times, 'body' => __('Sorry, that time is no longer free.')."\n\n".$times['body']];
+            }
+
+            $priceAmount = $length['price'];
+            $priceVaries = $length['price_varies'];
+        } else {
+            $slot = collect($this->safeSlots($serviceId, $resourceId, $date))->first(fn (array $slot) => CarbonImmutable::parse($slot['starts_at'])->equalTo($start));
+
+            if (! $slot) {
+                $times = $this->times($serviceId, $resourceId, $date, null, 0);
+
+                return [...$times, 'body' => __('Sorry, that time is no longer free.')."\n\n".$times['body']];
+            }
+
+            $priceAmount = $service->price !== null ? (string) $service->price : null;
+            $priceVaries = false;
         }
 
         $name = $this->name($session, $conversation);
 
         if ($name === null) {
-            return $this->askName($session, ['at', $serviceId, $resourceId, $timestamp]);
+            return $this->askName($session, $service
+                ? ['at', $serviceId, $resourceId, $timestamp]
+                : ['dur', $serviceId, $resourceId, $timestamp, $duration]);
         }
 
         $resource = $resourceId ? $this->offering($service)->firstWhere('id', $resourceId) : null;
-        $price = $service?->price !== null ? $this->content->money($service->price) : ($slot['price'] ? $this->content->money($slot['price']).($slot['price_varies'] ? ' '.__('or more') : '') : null);
+        $price = $priceAmount ? $this->content->money($priceAmount).($priceVaries ? ' '.__('or more') : '') : null;
+        $end = $start->addMinutes($duration);
+        $when = ! $service && $duration > $this->settings->slotInterval()
+            ? $this->when($start).' – '.$this->time($end).' ('.$this->lengthLabel($duration).')'
+            : $this->when($start);
         $lines = array_filter([
             __('*Please check your booking*'),
             '',
-            $service ? '✨ '.$service->name.' ('.trans_choice(':count min|:count mins', $this->booking->duration($service)).')' : null,
+            $service ? '✨ '.$service->name.' ('.trans_choice(':count min|:count mins', $duration).')' : '⏱️ '.$this->lengthLabel($duration),
             $resource ? '👤 '.$resource->name : ($this->offering($service)->count() > 1 ? '👤 '.__('Any available') : null),
-            '📅 '.$this->when($start),
+            '📅 '.$when,
             $price ? '💰 '.$price : null,
             '🙍 '.$name,
             '',
             $this->settings->online()['auto_confirm'] ? null : __('We will confirm it here shortly.'),
         ], fn ($line) => $line !== null);
 
+        $ok = $service
+            ? $this->id('ok', $serviceId, $resourceId, $timestamp)
+            : $this->id('ok', $serviceId, $resourceId, $timestamp, $duration);
+
         return $this->reply(trim(implode("\n", $lines)), Interactive::buttons([
-            ['id' => $this->id('ok', $serviceId, $resourceId, $timestamp), 'title' => __('Confirm booking')],
+            ['id' => $ok, 'title' => __('Confirm booking')],
             ['id' => $this->id('day', $serviceId, $resourceId, self::ymd($date)), 'title' => __('Change time')],
             ['id' => $this->id('no'), 'title' => __('Cancel')],
         ]));
     }
 
-    private function book(ChatbotSession $session, Conversation $conversation, int $serviceId, int $resourceId, int $timestamp): array
+    private function book(ChatbotSession $session, Conversation $conversation, int $serviceId, int $resourceId, int $timestamp, ?int $durationMinutes): array
     {
         $name = $this->name($session, $conversation);
 
         if (! $timestamp || $name === null) {
-            return $this->confirm($session, $conversation, $serviceId, $resourceId, $timestamp);
+            return $this->confirm($session, $conversation, $serviceId, $resourceId, $timestamp, $durationMinutes);
         }
 
-        if ($this->alreadyDone($session, "bk.{$serviceId}.{$resourceId}.{$timestamp}")) {
+        $doneKey = "bk.{$serviceId}.{$resourceId}.{$timestamp}.".($durationMinutes ?? 0);
+
+        if ($this->alreadyDone($session, $doneKey)) {
             return $this->reply(__('You are already booked for :when. 👍', ['when' => $this->when($timestamp)]), $this->menuButtons());
         }
 
@@ -304,17 +388,16 @@ class BookingFlow extends ChatFlow
                 'service_id' => $serviceId ?: null,
                 'resource_id' => $resourceId ?: null,
                 'starts_at' => CarbonImmutable::createFromTimestamp($timestamp)->toIso8601String(),
+                'duration_minutes' => $durationMinutes,
                 'name' => $name,
                 'phone' => $this->phone($conversation),
                 'email' => $this->email($conversation),
             ], 'whatsapp');
         } catch (ValidationException $exception) {
-            $session->put('done', array_values(array_diff($session->get('done', []), ["bk.{$serviceId}.{$resourceId}.{$timestamp}"])) ?: null);
+            $session->put('done', array_values(array_diff($session->get('done', []), [$doneKey])) ?: null);
 
-            if (array_key_exists('starts_at', $exception->errors())) {
-                $times = $this->times($serviceId, $resourceId, $this->local($timestamp)->toDateString(), null, 0);
-
-                return [...$times, 'body' => self::firstError($exception)."\n\n".$times['body']];
+            if (array_key_exists('starts_at', $exception->errors()) || array_key_exists('duration_minutes', $exception->errors())) {
+                return $this->afterTime($session, $conversation, $serviceId, $resourceId, $timestamp);
             }
 
             return $this->failed(self::firstError($exception), 'book');
@@ -326,10 +409,13 @@ class BookingFlow extends ChatFlow
             $appointment->resource ? __('with :name', ['name' => $appointment->resource->name]) : null,
         ]));
         $when = $this->when($appointment->starts_at->toImmutable());
+        $length = ! $appointment->service
+            ? ' ('.$this->lengthLabel((int) $appointment->starts_at->diffInMinutes($appointment->ends_at)).')'
+            : '';
 
         $body = $appointment->status === AppointmentStatus::Confirmed
-            ? __('✅ You are booked! :what on :when. See you then!', ['what' => $what, 'when' => $when])
-            : __('🙏 Thank you, :name! We have your booking request for :what on :when. We will confirm it here shortly.', ['name' => $name, 'what' => $what, 'when' => $when]);
+            ? __('✅ You are booked! :what on :when:length. See you then!', ['what' => $what, 'when' => $when, 'length' => $length])
+            : __('🙏 Thank you, :name! We have your booking request for :what on :when:length. We will confirm it here shortly.', ['name' => $name, 'what' => $what, 'when' => $when, 'length' => $length]);
 
         if ($manageUrl = ManageBookingLink::url($appointment)) {
             $body .= "\n\n".__('Manage or cancel: :url', ['url' => $manageUrl]);
@@ -339,6 +425,17 @@ class BookingFlow extends ChatFlow
             ['id' => self::PREFIX.'menu', 'title' => __('Main menu')],
             ['id' => self::PREFIX.'info', 'title' => __('Timings & location')],
         ]));
+    }
+
+    private function lengthLabel(int $minutes): string
+    {
+        if ($minutes % 60 === 0) {
+            $hours = intdiv($minutes, 60);
+
+            return trans_choice(':count hour|:count hours', $hours);
+        }
+
+        return trans_choice(':count min|:count mins', $minutes);
     }
 
     /** @return list<array<string, mixed>> */

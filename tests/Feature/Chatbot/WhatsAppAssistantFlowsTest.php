@@ -186,6 +186,50 @@ class WhatsAppAssistantFlowsTest extends TestCase
         $this->assertSame(0, Appointment::withoutTenantScope()->count());
     }
 
+    public function test_a_guest_books_multiple_hours_on_a_turf_in_the_chat(): void
+    {
+        $turf = $this->createTenant('Saffron Arena', 'turf');
+        $pitch = $this->makeResource($turf, [
+            'name' => 'Cricket Turf',
+            'hourly_rate' => 1000,
+            'rates' => [
+                ['label' => 'Evening', 'weekdays' => [1, 2, 3, 4, 5, 6, 7], 'from' => '18:00', 'to' => '24:00', 'hourly_rate' => 1400],
+            ],
+        ], $this->hours('06:00', '23:00'));
+        $this->enable($turf);
+
+        $this->tap($turf, 'Book a slot', 'aw.book', 'Rohan Mehta');
+        $this->assertStringContainsString('Which day suits you?', $this->lastReply()->body);
+
+        $this->tap($turf, 'Tomorrow', "aw.bk.day.0.{$pitch->id}.20261006");
+        $at = $this->local($turf, '2026-10-06 19:00')->getTimestamp();
+        $this->tap($turf, '7:00 pm', "aw.bk.at.0.{$pitch->id}.{$at}");
+
+        $lengths = $this->lastReply();
+        $this->assertStringContainsString('How long from 7:00 pm?', $lengths->body);
+        $this->assertSame('1 hour', $lengths->interactive['rows'][0]['title']);
+        $this->assertSame('2 hours', $lengths->interactive['rows'][1]['title']);
+        $this->assertSame("aw.bk.dur.0.{$pitch->id}.{$at}.120", $lengths->interactive['rows'][1]['id']);
+
+        $this->tap($turf, '2 hours', "aw.bk.dur.0.{$pitch->id}.{$at}.120");
+        $confirm = $this->lastReply();
+        $this->assertStringContainsString('2 hours', $confirm->body);
+        $this->assertStringContainsString('7:00 pm – 9:00 pm', $confirm->body);
+        $this->assertStringContainsString('Cricket Turf', $confirm->body);
+        $this->assertStringContainsString('₹2,800', $confirm->body);
+
+        $this->tap($turf, 'Confirm booking', "aw.bk.ok.0.{$pitch->id}.{$at}.120");
+        $this->assertStringContainsString('2 hours', $this->lastReply()->body);
+
+        $appointment = $this->inTenant($turf, fn () => Appointment::query()->sole());
+        $this->assertSame('whatsapp', $appointment->source);
+        $this->assertNull($appointment->service_id);
+        $this->assertSame($pitch->id, $appointment->booking_resource_id);
+        $this->assertTrue($appointment->starts_at->equalTo($this->local($turf, '2026-10-06 19:00')));
+        $this->assertTrue($appointment->ends_at->equalTo($this->local($turf, '2026-10-06 21:00')));
+        $this->assertSame('2800.00', (string) $appointment->price);
+    }
+
     public function test_a_guest_reserves_a_table_in_the_chat(): void
     {
         $cafe = $this->createTenant('ABC Cafe', 'cafe');

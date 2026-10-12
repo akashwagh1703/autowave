@@ -6,6 +6,11 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ## [Unreleased]
 
+### Added
+
+- **WhatsApp turf bookings can run for several hours.** After choosing a start time, customers pick
+  how long (1–6 consecutive free hours). WhatsApp lists only allow one tap, so length is a second step.
+
 ### Changed
 
 - **Local turf demo is Saffron Arena (Nashik).** `abc-turf` uses the public Google listing details:

@@ -86,9 +86,12 @@ question ("How much is a haircut?"), which gets a short greeting too.
 3. **Day:** days with at least one free time ("Today", "Tomorrow", "Wed 8 Oct"), 9 at a time with
    **Later dates**.
 4. **Time:** up to 10 times straight away, else **Morning / Afternoon / Evening** first.
-5. **Please check your booking:** service and duration, staff, day and time, price, name, with
-   **Confirm booking**, **Change time** and **Cancel**.
-6. Booked with source **WhatsApp**: confirmed straight away when the owner auto-confirms online
+5. **How long** (turf / slot booking only): WhatsApp can only pick one list row, so after the start
+   time the customer chooses **1 hour**, **2 hours**, … up to 6 consecutive free hours (priced from
+   the turf rates). Skipped when only one length is free.
+6. **Please check your booking:** service and duration, staff, day and time (or start–end for multi-hour),
+   price, name, with **Confirm booking**, **Change time** and **Cancel**.
+7. Booked with source **WhatsApp**: confirmed straight away when the owner auto-confirms online
    bookings, otherwise pending ("We will confirm it here shortly").
 
 ### Reserving a table

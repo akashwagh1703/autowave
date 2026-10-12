@@ -26,8 +26,8 @@ use Illuminate\Validation\ValidationException;
  * - Offered when the tenant has the booking engine, online booking is on and at least one active
  *   resource with working hours exists (and, with the service engine, a service it offers).
  * - With the service engine the visitor picks a service (its duration and price apply); without
- *   it a booking lasts one slot interval (e.g. an hour on a turf) and is priced from the
- *   resource's rates (ADR-020).
+ *   it a booking lasts one or more slot intervals (e.g. 1–6 hours on a turf) and is priced from
+ *   the resource's rates (ADR-020).
  * - "Any available" tries each resource offering the service in order until one is free.
  * - Minimum notice and how far ahead come from the tenant's online booking settings.
  * - BookAppointment keeps its double-booking guarantees; website bookings start pending unless
@@ -138,6 +138,55 @@ class OnlineBooking
     }
 
     /**
+     * How long a turf-style booking can run from a start time (consecutive free slot intervals).
+     *
+     * @return list<array{duration_minutes: int, price: ?string, price_varies: bool}>
+     */
+    public function lengths(?int $resourceId, CarbonImmutable $start): array
+    {
+        if ($this->usesServices()) {
+            return [];
+        }
+
+        $interval = $this->settings->slotInterval();
+        $maxBlocks = max(1, min(6, intdiv((int) config('booking.duration.max'), $interval)));
+        $start = $start->utc()->startOfMinute();
+        $lengths = [];
+
+        for ($blocks = 1; $blocks <= $maxBlocks; $blocks++) {
+            $duration = $blocks * $interval;
+            $end = $start->addMinutes($duration);
+            $prices = [];
+
+            foreach ($this->candidates(null, $resourceId) as $resource) {
+                if ($this->availability->problem($resource, $start, $end) !== null) {
+                    continue;
+                }
+
+                $prices[] = ResourceRates::quote($resource, $start, $end);
+            }
+
+            if ($prices === []) {
+                break;
+            }
+
+            $priced = array_values(array_filter($prices, fn (?string $price) => $price !== null));
+            $lowest = $priced === [] ? null : array_reduce(
+                $priced,
+                fn (?string $best, string $price) => $best === null || bccomp($price, $best, 2) < 0 ? $price : $best,
+            );
+
+            $lengths[] = [
+                'duration_minutes' => $duration,
+                'price' => $lowest,
+                'price_varies' => count(array_unique($prices, SORT_REGULAR)) > 1,
+            ];
+        }
+
+        return $lengths;
+    }
+
+    /**
      * @param  array<string, mixed>  $input
      * @param  string  $source  `website`, or `whatsapp` for the WhatsApp assistant (same rules)
      */
@@ -147,6 +196,7 @@ class OnlineBooking
             'service_id' => [$this->usesServices() ? 'required' : 'nullable', 'integer'],
             'resource_id' => ['nullable', 'integer'],
             'starts_at' => ['required', 'date'],
+            'duration_minutes' => ['nullable', 'integer'],
             'name' => ['required', 'string', 'min:2', 'max:120'],
             'phone' => ['required', 'string', 'regex:'.StoreBusinessRequest::PHONE_PATTERN],
             'email' => ['nullable', 'string', 'email', 'max:255'],
@@ -163,6 +213,7 @@ class OnlineBooking
 
         $service = $this->service(isset($data['service_id']) ? (int) $data['service_id'] : null);
         $start = CarbonImmutable::parse($data['starts_at'])->utc()->startOfMinute();
+        $duration = $this->duration($service, isset($data['duration_minutes']) ? (int) $data['duration_minutes'] : null);
         $localDate = $start->setTimezone(TenantTime::timezone())->toDateString();
         $window = $this->window();
 
@@ -174,7 +225,7 @@ class OnlineBooking
         $raced = false;
 
         foreach ($this->candidates($service, isset($data['resource_id']) ? (int) $data['resource_id'] : null) as $resource) {
-            if ($this->availability->problem($resource, $start, $start->addMinutes($this->duration($service))) !== null) {
+            if ($this->availability->problem($resource, $start, $start->addMinutes($duration)) !== null) {
                 continue;
             }
 
@@ -186,7 +237,7 @@ class OnlineBooking
                     'booking_resource_id' => $resource->id,
                     'service_id' => $service?->id,
                     'starts_at' => $start,
-                    'duration_minutes' => $this->duration($service),
+                    'duration_minutes' => $duration,
                     'notes' => filled($data['notes'] ?? null) ? trim($data['notes']) : null,
                     'status' => $status->value,
                     'source' => OnlineSource::resolve($source),
@@ -204,9 +255,25 @@ class OnlineBooking
             : __('This time is not available. Please choose another time.')]);
     }
 
-    public function duration(?Service $service): int
+    public function duration(?Service $service, ?int $minutes = null): int
     {
-        return $service?->duration_minutes ?? $this->settings->slotInterval();
+        if ($service) {
+            return $service->duration_minutes;
+        }
+
+        $interval = $this->settings->slotInterval();
+        $min = (int) config('booking.duration.min');
+        $max = (int) config('booking.duration.max');
+
+        if ($minutes === null) {
+            return $interval;
+        }
+
+        if ($minutes < max($min, $interval) || $minutes > $max || $minutes % $interval !== 0) {
+            throw ValidationException::withMessages(['duration_minutes' => __('Choose how long you want to book.')]);
+        }
+
+        return $minutes;
     }
 
     private function earliestStart(): CarbonImmutable
