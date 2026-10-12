@@ -34,7 +34,9 @@ class TemplateRenderer
 
         return (string) match ($variable) {
             'business.name' => $context->tenant->name,
-            'business.phone' => $this->businessPhone($context),
+            'business.phone' => $this->profile($context)['phone'] ?? null,
+            'business.address' => $this->profile($context)['address'] ?? null,
+            'business.city' => $this->profile($context)['city'] ?? null,
             'lead.name' => $lead?->name,
             'lead.first_name' => $lead ? Str::before(trim($lead->name), ' ') : null,
             'lead.phone' => $lead?->phone,
@@ -45,6 +47,7 @@ class TemplateRenderer
             'customer.phone' => $customer?->phone,
             'appointment.date' => $appointment?->starts_at->setTimezone($timezone)->format('D, j M'),
             'appointment.time' => $appointment?->starts_at->setTimezone($timezone)->format('g:i A'),
+            'appointment.end_time' => $appointment?->ends_at->setTimezone($timezone)->format('g:i A'),
             'appointment.service' => $appointment?->service?->name,
             'appointment.resource' => $appointment?->resource?->name,
             'order.number' => $order?->reference(),
@@ -70,10 +73,11 @@ class TemplateRenderer
         };
     }
 
-    private function businessPhone(SubjectContext $context): ?string
+    /** @return array<string, mixed> */
+    private function profile(SubjectContext $context): array
     {
         $profile = TenantSetting::query()->where('key', 'business_profile')->value('value');
 
-        return is_array($profile) ? ($profile['phone'] ?? null) : null;
+        return is_array($profile) ? $profile : [];
     }
 }

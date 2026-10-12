@@ -166,6 +166,8 @@ return [
     'variables' => [
         'business.name' => ['label' => 'Business name', 'entity' => 'business'],
         'business.phone' => ['label' => 'Business phone', 'entity' => 'business'],
+        'business.address' => ['label' => 'Business address', 'entity' => 'business'],
+        'business.city' => ['label' => 'Business city', 'entity' => 'business'],
         'lead.name' => ['label' => 'Lead name', 'entity' => 'lead'],
         'lead.first_name' => ['label' => 'Lead first name', 'entity' => 'lead'],
         'lead.phone' => ['label' => 'Lead phone', 'entity' => 'lead'],
@@ -175,7 +177,8 @@ return [
         'customer.first_name' => ['label' => 'Customer first name', 'entity' => 'customer'],
         'customer.phone' => ['label' => 'Customer phone', 'entity' => 'customer'],
         'appointment.date' => ['label' => 'Appointment date', 'entity' => 'appointment'],
-        'appointment.time' => ['label' => 'Appointment time', 'entity' => 'appointment'],
+        'appointment.time' => ['label' => 'Appointment start time', 'entity' => 'appointment'],
+        'appointment.end_time' => ['label' => 'Appointment end time', 'entity' => 'appointment'],
         'appointment.service' => ['label' => 'Appointment service', 'entity' => 'appointment'],
         'appointment.resource' => ['label' => 'Appointment with', 'entity' => 'appointment'],
         'order.number' => ['label' => 'Order number', 'entity' => 'order'],
@@ -262,7 +265,7 @@ return [
             'trigger' => 'appointment.confirmed',
             'active' => false,
             'steps' => [
-                ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => 'Hi {{customer.first_name}}, your appointment at {{business.name}} is confirmed for {{appointment.date}} at {{appointment.time}}.']],
+                ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => "🎉 Booking Confirmed!\n\nHi {{customer.name}},\nYour booking at {{business.name}} is confirmed.\n\n🗓️ Date: {{appointment.date}}\n⏰ Time: {{appointment.time}} to {{appointment.end_time}}\n📍 Location: {{business.address}}\n\nPlease arrive a little early. Thank you for choosing {{business.name}}!"]],
             ],
         ],
         'appointment_reminder' => [
