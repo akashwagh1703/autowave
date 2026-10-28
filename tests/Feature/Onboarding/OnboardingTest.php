@@ -57,7 +57,7 @@ class OnboardingTest extends TestCase
 
     public function test_the_wizard_offers_photo_studio_and_hides_draft_modules(): void
     {
-        $this->actingAs($this->user())->get($this->appUrl('/onboarding'))
+        $this->actingAs(User::factory()->create())->get($this->appUrl('/onboarding'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('catalog.business_types', fn ($types) => collect($types)->contains(fn ($type) => $type['code'] === 'photo_studio'))
@@ -84,7 +84,10 @@ class OnboardingTest extends TestCase
                 ->where('catalog.business_types.0.templates', ['elegant', 'modern', 'premium'])
                 ->where('catalog.business_types.0.required_modules', fn ($modules) => collect($modules)->contains('payments'))
                 ->has('catalog.templates', 5)
-                ->has('catalog.modules', count(config('catalog.modules')))
+                ->has('catalog.modules', count(array_filter(
+                    config('catalog.modules'),
+                    fn (array $module) => ($module['status'] ?? 'active') === 'active',
+                )))
                 ->where('catalog.domain_suffix', '.autowave.test'));
     }
 

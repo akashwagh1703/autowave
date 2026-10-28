@@ -52,7 +52,7 @@ class WebsiteEditorTest extends TestCase
 
                     return true;
                 })
-                ->where('addable', fn ($addable) => collect($addable)->pluck('type')->all() === ['video', 'reviews', 'downloads'])
+                ->where('addable', fn ($addable) => collect($addable)->pluck('type')->all() === ['video', 'downloads'])
                 ->where('checklist', fn ($checklist) => collect($checklist)->firstWhere('key', 'published')['done'] === true)
                 ->where('onlineBooking.settings.enabled', true)
                 ->where('canManage', true));

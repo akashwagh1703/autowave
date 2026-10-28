@@ -102,7 +102,7 @@ class InboxHttpTest extends TestCase
         $message = OutboundMessage::withoutTenantScope()->sole();
         $this->assertSame('Hi Priya, see you on Monday 4 pm.', $message->body);
         $this->assertSame('appointment_reminder', $message->template['name']);
-        Http::assertSent(fn ($request) => $request['type'] === 'template');
+        Http::assertSent(fn ($request) => ($request->data()['type'] ?? null) === 'template');
     }
 
     public function test_opted_out_contacts_cannot_be_sent_templates(): void

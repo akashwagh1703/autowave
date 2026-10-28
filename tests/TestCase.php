@@ -6,6 +6,7 @@ use Database\Seeders\PlatformSeeder;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 use RuntimeException;
 
 abstract class TestCase extends BaseTestCase
@@ -27,8 +28,9 @@ abstract class TestCase extends BaseTestCase
             throw new RuntimeException("Refusing to run tests against database [{$database}]. Use a *_testing database (see .env.testing).");
         }
 
-        // Backend tests must not depend on a compiled frontend (public/build).
+        // Backend tests must not depend on a compiled frontend (public/build) or a running SSR server.
         $this->withoutVite();
+        Inertia::disableSsr();
     }
 
     protected function appUrl(string $path = '/'): string

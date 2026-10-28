@@ -83,6 +83,9 @@ class CreateTenantTest extends TestCase
         $tenant = $this->createTenant('AutoWave Internal', 'autowave_internal', options: ['is_internal' => true]);
 
         $this->assertTrue($tenant->is_internal);
-        $this->assertContains('forms', app(ModuleManager::class)->enabledCodes($tenant));
+        $enabled = app(ModuleManager::class)->enabledCodes($tenant);
+        $this->assertContains('crm', $enabled);
+        $this->assertContains('website', $enabled);
+        $this->assertNotContains('forms', $enabled);
     }
 }
