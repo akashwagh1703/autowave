@@ -143,10 +143,16 @@ class CreateTenant
 
         $this->modules->enableWithDependencies($tenant, $moduleCodes->merge($engineModuleCodes)->unique()->values()->all());
 
-        // The owner chose from today's catalogue, so no module existing now should be switched on later by the backfill.
+        // Mark only catalogue-active modules as backfilled. Draft modules stay eligible when they later
+        // become active and are added to the business type (TenantBackfillSeeder / BackfillTenantModules).
+        $activeCatalogue = collect(config('catalog.modules'))
+            ->filter(fn (array $module) => ($module['status'] ?? 'active') === 'active')
+            ->keys()
+            ->all();
+
         TenantSetting::withoutTenantScope()->updateOrCreate(
             ['tenant_id' => $tenant->getKey(), 'key' => BackfillTenantModules::KEY],
-            ['value' => array_keys(config('catalog.modules'))],
+            ['value' => $activeCatalogue],
         );
 
         foreach ($type->engines as $engine) {

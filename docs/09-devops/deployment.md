@@ -64,11 +64,13 @@ Settings can be overridden with environment variables: `APP_DIR`, `REPO`, `BRANC
 4. `.env` changes do not need a deploy: edit `shared/.env`, then run
    `cd /var/www/autowave-platform/current && php8.4 artisan optimize && php8.4 artisan queue:restart` as
    `autowave`.
-5. The script does not seed. When a release adds permissions (the CHANGELOG says so, e.g. `documents`),
-   run after the deploy, as `autowave` in `current`:
-   `php8.4 artisan db:seed --class=RbacSeeder --force && php8.4 artisan db:seed --class=TenantBackfillSeeder --force`.
-   Both are safe to repeat. Until `RbacSeeder` runs nobody, not even owners, has the new permissions;
-   until `TenantBackfillSeeder` runs, only owners do.
+5. The script does not seed. When a release adds modules, business-type presets or permissions (the
+   CHANGELOG says so, e.g. `loyalty`, `documents`), run after the deploy, as `autowave` in `current`:
+   `php8.4 artisan db:seed --class=CatalogSeeder --force && php8.4 artisan db:seed --class=RbacSeeder --force && php8.4 artisan db:seed --class=TenantBackfillSeeder --force`.
+   All three are safe to repeat. Without `CatalogSeeder`, new modules stay `draft` / missing from
+   business-type presets in the DB, so Settings and backfill cannot turn them on. Until `RbacSeeder`
+   runs nobody, not even owners, has the new permissions; until `TenantBackfillSeeder` runs, only
+   owners do (and existing tenants may still lack the new module rows).
 6. Billing release (2026-10-07): run both seeders. `TenantBackfillSeeder` also seeds the plans and gives
    every business without a subscription a 14-day trial; until it runs, those businesses have no plan and
    no limits.

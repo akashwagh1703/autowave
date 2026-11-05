@@ -6,6 +6,12 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Existing businesses missing new modules (e.g. Loyalty).** Deploy alone does not refresh the catalogue
+  DB; run `CatalogSeeder` then `TenantBackfillSeeder`. Backfill also recovers modules that were marked
+  done while still draft and never provisioned. New signups only mark catalogue-active modules as backfilled.
+
 ### Added
 
 - **Settings → Modules.** Owners can turn catalogue features on or off after onboarding (dependencies and
