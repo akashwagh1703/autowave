@@ -26,7 +26,7 @@ class AutomationProvisioningTest extends TestCase
         $automations = $this->inTenant($tenant, fn () => Automation::query()->with('nodes')->get()->keyBy('template_key'));
 
         $this->assertEqualsCanonicalizing([
-            'new_lead_welcome', 'new_lead_followup', 'appointment_confirmation', 'appointment_reminder', 'no_show_followup', 'thank_you', 'new_online_order_alert', 'order_ready',
+            'new_lead_welcome', 'new_lead_followup', 'appointment_confirmation', 'appointment_reminder', 'no_show_followup', 'thank_you', 'new_online_order_alert', 'order_ready', 'birthday_wish',
         ], $automations->keys()->all());
         $this->assertSame(['new_lead_followup', 'new_online_order_alert', 'no_show_followup'], $automations->where('is_active', true)->keys()->sort()->values()->all());
         $this->assertSame(['wait', 'condition', 'action'], $automations['new_lead_followup']->nodes->pluck('type.value')->all());
@@ -41,9 +41,9 @@ class AutomationProvisioningTest extends TestCase
 
         $automations = $this->inTenant($tenant, fn () => Automation::query()->get()->keyBy('template_key'));
 
-        // No booking, commerce or food engine: only the lead and education templates apply.
+        // No booking, commerce or food engine: only the lead, education and birthday templates apply.
         $this->assertSame(
-            ['admission_welcome', 'demo_class_confirmation', 'fee_due_reminder', 'fee_overdue_followup', 'new_lead_followup', 'new_lead_welcome'],
+            ['admission_welcome', 'birthday_wish', 'demo_class_confirmation', 'fee_due_reminder', 'fee_overdue_followup', 'new_lead_followup', 'new_lead_welcome'],
             $automations->keys()->sort()->values()->all(),
         );
         $this->assertSame(['fee_overdue_followup', 'new_lead_followup'], $automations->where('is_active', true)->keys()->sort()->values()->all());
@@ -57,7 +57,7 @@ class AutomationProvisioningTest extends TestCase
 
         // No leads module: the lead templates do not apply.
         $this->assertSame(
-            ['new_online_order_alert', 'new_reservation_alert', 'order_ready', 'reservation_confirmation'],
+            ['birthday_wish', 'new_online_order_alert', 'new_reservation_alert', 'order_ready', 'reservation_confirmation'],
             $automations->keys()->sort()->values()->all(),
         );
         $this->assertSame(['new_online_order_alert', 'new_reservation_alert'], $automations->where('is_active', true)->keys()->sort()->values()->all());
@@ -82,7 +82,7 @@ class AutomationProvisioningTest extends TestCase
         $created = app(ProvisionAutomations::class)->ensureFor($tenant);
 
         $this->assertSame([], $created);
-        $this->assertSame(7, $this->inTenant($tenant, fn () => Automation::query()->count()));
+        $this->assertSame(8, $this->inTenant($tenant, fn () => Automation::query()->count()));
     }
 
     public function test_the_backfill_provisions_tenants_that_had_no_automations(): void
@@ -92,7 +92,7 @@ class AutomationProvisioningTest extends TestCase
 
         $this->seed(TenantBackfillSeeder::class);
 
-        $this->assertSame(8, $this->inTenant($tenant, fn () => Automation::query()->count()));
+        $this->assertSame(9, $this->inTenant($tenant, fn () => Automation::query()->count()));
     }
 
     public function test_no_automations_without_the_module(): void

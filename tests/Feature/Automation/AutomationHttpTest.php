@@ -33,7 +33,7 @@ class AutomationHttpTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('business/automations/Index')
-                ->has('automations', 8)
+                ->has('automations', 9)
                 ->where('counts.active', 3)
                 ->where('automations.0.is_active', true)
                 ->has('automations.0.steps')
@@ -156,7 +156,7 @@ class AutomationHttpTest extends TestCase
         $this->post($this->appUrl('/automations'), ['name' => 'x', 'trigger' => 'order.shipped', 'steps' => []])
             ->assertSessionHasErrors(['trigger', 'steps']);
 
-        $this->assertSame(8, $this->inTenant($tenant, fn () => Automation::query()->count()));
+        $this->assertSame(9, $this->inTenant($tenant, fn () => Automation::query()->count()));
     }
 
     public function test_runs_can_be_listed_inspected_cancelled_and_retried(): void

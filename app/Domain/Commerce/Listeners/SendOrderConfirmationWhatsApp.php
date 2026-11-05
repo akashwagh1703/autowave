@@ -11,6 +11,7 @@ use App\Domain\Messaging\Enums\MessagePurpose;
 use App\Domain\Messaging\Services\MessagingService;
 use App\Domain\Messaging\Support\MessagingCompliance;
 use App\Domain\Tenant\Support\TenantContext;
+use App\Support\Phone;
 use Throwable;
 
 /**
@@ -47,7 +48,7 @@ class SendOrderConfirmationWhatsApp
 
         $order = $event->order->loadMissing(['customer', 'items']);
         $customer = $order->customer;
-        $phone = $customer?->phone;
+        $phone = Phone::normalize($customer?->phone);
 
         if (! $phone) {
             return;

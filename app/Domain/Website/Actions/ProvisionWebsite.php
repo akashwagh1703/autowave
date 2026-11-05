@@ -56,12 +56,14 @@ class ProvisionWebsite
         $bookable = in_array('booking', $this->engines->enabledCodes($tenant), true);
 
         foreach (array_values($configuration['website_sections'] ?? ['header', 'hero', 'about', 'contact', 'footer']) as $index => $sectionType) {
-            WebsiteSection::query()->create([
-                'type' => $sectionType,
-                'sort_order' => ($index + 1) * 10,
-                'enabled' => true,
-                'configuration' => $this->defaults($sectionType, $tenant, $content, $bookable),
-            ]);
+            WebsiteSection::query()->firstOrCreate(
+                ['type' => $sectionType],
+                [
+                    'sort_order' => ($index + 1) * 10,
+                    'enabled' => true,
+                    'configuration' => $this->defaults($sectionType, $tenant, $content, $bookable),
+                ],
+            );
         }
 
         return $config;

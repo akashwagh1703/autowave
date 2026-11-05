@@ -4,6 +4,7 @@ namespace Tests\Feature\Tenancy;
 
 use App\Domain\Module\Services\ModuleManager;
 use App\Domain\Website\Models\WebsiteConfig;
+use App\Domain\Website\Models\WebsiteSection;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -111,8 +112,8 @@ class UpdateTenantModulesTest extends TestCase
         $this->actingAs($this->ownerOf($tenant));
 
         $this->put($this->appUrl('/settings/modules'), [
-            'modules' => [...app(ModuleManager::class)->enabledCodes($tenant), 'forms'],
-        ])->assertSessionHasErrors('modules');
+            'modules' => ['customers', 'forms'],
+        ])->assertSessionHasErrors('modules.1');
     }
 
     public function test_manager_cannot_change_modules(): void
@@ -133,6 +134,7 @@ class UpdateTenantModulesTest extends TestCase
         ]);
 
         $this->inTenant($tenant, function () {
+            WebsiteSection::query()->delete();
             WebsiteConfig::query()->delete();
         });
 

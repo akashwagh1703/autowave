@@ -41,6 +41,7 @@ class LoyaltyStampCardTest extends TestCase
                 'earn_per' => 'item',
                 'product_ids' => [],
                 'reward_label' => 'Free coffee',
+                'collect_birthday' => false,
             ]);
         });
 
@@ -52,7 +53,8 @@ class LoyaltyStampCardTest extends TestCase
                 'phone' => '98765 43210',
                 'company_website' => '',
             ])
-            ->assertRedirect();
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
 
         $account = $this->inTenant($tenant, fn () => LoyaltyAccount::query()->with('customer')->sole());
         $this->assertSame('Priya Shah', $account->customer->name);
