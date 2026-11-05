@@ -2,25 +2,37 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Domain\Module\Actions\UpdateTenantModules;
 use App\Domain\Module\Models\Module;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Domain\Website\Models\WebsiteConfig;
 use App\Domain\Website\Models\WebsiteSection;
 use App\Http\Controllers\Controller;
 use App\Support\Enums\CatalogStatus;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/**
- * Read-only business settings. Editing arrives with the settings feature.
- */
+/** Business settings: profile overview and post-onboarding module toggles. */
 class SettingsController extends Controller
 {
     public function __invoke(Request $request, TenantContext $context): Response
     {
-        $tenant = $context->tenant()->loadMissing(['businessType:id,name', 'domains']);
+        $tenant = $context->tenant()->loadMissing(['businessType:id,name', 'businessType.engines', 'businessType.modules', 'domains']);
         $enabled = $context->enabledModules();
+
+        $required = $tenant->businessType?->engines
+            ->flatMap->requiredModuleCodes()
+            ->unique()
+            ->values()
+            ->all() ?? [];
+
+        $recommended = $tenant->businessType?->modules
+            ->filter(fn (Module $module) => $module->pivot->enabled && $module->isActive())
+            ->pluck('code')
+            ->all() ?? [];
 
         return Inertia::render('business/Settings', [
             'business' => [
@@ -42,15 +54,49 @@ class SettingsController extends Controller
                 'is_primary' => $domain->is_primary,
             ]),
             // Only catalogue-active modules (draft/coming-soon modules are hidden until built).
-            'modules' => Module::query()->where('status', CatalogStatus::Active)->orderBy('sort_order')->get(['code', 'name', 'description'])
+            'modules' => Module::query()
+                ->where('status', CatalogStatus::Active)
+                ->with('dependencies:id,code')
+                ->orderBy('sort_order')
+                ->get()
                 ->map(fn (Module $module) => [
                     'code' => $module->code,
                     'name' => $module->name,
                     'description' => $module->description,
+                    'type' => $module->type,
+                    'depends_on' => $module->dependencies->pluck('code')->values()->all(),
                     'enabled' => in_array($module->code, $enabled, true),
+                    'recommended' => in_array($module->code, $recommended, true),
+                    'required' => in_array($module->code, $required, true),
                 ]),
             'canUpdate' => $request->user()->can('settings.update'),
         ]);
+    }
+
+    public function updateModules(Request $request, TenantContext $context, UpdateTenantModules $update): RedirectResponse
+    {
+        $active = Module::query()->where('status', CatalogStatus::Active)->pluck('code')->all();
+
+        $validated = $request->validate([
+            'modules' => ['present', 'array'],
+            'modules.*' => ['string', 'distinct', Rule::in($active)],
+        ]);
+
+        $result = $update->handle($context->tenant(), array_values($validated['modules']));
+
+        $message = __('Modules updated.');
+        if ($result['enabled_now'] !== [] || $result['disabled_now'] !== []) {
+            $parts = [];
+            if ($result['enabled_now'] !== []) {
+                $parts[] = __('turned on :list', ['list' => implode(', ', $result['enabled_now'])]);
+            }
+            if ($result['disabled_now'] !== []) {
+                $parts[] = __('turned off :list', ['list' => implode(', ', $result['disabled_now'])]);
+            }
+            $message = __('Modules updated (:changes).', ['changes' => implode('; ', $parts)]);
+        }
+
+        return back()->with('success', $message);
     }
 
     /** @return ?array<string, mixed> */

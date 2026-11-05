@@ -1,12 +1,17 @@
-import { Link } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
+import { useMemo } from 'react';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
+import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
+import Tooltip from '@mui/material/Tooltip';
+import LockIcon from '@mui/icons-material/Lock';
 import AppLayout from '@/layouts/AppLayout';
 import useTenant from '@/hooks/useTenant';
 import PageHeader from '@/components/PageHeader';
 import StatusChip from '@/components/StatusChip';
+import { indexByCode, lockedModules, withDependencies } from '@/components/onboarding/modules';
 import { humanize } from '@/utils/format';
 
 function Detail({ label, value }) {
@@ -20,6 +25,51 @@ function Detail({ label, value }) {
 
 export default function Settings({ business, branding, profile, website, domains, modules, canUpdate }) {
     const { hasModule, hasEngine, can } = useTenant();
+    const flash = usePage().props.flash ?? {};
+
+    const modulesByCode = useMemo(() => indexByCode(modules), [modules]);
+    const required = useMemo(() => modules.filter((module) => module.required).map((module) => module.code), [modules]);
+    const initialSelected = useMemo(() => modules.filter((module) => module.enabled).map((module) => module.code), [modules]);
+
+    const form = useForm({ modules: initialSelected });
+    const locked = lockedModules(form.data.modules, required, modulesByCode);
+    const dirty =
+        form.data.modules.length !== initialSelected.length ||
+        form.data.modules.some((code) => !initialSelected.includes(code));
+
+    const toggle = (code) => {
+        if (!canUpdate) {
+            return;
+        }
+
+        if (form.data.modules.includes(code)) {
+            if (!locked[code]) {
+                form.setData(
+                    'modules',
+                    form.data.modules.filter((other) => other !== code),
+                );
+            }
+            return;
+        }
+
+        form.setData('modules', withDependencies([...form.data.modules, code], modulesByCode));
+    };
+
+    const groups = modules.reduce((result, module) => {
+        (result[module.type] ??= []).push(module);
+        return result;
+    }, {});
+
+    const save = (event) => {
+        event.preventDefault();
+        form.put('/settings/modules', {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                const next = (page.props.modules ?? []).filter((module) => module.enabled).map((module) => module.code);
+                form.setData('modules', next);
+            },
+        });
+    };
 
     return (
         <AppLayout title="Settings">
@@ -86,6 +136,10 @@ export default function Settings({ business, branding, profile, website, domains
                     </>
                 }
             />
+
+            {flash.success ? (
+                <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{flash.success}</p>
+            ) : null}
 
             <div className="grid gap-4 lg:grid-cols-2">
                 <Card variant="outlined">
@@ -179,24 +233,73 @@ export default function Settings({ business, branding, profile, website, domains
                 </Card>
             </div>
 
-            <Card variant="outlined" className="mt-4">
+            <Card variant="outlined" className="mt-4" component="form" onSubmit={save}>
                 <CardContent>
-                    <h2 className="font-semibold text-slate-900">Modules</h2>
-                    <p className="mt-1 text-sm text-slate-600">Features included with your business type. Contact support if you need a change.</p>
-                    <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        {modules.map((module) => (
-                            <li
-                                key={module.code}
-                                className={`rounded-lg border p-3 ${module.enabled ? 'border-brand-100 bg-brand-50' : 'border-slate-200'}`}
-                            >
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className="text-sm font-medium text-slate-900">{module.name}</span>
-                                    <StatusChip status={module.enabled ? 'active' : 'disabled'} />
-                                </div>
-                                <p className="mt-1 text-xs text-slate-600">{module.description}</p>
-                            </li>
-                        ))}
-                    </ul>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                            <h2 className="font-semibold text-slate-900">Modules</h2>
+                            <p className="mt-1 text-sm text-slate-600">
+                                {canUpdate
+                                    ? 'Turn features on or off any time. Required features stay locked; turning one on also enables what it needs.'
+                                    : 'Features included with your business. Ask an owner if you need a change.'}
+                            </p>
+                        </div>
+                        {canUpdate ? (
+                            <Button type="submit" variant="contained" disabled={!dirty || form.processing}>
+                                {form.processing ? 'Saving…' : 'Save modules'}
+                            </Button>
+                        ) : null}
+                    </div>
+
+                    {Object.entries(groups).map(([type, items]) => (
+                        <section key={type} className="mt-5">
+                            <h3 className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">{humanize(type)}</h3>
+                            <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                {items.map((module) => {
+                                    const checked = form.data.modules.includes(module.code);
+                                    const reason = checked ? locked[module.code] : null;
+                                    const disabled = !canUpdate || Boolean(reason);
+
+                                    return (
+                                        <li key={module.code}>
+                                            <label
+                                                className={`flex h-full items-start gap-2 rounded-lg border p-3 ${
+                                                    checked ? 'border-brand-100 bg-brand-50' : 'border-slate-200 bg-white'
+                                                } ${disabled ? 'cursor-default' : 'cursor-pointer'}`}
+                                            >
+                                                <Checkbox
+                                                    checked={checked}
+                                                    disabled={disabled}
+                                                    onChange={() => toggle(module.code)}
+                                                    size="small"
+                                                    className="-mt-1 -ml-1"
+                                                    slotProps={{ input: { 'aria-describedby': `settings-module-${module.code}` } }}
+                                                />
+                                                <span className="min-w-0 flex-1">
+                                                    <span className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-slate-900">
+                                                        {module.name}
+                                                        {module.recommended ? (
+                                                            <Chip label="Recommended" size="small" color="primary" variant="outlined" className="h-5 text-[11px]" />
+                                                        ) : null}
+                                                        {reason ? (
+                                                            <Tooltip title={reason}>
+                                                                <LockIcon className="text-slate-400" sx={{ fontSize: 14 }} aria-label={reason} />
+                                                            </Tooltip>
+                                                        ) : null}
+                                                    </span>
+                                                    <span id={`settings-module-${module.code}`} className="mt-0.5 block text-xs text-slate-600">
+                                                        {reason ?? module.description}
+                                                    </span>
+                                                </span>
+                                            </label>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </section>
+                    ))}
+
+                    {form.errors.modules ? <p className="mt-3 text-sm text-red-600">{form.errors.modules}</p> : null}
                 </CardContent>
             </Card>
         </AppLayout>

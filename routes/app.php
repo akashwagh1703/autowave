@@ -67,6 +67,7 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
     Route::middleware(['tenant.member', 'subscription'])->group(function () {
         Route::get('/dashboard', DashboardController::class)->name('dashboard');
         Route::get('/settings', SettingsController::class)->middleware('can:settings.view')->name('settings');
+        Route::put('/settings/modules', [SettingsController::class, 'updateModules'])->middleware('can:settings.update')->name('settings.modules');
 
         // Billing (docs/05-features/billing.md): always reachable, even while read-only or locked.
         Route::middleware('can:billing.view')->group(function () {

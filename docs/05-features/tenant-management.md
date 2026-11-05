@@ -51,8 +51,15 @@ App: membership required (`tenant.member`); settings page `settings.view`. Admin
 
 ## UI
 
-`business/Dashboard`, `business/Workspaces`, `business/Settings` (read-only), `admin/Dashboard`,
+`business/Dashboard`, `business/Workspaces`, `business/Settings` (module toggles + overview), `admin/Dashboard`,
 `admin/tenants/Index`, `website/Home` (see [website.md](website.md)), `onboarding/Create`.
+
+### Modules after onboarding
+
+Owners (`settings.update`) can turn catalogue-active modules on or off under **Settings → Modules**
+(`PUT /settings/modules`). Engine-required modules stay locked; enabling a module also enables its
+dependencies (`ModuleManager`). Newly enabled modules get the same idempotent defaults as backfill
+(website, CRM, service categories, automations). Audit: `tenant.modules_updated`.
 
 ## Security
 
@@ -60,9 +67,11 @@ See `docs/02-architecture/multi-tenancy.md` and ADR-011. Suspend/activate is aud
 
 ## Testing
 
-`tests/Feature/Tenancy/*`, `tests/Feature/Catalog/ModuleManagerTest.php`, `tests/Feature/Admin/AdminAccessTest.php`.
+`tests/Feature/Tenancy/*` (including `UpdateTenantModulesTest`), `tests/Feature/Catalog/ModuleManagerTest.php`,
+`tests/Feature/Admin/AdminAccessTest.php`.
 
 ## Known limitations
 
 - No invitation flow or member management UI yet (`users.manage` permission exists).
-- Settings are read-only; no custom domain UI (custom domains work at the data level).
+- No custom domain UI (custom domains work at the data level).
+- Engines are still fixed by business type (owners cannot add/remove engines from Settings).

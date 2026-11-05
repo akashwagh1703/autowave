@@ -21,7 +21,7 @@ Finishing every unfinished module (reviews, loyalty, membership, marketing campa
 | marketing, forms, qr, reviews, loyalty, membership, analytics | Declared only | Mark `draft` until built |
 | packages (website section) | Placeholder | Build in Phase 2 |
 
-Also: owners **cannot** turn modules on/off after signup (wizard text is wrong). That is Phase 6.
+Also: owners **can** turn modules on/off after signup under Settings → Modules (Phase 6 done).
 
 ---
 
@@ -50,7 +50,7 @@ WhatsApp assistant: book sessions, services & prices, products/albums, offers, F
 1. Set unfinished modules to `status: draft` in `config/catalog.php` (CatalogSeeder already respects this; onboarding only lists `active`).
 2. Remove draft modules from all business-type presets so new businesses are not told they have Reviews/Loyalty/Marketing when nothing exists.
 3. Fix Offers nav: require `engine: commerce` as well as `module: offers`.
-4. Soften wizard copy: do not promise “switch on later” until Phase 6 exists.
+4. Wizard copy may mention Settings → Modules for later changes (Phase 6).
 5. Settings → Modules: show draft/disabled clearly; only claim Active when the module is active in the catalogue **and** enabled for the tenant.
 
 ### Tests (Phase 1)
@@ -97,10 +97,10 @@ WhatsApp assistant: book sessions, services & prices, products/albums, offers, F
 - Membership plans (monthly/yearly); link to customer; optional booking discount.
 - Flip `membership` to active.
 
-## Phase 6 — Module toggle UI
+## Phase 6 — Module toggle UI ✅
 
-- Owner (or Super Admin) enable/disable modules after signup with dependency checks (`ModuleManager::disable` already enforces).
-- Fix wizard copy permanently.
+- Owner enable/disable modules after signup via Settings → Modules (`UpdateTenantModules`, dependency checks).
+- Wizard copy points owners to Settings for later changes.
 
 ## Phase 7 — Marketing campaigns
 

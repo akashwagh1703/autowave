@@ -8,6 +8,8 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **Settings → Modules.** Owners can turn catalogue features on or off after onboarding (dependencies and
+  engine-required modules enforced). Newly enabled modules get website/CRM/automation defaults.
 - **Loyalty stamp cards.** Cafés, salons, studios and stores get a configurable stamp card (e.g. buy 9,
   get the 10th free). Walk-ins join via a public QR on the website; stamps are earned when an order
   (or appointment) is completed; staff redeem on the customer page. Settings → Loyalty.
@@ -27,8 +29,7 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
   Login unchanged: `owner@abc-turf.test` / `password`.
 - **Online table reservations hold a free table.** Website and WhatsApp reservation requests assign a
   fitting free table so busy evenings cannot over-collect requests. Slot lists can filter by party size.
-- **Honest setup copy.** Onboarding no longer promises “change features later”; Settings explains modules
-  are included with the business type; dashboard widget footnote no longer implies unfinished modules.
+- **Onboarding capabilities copy** points owners to Settings → Modules for features they leave off.
 
 ### Added
 

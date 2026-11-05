@@ -75,7 +75,7 @@ class ModuleManager
             $alreadyEnabled = $this->enabledCodes($tenant);
             $enabled = [];
 
-            foreach ($this->resolveOrder($codes) as $code) {
+            foreach ($this->withDependencies($codes) as $code) {
                 if (! in_array($code, $alreadyEnabled, true)) {
                     $this->enable($tenant, $code);
                     $enabled[] = $code;
@@ -84,6 +84,17 @@ class ModuleManager
 
             return $enabled;
         });
+    }
+
+    /**
+     * Active modules plus their dependencies, dependencies first.
+     *
+     * @param  list<string>  $codes
+     * @return list<string>
+     */
+    public function withDependencies(array $codes): array
+    {
+        return $this->resolveOrder($codes);
     }
 
     /**
