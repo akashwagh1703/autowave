@@ -14,6 +14,10 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **Counter WhatsApp QR.** Settings → Messaging shows a downloadable QR for the business WhatsApp
+  number. Customers scan it to open a chat with a “Hi” greeting — for printing at the counter.
+- **Downloadable loyalty and WhatsApp payment QRs.** Settings → Loyalty can download the join QR.
+  Settings → Orders shows and downloads the business UPI payment QR used with WhatsApp confirmation.
 - **Settings → Modules.** Owners can turn catalogue features on or off after onboarding (dependencies and
   engine-required modules enforced). Newly enabled modules get website/CRM/automation defaults.
 - **Loyalty stamp cards.** Cafés, salons, studios and stores get a configurable stamp card (e.g. buy 9,

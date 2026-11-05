@@ -12,13 +12,16 @@ import Select from '@mui/material/Select';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import DownloadIcon from '@mui/icons-material/Download';
 import AppLayout from '@/layouts/AppLayout';
 import PageHeader from '@/components/PageHeader';
 import useTenant from '@/hooks/useTenant';
+import { downloadDataUri } from '@/utils/download';
 
 export default function Loyalty({ loyalty, join_url, join_qr, products, has_booking, has_commerce }) {
-    const { can } = useTenant();
+    const { can, tenant } = useTenant();
     const canUpdate = can('settings.update');
+    const qrFilename = `${tenant?.slug || 'loyalty'}-join-qr.png`;
     const form = useForm({
         enabled: loyalty.enabled,
         stamps_required: loyalty.stamps_required,
@@ -217,11 +220,22 @@ export default function Loyalty({ loyalty, join_url, join_qr, products, has_book
                         {join_url ? (
                             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
                                 {join_qr ? <img src={join_qr} alt="Loyalty join QR" className="h-40 w-40 rounded border border-slate-200 bg-white p-2" /> : null}
-                                <div className="space-y-1 text-sm">
+                                <div className="space-y-2 text-sm">
                                     <p className="font-medium text-slate-800">Print or show this QR at the counter</p>
                                     <a href={join_url} className="break-all text-brand-700 hover:underline" target="_blank" rel="noreferrer">
                                         {join_url}
                                     </a>
+                                    {join_qr ? (
+                                        <Button
+                                            type="button"
+                                            variant="outlined"
+                                            size="small"
+                                            startIcon={<DownloadIcon />}
+                                            onClick={() => downloadDataUri(join_qr, qrFilename)}
+                                        >
+                                            Download loyalty QR
+                                        </Button>
+                                    ) : null}
                                 </div>
                             </div>
                         ) : (

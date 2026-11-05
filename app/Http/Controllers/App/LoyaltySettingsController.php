@@ -26,7 +26,7 @@ class LoyaltySettingsController extends Controller
         return Inertia::render('business/settings/Loyalty', [
             'loyalty' => $config,
             'join_url' => $joinUrl,
-            'join_qr' => $joinUrl ? QrCode::dataUri($joinUrl, 280) : null,
+            'join_qr' => $joinUrl ? QrCode::pngDataUri($joinUrl, 280) : null,
             'products' => $context->hasEngine('commerce')
                 ? Product::query()->orderBy('name')->get(['id', 'name', 'is_active'])->map(fn (Product $product) => [
                     'id' => $product->id,

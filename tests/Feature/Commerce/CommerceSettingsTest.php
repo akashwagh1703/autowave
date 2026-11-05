@@ -94,6 +94,10 @@ class CommerceSettingsTest extends TestCase
         ], $this->inTenant($tenant, fn () => app(CommerceSettings::class)->confirmation()));
         $this->assertDatabaseHas('audit_logs', ['action' => 'commerce.settings_updated']);
 
+        $this->get($this->appUrl('/settings/commerce'))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('confirmation.upi_id', 'shop@upi')
+            ->where('payment_qr', fn (?string $value) => is_string($value) && str_starts_with($value, 'data:image/png;base64,')));
+
         $this->put($this->appUrl('/settings/commerce'), $this->settingsPayload(['pickup' => false, 'delivery' => false]))->assertSessionHasErrors('pickup');
         $this->put($this->appUrl('/settings/commerce'), $this->settingsPayload(['delivery_fee' => '-1']))->assertSessionHasErrors('delivery_fee');
         $this->put($this->appUrl('/settings/commerce'), $this->settingsPayload(['whatsapp' => true, 'include_qr' => true, 'qr_payload' => 'upi', 'upi_id' => '']))->assertSessionHasErrors('upi_id');

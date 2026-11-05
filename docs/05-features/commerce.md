@@ -242,6 +242,9 @@ when Meta WhatsApp is connected). Optional QR image (PNG) encodes one of:
 - **Order reference**: opaque check string for the team.
 - **UPI payment link**: amount filled from the balance due (or total), using the UPI ID in settings.
 
+When a UPI ID is saved, Settings → Orders also shows a downloadable **WhatsApp payment QR** (static UPI
+QR for printing or sharing). Per-order status/reference QRs are still generated at confirm time.
+
 Message text supports the usual order/customer/business placeholders. Idempotent per order
 (`order-confirm-wa:{id}`). This is separate from Automations (you can still build custom
 `order.confirmed` flows).

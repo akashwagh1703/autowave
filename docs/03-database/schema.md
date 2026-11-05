@@ -274,7 +274,7 @@ Other changes:
   `template`. Leads created from a message use the source `whatsapp` or `instagram`.
 - Automation `send_whatsapp` config may be `{mode: template, template: {name, language}, params: [...]}`.
 - New tenant setting `messaging`: `quiet_hours` (`enabled`, `start`, `end`), `email` (`from_name`,
-  `reply_to`).
+  `reply_to`), `owner_alerts`, `public_whatsapp` (counter QR / `wa.me` number).
 - New permission group `conversations` (`view`, `reply`, `assign`).
 - New audit actions: `messaging.channel_connected`, `messaging.channel_disconnected`,
   `messaging.templates_synced`, `messaging.settings_updated`, `conversation.opted_out`,

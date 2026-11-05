@@ -228,6 +228,8 @@ This document describes what **actually exists** in the repository today. Planne
   - tokens and secrets stored encrypted and write-only (the page only says whether one is saved);
   - the webhook callback URL and verify token to paste into Meta; disconnect;
   - sync WhatsApp templates; quiet hours; email sender name and reply-to;
+  - **Counter WhatsApp QR**: downloadable PNG that opens `wa.me` with a “Hi” greeting (number from
+    `public_whatsapp`, seeded when WhatsApp is connected);
   - **Email alerts** (on by default): owners get `WebsiteActivityAlert` for each website enquiry and online
     booking (`EmailOwnersAboutWebsiteActivity`; staff-entered bookings and the internal tenant are skipped).
     Website orders and reservations are emailed by the default "Tell the team" automations instead.

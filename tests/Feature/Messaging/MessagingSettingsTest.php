@@ -45,6 +45,31 @@ class MessagingSettingsTest extends TestCase
         $raw = (string) DB::table('messaging_channels')->where('id', $channel->id)->value('credentials');
         $this->assertStringNotContainsString('EAAG-secret-token', $raw);
         $this->assertTrue(AuditLog::query()->where('action', 'messaging.channel_connected')->exists());
+        $this->assertSame('+919876543210', $this->inTenant($tenant, fn () => app(MessagingSettings::class)->publicWhatsapp()));
+    }
+
+    public function test_the_counter_whatsapp_qr_opens_a_chat_with_hi(): void
+    {
+        $tenant = $this->createTenant();
+        $this->connectWhatsApp($tenant);
+        $this->actingAs($this->ownerOf($tenant));
+
+        $this->put($this->appUrl('/settings/messaging'), [
+            'quiet_hours' => ['enabled' => false, 'start' => '21:00', 'end' => '09:00'],
+            'email' => ['from_name' => '', 'reply_to' => ''],
+            'public_whatsapp' => '+91 98765 43210',
+        ])->assertSessionHasNoErrors();
+
+        $this->get($this->appUrl('/settings/messaging'))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('public_whatsapp', '+919876543210')
+            ->where('whatsapp_chat_url', 'https://wa.me/919876543210?text=Hi')
+            ->where('whatsapp_qr', fn ($qr) => is_string($qr) && str_starts_with($qr, 'data:image/png;base64,')));
+
+        $this->put($this->appUrl('/settings/messaging'), [
+            'quiet_hours' => ['enabled' => false, 'start' => '21:00', 'end' => '09:00'],
+            'email' => ['from_name' => '', 'reply_to' => ''],
+            'public_whatsapp' => 'not-a-number',
+        ])->assertSessionHasErrors('public_whatsapp');
     }
 
     public function test_secrets_never_reach_the_page_and_a_blank_secret_keeps_the_saved_one(): void

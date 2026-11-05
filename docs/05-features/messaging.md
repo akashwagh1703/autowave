@@ -164,7 +164,11 @@ Stored in the `messaging` tenant setting:
 - `owner_alerts` (default on): email every owner (`WebsiteActivityAlert`, `notifications` queue) when a
   customer sends an enquiry or books on the website. Sent by `EmailOwnersAboutWebsiteActivity` after the
   transaction commits; failures are reported and never break the customer's request. Website orders and
-  reservations are covered by the default `new_online_order_alert` / `new_reservation_alert` automations.
+  reservations are covered by the default `new_online_order_alert` / `new_reservation_alert` automations;
+- `public_whatsapp`: the number for the **counter QR**. Connecting WhatsApp seeds it from the display
+  phone number. The page builds a `wa.me/<digits>?text=Hi` link and a downloadable PNG QR so the
+  business can print it for the counter. If the field is cleared, the QR still falls back to the
+  connected WhatsApp display number when available.
 
 ## Database
 
@@ -202,7 +206,7 @@ inbox for ABC Salon locally.
   receipts, Instagram, module gating, recovery and pruning.
 - `MessageDeliveryTest`: provider payloads (`Http::fake`), permanent failures, quiet hours, the window
   and template mode in automations, opt-out.
-- `MessagingSettingsTest`: connection, write-only secrets, template sync, preferences.
+- `MessagingSettingsTest`: connection, write-only secrets, template sync, preferences, counter WhatsApp QR.
 - `InboxHttpTest`: inbox, replies, templates, assignment, permissions, chat buttons, backfill, simulate
   command.
 - `MessagingIsolationTest`: cross-tenant access, templates, members, webhooks and composite FKs.

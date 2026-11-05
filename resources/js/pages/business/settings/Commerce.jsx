@@ -12,9 +12,11 @@ import Select from '@mui/material/Select';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import DownloadIcon from '@mui/icons-material/Download';
 import AppLayout from '@/layouts/AppLayout';
 import PageHeader from '@/components/PageHeader';
 import useTenant from '@/hooks/useTenant';
+import { downloadDataUri } from '@/utils/download';
 
 function MoneyField({ form, name, label, helperText, disabled }) {
     const { currency } = useTenant();
@@ -34,8 +36,8 @@ function MoneyField({ form, name, label, helperText, disabled }) {
     );
 }
 
-export default function Commerce({ online, confirmation }) {
-    const { can, hasModule } = useTenant();
+export default function Commerce({ online, confirmation, payment_qr }) {
+    const { can, hasModule, tenant } = useTenant();
     const canUpdate = can('settings.update');
     const form = useForm({
         enabled: online.enabled,
@@ -55,6 +57,7 @@ export default function Commerce({ online, confirmation }) {
     });
     const locked = !canUpdate || !form.data.enabled;
     const confirmationLocked = !canUpdate || !form.data.whatsapp;
+    const paymentQrFilename = `${tenant?.slug || 'business'}-whatsapp-payment-qr.png`;
 
     const submit = (event) => {
         event.preventDefault();
@@ -186,6 +189,30 @@ export default function Commerce({ online, confirmation }) {
                                     helperText={form.errors.upi_payee ?? 'Optional. Shown in the payment app.'}
                                 />
                             </div>
+                        ) : null}
+                        {payment_qr ? (
+                            <div className="flex flex-col items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-center">
+                                <img src={payment_qr} alt="WhatsApp payment QR" className="h-40 w-40 rounded border border-slate-200 bg-white p-2" />
+                                <div className="space-y-2 text-sm">
+                                    <p className="font-medium text-slate-800">WhatsApp payment QR</p>
+                                    <p className="text-slate-600">
+                                        Download this QR to print or share. When confirmation QR encodes UPI, WhatsApp messages use your UPI ID with the order amount filled in.
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<DownloadIcon />}
+                                        onClick={() => downloadDataUri(payment_qr, paymentQrFilename)}
+                                    >
+                                        Download WhatsApp QR
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : form.data.include_qr && form.data.qr_payload === 'upi' ? (
+                            <p className="text-sm text-slate-600">Save a UPI ID to preview and download your WhatsApp payment QR.</p>
+                        ) : form.data.include_qr ? (
+                            <p className="text-sm text-slate-600">Status and reference QRs are created per order when you confirm. Add a UPI ID to download a reusable payment QR.</p>
                         ) : null}
                         <TextField
                             label="Message"

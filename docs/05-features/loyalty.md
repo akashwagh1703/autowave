@@ -17,7 +17,7 @@ free). Walk-ins join by scanning a QR; stamps are awarded when an order or appoi
 - Optional product allow-list (empty = every product)
 - Optional: one stamp when an appointment is completed (booking businesses)
 - Birthday: ask on join form, greet on the day or the 1st of the birth month, optional free stamp reward
-- Join page heading/blurb and printable join QR (needs the business website domain)
+- Join page heading/blurb and printable join QR with download (needs the business website domain)
 
 ## Birthdays
 

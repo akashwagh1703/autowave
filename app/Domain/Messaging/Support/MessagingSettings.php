@@ -4,6 +4,7 @@ namespace App\Domain\Messaging\Support;
 
 use App\Domain\Tenant\Models\TenantSetting;
 use App\Domain\Tenant\Support\TenantContext;
+use App\Support\Phone;
 
 /**
  * Tenant messaging preferences: the `messaging` tenant setting over the config/messaging.php defaults.
@@ -12,6 +13,8 @@ use App\Domain\Tenant\Support\TenantContext;
 class MessagingSettings
 {
     public const KEY = 'messaging';
+
+    public const CHAT_GREETING = 'Hi';
 
     public function __construct(private readonly TenantContext $context) {}
 
@@ -46,17 +49,54 @@ class MessagingSettings
         return (bool) ($this->stored()['owner_alerts'] ?? true);
     }
 
+    /** Public WhatsApp number for the counter QR (customers scan to chat). */
+    public function publicWhatsapp(): ?string
+    {
+        $stored = $this->stored()['public_whatsapp'] ?? null;
+
+        return filled($stored) ? (string) $stored : null;
+    }
+
+    /**
+     * wa.me link with a short Hi greeting. Uses the saved public number, or a fallback handle
+     * (usually the connected WhatsApp display number).
+     */
+    public function whatsappChatUrl(?string $fallbackHandle = null): ?string
+    {
+        $normalized = Phone::normalize($this->publicWhatsapp() ?: $fallbackHandle);
+
+        if (! $normalized) {
+            return null;
+        }
+
+        return 'https://wa.me/'.ltrim($normalized, '+').'?text='.rawurlencode(self::CHAT_GREETING);
+    }
+
     /**
      * @param  array{enabled: bool, start: string, end: string}  $quietHours
      * @param  array{from_name: ?string, reply_to: ?string}  $email
      */
-    public function update(array $quietHours, array $email, ?bool $ownerAlerts = null): void
+    public function update(array $quietHours, array $email, ?bool $ownerAlerts = null, ?string $publicWhatsapp = null): void
     {
         TenantSetting::query()->updateOrCreate(['key' => self::KEY], ['value' => [
             ...$this->stored(),
             'quiet_hours' => $quietHours,
             'email' => $email,
             'owner_alerts' => $ownerAlerts ?? $this->ownerAlerts(),
+            'public_whatsapp' => $publicWhatsapp,
+        ]]);
+    }
+
+    /** Seeds the counter QR number from the connected WhatsApp display handle when empty. */
+    public function seedPublicWhatsappFrom(?string $displayHandle): void
+    {
+        if ($this->publicWhatsapp() || ! Phone::normalize($displayHandle)) {
+            return;
+        }
+
+        TenantSetting::query()->updateOrCreate(['key' => self::KEY], ['value' => [
+            ...$this->stored(),
+            'public_whatsapp' => Phone::normalize($displayHandle),
         ]]);
     }
 

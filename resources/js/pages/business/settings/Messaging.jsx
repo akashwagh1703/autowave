@@ -17,6 +17,7 @@ import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DownloadIcon from '@mui/icons-material/Download';
 import SyncIcon from '@mui/icons-material/Sync';
 import { useState } from 'react';
 import AppLayout from '@/layouts/AppLayout';
@@ -24,6 +25,7 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import PageHeader from '@/components/PageHeader';
 import useTenant from '@/hooks/useTenant';
 import { channelColors, channelIcons } from '@/modules/inbox/channels';
+import { downloadDataUri } from '@/utils/download';
 import { formatDateTime, formatRelative } from '@/utils/format';
 
 function CopyField({ label, value }) {
@@ -325,11 +327,17 @@ function TemplatesCard({ templates, canSync, whatsappConnected }) {
     );
 }
 
-function PreferencesCard({ quietHours, email, ownerAlerts, canUpdate }) {
-    const { timezone } = useTenant();
-    const form = useForm({ quiet_hours: quietHours, email: { from_name: email.from_name ?? '', reply_to: email.reply_to ?? '' }, owner_alerts: ownerAlerts });
+function PreferencesCard({ quietHours, email, ownerAlerts, publicWhatsapp, whatsappChatUrl, whatsappQr, canUpdate }) {
+    const { tenant, timezone } = useTenant();
+    const form = useForm({
+        quiet_hours: quietHours,
+        email: { from_name: email.from_name ?? '', reply_to: email.reply_to ?? '' },
+        owner_alerts: ownerAlerts,
+        public_whatsapp: publicWhatsapp ?? '',
+    });
     const setQuiet = (changes) => form.setData('quiet_hours', { ...form.data.quiet_hours, ...changes });
     const setEmail = (changes) => form.setData('email', { ...form.data.email, ...changes });
+    const qrFilename = `${tenant?.slug || 'whatsapp'}-chat-qr.png`;
 
     const submit = (event) => {
         event.preventDefault();
@@ -340,6 +348,52 @@ function PreferencesCard({ quietHours, email, ownerAlerts, canUpdate }) {
         <form onSubmit={submit} noValidate>
             <Card variant="outlined">
                 <CardContent className="space-y-5">
+                    <div className="space-y-3">
+                        <h2 className="font-semibold text-slate-900">Counter WhatsApp QR</h2>
+                        <p className="text-sm text-slate-600">
+                            Print this QR for your counter. When a customer scans it, WhatsApp opens a chat with your number and a &ldquo;Hi&rdquo; message ready to send.
+                        </p>
+                        <TextField
+                            label="WhatsApp number"
+                            size="small"
+                            value={form.data.public_whatsapp}
+                            disabled={!canUpdate}
+                            onChange={(event) => form.setData('public_whatsapp', event.target.value)}
+                            error={Boolean(form.errors.public_whatsapp)}
+                            helperText={form.errors.public_whatsapp ?? 'Include country code, e.g. +91 98765 43210. Filled from your connected WhatsApp number when empty.'}
+                            slotProps={{ htmlInput: { inputMode: 'tel', maxLength: 30 } }}
+                        />
+                        {whatsappQr ? (
+                            <div className="flex flex-col items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-center">
+                                <img src={whatsappQr} alt="WhatsApp chat QR" className="h-40 w-40 rounded border border-slate-200 bg-white p-2" />
+                                <div className="space-y-2 text-sm">
+                                    <p className="font-medium text-slate-800">Download for print</p>
+                                    <p className="text-slate-600">
+                                        Customers scan this to message you on WhatsApp. Link:{' '}
+                                        <a href={whatsappChatUrl} target="_blank" rel="noreferrer" className="text-sky-700 underline">
+                                            open chat
+                                        </a>
+                                    </p>
+                                    <Button
+                                        type="button"
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<DownloadIcon />}
+                                        onClick={() => downloadDataUri(whatsappQr, qrFilename)}
+                                    >
+                                        Download WhatsApp QR
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-slate-600">
+                                {canUpdate
+                                    ? 'Enter a WhatsApp number above (or connect WhatsApp) and save to generate your counter QR.'
+                                    : 'No WhatsApp number is set for the counter QR yet.'}
+                            </p>
+                        )}
+                    </div>
+
                     <div className="space-y-3">
                         <h2 className="font-semibold text-slate-900">Quiet hours</h2>
                         <FormControlLabel
@@ -425,7 +479,7 @@ function PreferencesCard({ quietHours, email, ownerAlerts, canUpdate }) {
     );
 }
 
-export default function Messaging({ channels, templates, quietHours, email, ownerAlerts }) {
+export default function Messaging({ channels, templates, quietHours, email, ownerAlerts, public_whatsapp, whatsapp_chat_url, whatsapp_qr }) {
     const { can, timezone } = useTenant();
     const canUpdate = can('settings.update');
     const [disconnecting, setDisconnecting] = useState(null);
@@ -449,7 +503,7 @@ export default function Messaging({ channels, templates, quietHours, email, owne
             </Button>
             <PageHeader
                 title="Messaging"
-                description={canUpdate ? 'Connect WhatsApp and Instagram, manage templates, quiet hours, email alerts and the email sender.' : 'You have view-only access.'}
+                description={canUpdate ? 'Connect WhatsApp and Instagram, download a counter QR, manage templates, quiet hours, email alerts and the email sender.' : 'You have view-only access.'}
                 actions={
                     <>
                         <Button component={Link} href="/settings/whatsapp-assistant" variant="outlined">
@@ -468,7 +522,15 @@ export default function Messaging({ channels, templates, quietHours, email, owne
                 <WhatsAppCard channel={channels.whatsapp} canUpdate={canUpdate} onDisconnect={setDisconnecting} timezone={timezone} />
                 <TemplatesCard templates={templates} canSync={canUpdate} whatsappConnected={channels.whatsapp.connected} />
                 <InstagramCard channel={channels.instagram} canUpdate={canUpdate} onDisconnect={setDisconnecting} timezone={timezone} />
-                <PreferencesCard quietHours={quietHours} email={email} ownerAlerts={ownerAlerts} canUpdate={canUpdate} />
+                <PreferencesCard
+                    quietHours={quietHours}
+                    email={email}
+                    ownerAlerts={ownerAlerts}
+                    publicWhatsapp={public_whatsapp}
+                    whatsappChatUrl={whatsapp_chat_url}
+                    whatsappQr={whatsapp_qr}
+                    canUpdate={canUpdate}
+                />
             </div>
 
             <ConfirmDialog

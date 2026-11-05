@@ -20,6 +20,12 @@ final class QrCode
         return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }
 
+    /** PNG data URI for on-screen preview and browser download (print-friendly). */
+    public static function pngDataUri(string $text, int $size = 400, int $margin = 2): string
+    {
+        return 'data:image/png;base64,'.base64_encode(self::png($text, $size, $margin));
+    }
+
     /** PNG bytes (WhatsApp / Meta media upload). Uses GD so Imagick is not required. */
     public static function png(string $text, int $size = 400, int $margin = 2): string
     {

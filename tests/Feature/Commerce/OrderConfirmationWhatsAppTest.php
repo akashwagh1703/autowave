@@ -128,5 +128,6 @@ class OrderConfirmationWhatsAppTest extends TestCase
     {
         $png = QrCode::png('AW-1-#1001', 200);
         $this->assertStringStartsWith("\x89PNG", $png);
+        $this->assertStringStartsWith('data:image/png;base64,', QrCode::pngDataUri('AW-1-#1001', 200));
     }
 }

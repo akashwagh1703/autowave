@@ -4,7 +4,9 @@ namespace App\Http\Controllers\App;
 
 use App\Domain\Audit\Services\AuditLogger;
 use App\Domain\Billing\Actions\UpdateBillingSettings;
+use App\Domain\Billing\Support\QrCode;
 use App\Domain\Commerce\Support\CommerceSettings;
+use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,11 +18,25 @@ use Inertia\Response;
 /** Settings → Orders and shop: online ordering, pickup/delivery, and WhatsApp confirmation QR. */
 class CommerceSettingsController extends Controller
 {
-    public function show(CommerceSettings $settings): Response
+    public function show(CommerceSettings $settings, TenantContext $context): Response
     {
+        $confirmation = $settings->confirmation();
+        $paymentQr = null;
+
+        if (filled($confirmation['upi_id'] ?? null)) {
+            $payee = $confirmation['upi_payee'] ?: $context->tenant()->name;
+            $upi = 'upi://pay?'.http_build_query([
+                'pa' => $confirmation['upi_id'],
+                'pn' => $payee,
+                'cu' => 'INR',
+            ], '', '&', PHP_QUERY_RFC3986);
+            $paymentQr = QrCode::pngDataUri($upi, 280);
+        }
+
         return Inertia::render('business/settings/Commerce', [
             'online' => $settings->online(),
-            'confirmation' => $settings->confirmation(),
+            'confirmation' => $confirmation,
+            'payment_qr' => $paymentQr,
         ]);
     }
 

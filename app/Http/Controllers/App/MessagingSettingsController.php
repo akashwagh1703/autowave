@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\App;
 
 use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Billing\Support\QrCode;
 use App\Domain\Messaging\Actions\ConnectChannel;
 use App\Domain\Messaging\Actions\DisconnectChannel;
 use App\Domain\Messaging\Actions\SyncTemplates;
@@ -10,9 +11,11 @@ use App\Domain\Messaging\Models\MessageTemplate;
 use App\Domain\Messaging\Support\MessagingSettings;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\MessagingPresenter;
+use App\Support\Phone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,10 +28,12 @@ class MessagingSettingsController extends Controller
     public function show(Request $request, MessagingSettings $settings): Response
     {
         $canUpdate = $request->user()->can('settings.update');
+        $whatsapp = MessagingPresenter::channel(ConnectChannel::ensure('whatsapp'), $canUpdate);
+        $chatUrl = $settings->whatsappChatUrl($whatsapp['display_handle'] ?? null);
 
         return Inertia::render('business/settings/Messaging', [
             'channels' => [
-                'whatsapp' => MessagingPresenter::channel(ConnectChannel::ensure('whatsapp'), $canUpdate),
+                'whatsapp' => $whatsapp,
                 'instagram' => MessagingPresenter::channel(ConnectChannel::ensure('instagram'), $canUpdate),
             ],
             'templates' => MessageTemplate::query()->where('channel', 'whatsapp')->orderBy('name')->orderBy('language')->get()
@@ -36,11 +41,14 @@ class MessagingSettingsController extends Controller
             'quietHours' => $settings->quietHours(),
             'email' => $settings->email(),
             'ownerAlerts' => $settings->ownerAlerts(),
+            'public_whatsapp' => $settings->publicWhatsapp(),
+            'whatsapp_chat_url' => $chatUrl,
+            'whatsapp_qr' => $chatUrl ? QrCode::pngDataUri($chatUrl, 280) : null,
             'graphVersion' => config('messaging.meta.graph_version'),
         ]);
     }
 
-    public function connectWhatsApp(Request $request, ConnectChannel $connect): RedirectResponse
+    public function connectWhatsApp(Request $request, ConnectChannel $connect, MessagingSettings $settings): RedirectResponse
     {
         $validated = $request->validate([
             'phone_number_id' => ['required', 'string', 'regex:/^\d{5,32}$/'],
@@ -52,7 +60,8 @@ class MessagingSettingsController extends Controller
             'business_account_id.regex' => __('The WhatsApp Business Account id is a long number.'),
         ]);
 
-        $connect->whatsapp($validated, $request->user());
+        $channel = $connect->whatsapp($validated, $request->user());
+        $settings->seedPublicWhatsappFrom($channel->display_handle);
 
         return back()->with('success', __('WhatsApp connected. Messages now go out from your number.'));
     }
@@ -94,6 +103,7 @@ class MessagingSettingsController extends Controller
             'email.from_name' => ['nullable', 'string', 'max:100', 'not_regex:/[\r\n<>"]/'],
             'email.reply_to' => ['nullable', 'email', 'max:191'],
             'owner_alerts' => ['sometimes', 'boolean'],
+            'public_whatsapp' => ['nullable', 'string', 'max:30'],
         ], [
             'quiet_hours.end.different' => __('Quiet hours must end at a different time than they start.'),
         ]);
@@ -109,9 +119,28 @@ class MessagingSettingsController extends Controller
         ];
 
         $ownerAlerts = array_key_exists('owner_alerts', $validated) ? (bool) $validated['owner_alerts'] : $settings->ownerAlerts();
+        $publicWhatsapp = $settings->publicWhatsapp();
 
-        $settings->update($quietHours, $email, $ownerAlerts);
-        $audit->log('messaging.settings_updated', null, ['quiet_hours' => $quietHours, 'email' => $email, 'owner_alerts' => $ownerAlerts]);
+        if (array_key_exists('public_whatsapp', $validated)) {
+            if (filled($validated['public_whatsapp'])) {
+                $publicWhatsapp = Phone::normalize($validated['public_whatsapp']);
+                if (! $publicWhatsapp) {
+                    throw ValidationException::withMessages([
+                        'public_whatsapp' => __('Enter a valid WhatsApp number with country code, e.g. +91 98765 43210.'),
+                    ]);
+                }
+            } else {
+                $publicWhatsapp = null;
+            }
+        }
+
+        $settings->update($quietHours, $email, $ownerAlerts, $publicWhatsapp);
+        $audit->log('messaging.settings_updated', null, [
+            'quiet_hours' => $quietHours,
+            'email' => $email,
+            'owner_alerts' => $ownerAlerts,
+            'public_whatsapp' => $publicWhatsapp,
+        ]);
 
         return back()->with('success', __('Messaging settings saved.'));
     }

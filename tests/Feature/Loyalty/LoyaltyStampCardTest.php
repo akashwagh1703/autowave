@@ -120,7 +120,8 @@ class LoyaltyStampCardTest extends TestCase
         $this->get($this->appUrl('/settings/loyalty'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('business/settings/Loyalty')
             ->where('loyalty.enabled', true)
-            ->where('loyalty.stamps_required', 10));
+            ->where('loyalty.stamps_required', 10)
+            ->where('join_qr', fn (?string $value) => is_string($value) && str_starts_with($value, 'data:image/png;base64,')));
 
         $this->put($this->appUrl('/settings/loyalty'), [
             'enabled' => true,
