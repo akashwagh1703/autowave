@@ -54,6 +54,7 @@ return [
         'lead.converted' => ['label' => 'Lead converted', 'group' => 'Leads', 'subject' => 'lead', 'module' => 'leads', 'description' => 'A lead becomes a customer.'],
         'website.enquiry' => ['label' => 'Website enquiry received', 'group' => 'Leads', 'subject' => 'lead', 'module' => 'leads', 'description' => 'A visitor sends the enquiry form on your website (new or existing lead).'],
         'customer.created' => ['label' => 'Customer added', 'group' => 'Customers', 'subject' => 'customer', 'module' => 'customers', 'description' => 'A new customer is added.'],
+        'customer.birthday' => ['label' => 'Customer birthday', 'group' => 'Customers', 'subject' => 'customer', 'module' => 'customers', 'description' => 'Once a year on the customer’s birthday (or the 1st of their birth month, if configured under Loyalty).'],
         'appointment.created' => ['label' => 'Appointment booked', 'group' => 'Appointments', 'subject' => 'appointment', 'engine' => 'booking', 'description' => 'A new appointment is booked.'],
         'appointment.confirmed' => ['label' => 'Appointment confirmed', 'group' => 'Appointments', 'subject' => 'appointment', 'engine' => 'booking', 'description' => 'An appointment is confirmed (including bookings confirmed automatically).'],
         'appointment.rescheduled' => ['label' => 'Appointment rescheduled', 'group' => 'Appointments', 'subject' => 'appointment', 'engine' => 'booking', 'description' => 'An appointment moves to another time or person.'],
@@ -176,6 +177,7 @@ return [
         'customer.name' => ['label' => 'Customer name', 'entity' => 'customer'],
         'customer.first_name' => ['label' => 'Customer first name', 'entity' => 'customer'],
         'customer.phone' => ['label' => 'Customer phone', 'entity' => 'customer'],
+        'customer.birthday' => ['label' => 'Customer birthday (day month)', 'entity' => 'customer'],
         'appointment.date' => ['label' => 'Appointment date', 'entity' => 'appointment'],
         'appointment.time' => ['label' => 'Appointment start time', 'entity' => 'appointment'],
         'appointment.end_time' => ['label' => 'Appointment end time', 'entity' => 'appointment'],
@@ -185,6 +187,7 @@ return [
         'order.total' => ['label' => 'Order total', 'entity' => 'order'],
         'order.items' => ['label' => 'Order items', 'entity' => 'order'],
         'order.fulfilment' => ['label' => 'Order type (pickup, delivery…)', 'entity' => 'order'],
+        'order.status_url' => ['label' => 'Signed order status link', 'entity' => 'order'],
         'conversation.channel' => ['label' => 'Conversation channel', 'entity' => 'conversation'],
         'message.text' => ['label' => 'Message text', 'entity' => 'conversation'],
         'enrolment.course' => ['label' => 'Course', 'entity' => 'enrolment'],
@@ -234,7 +237,7 @@ return [
     */
     'default_templates' => [
         'new_lead_welcome', 'new_lead_followup', 'appointment_confirmation', 'appointment_reminder', 'no_show_followup', 'thank_you', 'new_online_order_alert', 'order_ready',
-        'admission_welcome', 'fee_due_reminder', 'fee_overdue_followup', 'demo_class_confirmation', 'new_reservation_alert', 'reservation_confirmation',
+        'admission_welcome', 'fee_due_reminder', 'fee_overdue_followup', 'demo_class_confirmation', 'new_reservation_alert', 'reservation_confirmation', 'birthday_wish',
     ],
 
     'templates' => [
@@ -319,6 +322,15 @@ return [
             'active' => false,
             'steps' => [
                 ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => 'Hi {{customer.first_name}}, your order {{order.number}} from {{business.name}} is ready ({{order.fulfilment}}). Total: {{order.total}}.']],
+            ],
+        ],
+        'birthday_wish' => [
+            'name' => 'Wish customers a happy birthday',
+            'description' => 'Sends a WhatsApp message on the customer’s birthday (needs a date of birth on the customer).',
+            'trigger' => 'customer.birthday',
+            'active' => false,
+            'steps' => [
+                ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => 'Happy birthday, {{customer.first_name}}! From everyone at {{business.name}} — we hope your day is wonderful. Show this message for a birthday treat.']],
             ],
         ],
         'admission_welcome' => [

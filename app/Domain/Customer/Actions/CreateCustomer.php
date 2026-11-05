@@ -19,7 +19,7 @@ class CreateCustomer
     public function __construct(private readonly RecordActivity $recordActivity) {}
 
     /**
-     * @param  array{name: string, phone?: ?string, email?: ?string, city?: ?string, address?: ?string, tags?: ?list<string>, notes?: ?string}  $data
+     * @param  array{name: string, phone?: ?string, email?: ?string, city?: ?string, address?: ?string, date_of_birth?: ?string, tags?: ?list<string>, notes?: ?string}  $data
      * @param  array<string, mixed>  $activityMetadata  context for the `created` timeline entry
      */
     public function handle(array $data, ?User $actor = null, array $activityMetadata = []): Customer
@@ -33,6 +33,7 @@ class CreateCustomer
                 'email' => $data['email'] ?? null,
                 'city' => $data['city'] ?? null,
                 'address' => $data['address'] ?? null,
+                'date_of_birth' => filled($data['date_of_birth'] ?? null) ? $data['date_of_birth'] : null,
                 'tags' => CustomerTags::normalize($data['tags'] ?? []),
                 'notes' => $data['notes'] ?? null,
                 'created_by_user_id' => $actor?->id,

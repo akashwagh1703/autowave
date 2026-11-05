@@ -15,6 +15,7 @@ use App\Domain\Commerce\Events\OrderConfirmed;
 use App\Domain\Commerce\Events\OrderCreated;
 use App\Domain\Commerce\Events\OrderPaid;
 use App\Domain\Commerce\Events\OrderReady;
+use App\Domain\Customer\Events\CustomerBirthday;
 use App\Domain\Customer\Events\CustomerCreated;
 use App\Domain\Education\Events\DemoScheduled;
 use App\Domain\Education\Events\EnrolmentCreated;
@@ -52,6 +53,7 @@ class StartAutomations
         LeadAssigned::class,
         LeadConverted::class,
         CustomerCreated::class,
+        CustomerBirthday::class,
         AppointmentCreated::class,
         AppointmentConfirmed::class,
         AppointmentRescheduled::class,
@@ -104,6 +106,7 @@ class StartAutomations
                 : null,
             $event instanceof LeadConverted => ['lead.converted', $event->lead, "lead:{$event->lead->id}:converted:".$event->lead->converted_at?->getTimestamp(), ['customer_id' => $event->customer->id, 'customer_created' => $event->customerCreated]],
             $event instanceof CustomerCreated => ['customer.created', $event->customer, "customer:{$event->customer->id}", []],
+            $event instanceof CustomerBirthday => ['customer.birthday', $event->customer, "customer:{$event->customer->id}:birthday:".now()->year, ['mode' => $event->mode]],
             $event instanceof AppointmentCreated => ['appointment.created', $event->appointment, "appointment:{$event->appointment->id}", []],
             $event instanceof AppointmentConfirmed => ['appointment.confirmed', $event->appointment, "appointment:{$event->appointment->id}", []],
             $event instanceof AppointmentRescheduled => [

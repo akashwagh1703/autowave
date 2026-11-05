@@ -10,6 +10,9 @@ use App\Domain\Customer\Actions\CreateCustomer;
 use App\Domain\Customer\Actions\DeleteCustomer;
 use App\Domain\Customer\Actions\UpdateCustomer;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Loyalty\Models\LoyaltyAccount;
+use App\Domain\Loyalty\Support\LoyaltyPresenter;
+use App\Domain\Loyalty\Support\LoyaltySettings;
 use App\Domain\Tenant\Support\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\AiPresenter;
@@ -95,10 +98,14 @@ class CustomerController extends Controller
         return to_route('customers.show', $customer)->with('success', __('Customer added.'));
     }
 
-    public function show(Request $request, Customer $customer): Response
+    public function show(Request $request, Customer $customer, LoyaltySettings $loyaltySettings): Response
     {
         $showAppointments = $this->context->hasEngine('booking') && $request->user()->can('appointments.view');
         $showOrders = $this->context->hasEngine('commerce') && $request->user()->can('orders.view');
+        $showLoyalty = $this->context->hasModule('loyalty') && $loyaltySettings->enabled() && $request->user()->can('loyalty.view');
+        $loyaltyAccount = $showLoyalty
+            ? LoyaltyAccount::query()->where('customer_id', $customer->id)->first()
+            : null;
 
         return Inertia::render('business/customers/Show', [
             'orders' => $showOrders
@@ -119,6 +126,10 @@ class CustomerController extends Controller
                     ->get()
                     ->map(fn (Appointment $appointment) => BookingPresenter::appointment($appointment))
                 : null,
+            'loyalty' => $showLoyalty
+                ? ($loyaltyAccount ? LoyaltyPresenter::account($loyaltyAccount, $loyaltySettings) : null)
+                : false,
+            'loyalty_reward' => $showLoyalty ? $loyaltySettings->all()['reward_label'] : null,
             'customer' => CrmPresenter::customer($customer),
             'ai' => AiPresenter::record($customer, $request->user()),
             'leads' => $customer->leads()

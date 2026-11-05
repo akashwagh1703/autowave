@@ -65,6 +65,10 @@ return [
             'view' => 'View offers and coupon codes',
             'manage' => 'Create, edit and delete offers and coupon codes',
         ],
+        'loyalty' => [
+            'view' => 'View loyalty stamp cards',
+            'manage' => 'Enroll customers, add stamps and redeem rewards',
+        ],
         'courses' => [
             'view' => 'View courses and batches',
             'manage' => 'Create, edit and delete courses and batches',
@@ -140,7 +144,7 @@ return [
             'description' => 'Runs day-to-day operations.',
             'permissions' => [
                 'customers.*', 'documents.*', 'leads.*', 'services.*', 'resources.*', 'appointments.*', 'products.*', 'orders.*',
-                'offers.*', 'courses.*', 'students.*', 'fees.*', 'reservations.*',
+                'offers.*', 'loyalty.*', 'courses.*', 'students.*', 'fees.*', 'reservations.*',
                 'conversations.*', 'automation.*', 'website.*', 'ai.*', 'reports.view', 'users.view', 'settings.view',
             ],
         ],
@@ -152,7 +156,7 @@ return [
                 'leads.view', 'leads.create', 'leads.update',
                 'services.view', 'resources.view',
                 'appointments.*', 'orders.view', 'orders.create',
-                'offers.view', 'courses.view', 'students.view', 'students.admit', 'fees.view', 'fees.collect', 'reservations.*',
+                'offers.view', 'loyalty.view', 'loyalty.manage', 'courses.view', 'students.view', 'students.admit', 'fees.view', 'fees.collect', 'reservations.*',
                 'conversations.view', 'conversations.reply',
                 'ai.use',
             ],
@@ -183,7 +187,7 @@ return [
             'description' => 'Views orders and financial reports.',
             'permissions' => [
                 'customers.view', 'documents.view', 'services.view', 'products.view', 'orders.view', 'reports.view',
-                'offers.view', 'courses.view', 'students.view', 'fees.view',
+                'offers.view', 'loyalty.view', 'courses.view', 'students.view', 'fees.view',
             ],
         ],
     ],

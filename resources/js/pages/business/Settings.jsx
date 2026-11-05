@@ -48,6 +48,11 @@ export default function Settings({ business, branding, profile, website, domains
                                 Order settings
                             </Button>
                         ) : null}
+                        {hasModule('loyalty') ? (
+                            <Button component={Link} href="/settings/loyalty" variant="outlined">
+                                Loyalty
+                            </Button>
+                        ) : null}
                         {hasEngine('food') ? (
                             <Button component={Link} href="/settings/food" variant="outlined">
                                 Reservation settings

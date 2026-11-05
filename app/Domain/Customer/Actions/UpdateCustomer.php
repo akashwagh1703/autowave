@@ -14,7 +14,7 @@ class UpdateCustomer
     public function __construct(private readonly RecordActivity $recordActivity) {}
 
     /**
-     * @param  array{name?: string, phone?: ?string, email?: ?string, city?: ?string, address?: ?string, tags?: ?list<string>, notes?: ?string}  $data
+     * @param  array{name?: string, phone?: ?string, email?: ?string, city?: ?string, address?: ?string, date_of_birth?: ?string, tags?: ?list<string>, notes?: ?string}  $data
      */
     public function handle(Customer $customer, array $data, ?User $actor = null): Customer
     {
@@ -26,8 +26,12 @@ class UpdateCustomer
             $data['tags'] = CustomerTags::normalize($data['tags'] ?? []);
         }
 
+        if (array_key_exists('date_of_birth', $data)) {
+            $data['date_of_birth'] = filled($data['date_of_birth']) ? $data['date_of_birth'] : null;
+        }
+
         return DB::transaction(function () use ($customer, $data, $actor) {
-            $customer->fill(array_intersect_key($data, array_flip(['name', 'phone', 'email', 'city', 'address', 'tags', 'notes'])));
+            $customer->fill(array_intersect_key($data, array_flip(['name', 'phone', 'email', 'city', 'address', 'date_of_birth', 'tags', 'notes'])));
             $changed = array_values(array_diff(array_keys($customer->getDirty()), ['phone_normalized']));
 
             if ($changed === []) {

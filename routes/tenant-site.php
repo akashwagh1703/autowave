@@ -4,7 +4,9 @@ use App\Http\Controllers\SeoController;
 use App\Http\Controllers\Website\BookingController;
 use App\Http\Controllers\Website\EnquiryController;
 use App\Http\Controllers\Website\HomeController;
+use App\Http\Controllers\Website\LoyaltyJoinController;
 use App\Http\Controllers\Website\ManageBookingController;
+use App\Http\Controllers\Website\OrderStatusController;
 use App\Http\Controllers\Website\ReservationController;
 use App\Http\Controllers\Website\ShopController;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +33,12 @@ Route::middleware('site.live')->group(function () {
     });
     Route::post('/cart/quote', [ShopController::class, 'quote'])->middleware('throttle:website-cart')->name('tenant.cart.quote');
     Route::post('/orders', [ShopController::class, 'store'])->middleware('throttle:website-order')->name('tenant.orders.store');
+    Route::get('/orders/{order}/status', OrderStatusController::class)->middleware(['signed:relative', 'throttle:60,1'])->name('tenant.orders.status');
+    Route::middleware('throttle:website-enquiry')->group(function () {
+        Route::get('/loyalty/join', [LoyaltyJoinController::class, 'show'])->name('tenant.loyalty.join');
+        Route::post('/loyalty/join', [LoyaltyJoinController::class, 'store'])->name('tenant.loyalty.join.store');
+        Route::get('/loyalty/card/{token}', [LoyaltyJoinController::class, 'card'])->where('token', '[0-9A-HJKMNP-TV-Z]{26}')->name('tenant.loyalty.card');
+    });
     Route::get('/reservations/slots', [ReservationController::class, 'slots'])->middleware('throttle:website-slots')->name('tenant.reservations.slots');
     Route::post('/reservations', [ReservationController::class, 'store'])->middleware('throttle:website-reservation')->name('tenant.reservations.store');
 });

@@ -201,7 +201,8 @@ This document describes what **actually exists** in the repository today. Planne
     remove payments (cash, UPI, card, bank transfer, other), notes, customer call and WhatsApp, history.
   - Prices, totals and stock are always computed on the server. Order numbers run per business from #1001.
 - **Order settings** (`/settings/commerce`): online ordering, auto-confirm, pickup, delivery fee, free
-  delivery threshold, minimum order, delivery note.
+  delivery threshold, minimum order, delivery note, optional WhatsApp confirmation with QR (status /
+  reference / UPI).
 - **Website shop:** the products section now shows the catalogue. When online ordering is open, visitors add
   products to a cart (kept in the browser), see a server-priced quote, and check out for pickup or delivery.
   Website orders start pending (or confirmed with auto-confirm) and the owners get an email. Honeypot and
@@ -432,7 +433,9 @@ This document describes what **actually exists** in the repository today. Planne
   leads, messaging, offers, automation, website, ai (+ payments via commerce). Photographer resource
   label; wedding/maternity/portrait/product/events/passport categories. Marketing `/for/studios`. Demo
   `abc-studio`. Plan: [photo-studio-and-modules-plan.md](photo-studio-and-modules-plan.md).
-- **Draft modules:** marketing, forms, qr, reviews, loyalty, membership, analytics are `draft` in
+- **Loyalty stamp cards:** café/salon/studio/store presets; QR join, earn on completed orders,
+  redeem on the customer page (Settings → Loyalty).
+- **Draft modules:** marketing, forms, qr, reviews, membership, analytics are `draft` in
   `config/catalog.php` (hidden from onboarding and Settings until built). Presets no longer enable them.
 
 ### Marketing site and search (2026-10-05)

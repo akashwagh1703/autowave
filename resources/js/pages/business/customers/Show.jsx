@@ -32,11 +32,13 @@ function Detail({ label, children }) {
     );
 }
 
-export default function Show({ customer, leads, activities, activityTypes, appointments, orders, ai, documents }) {
+export default function Show({ customer, leads, activities, activityTypes, appointments, orders, ai, documents, loyalty, loyalty_reward }) {
     const { timezone, currency, can, hasModule } = useTenant();
     const now = Date.now();
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const canManageLoyalty = hasModule('loyalty') && can('loyalty.manage');
+    const showLoyalty = loyalty !== false && hasModule('loyalty');
     const digits = String(customer.phone ?? '').replace(/\D/g, '');
     const canSeeLeads = hasModule('leads') && can('leads.view');
     const canChat = hasModule('messaging') && can('conversations.view');
@@ -134,6 +136,7 @@ export default function Show({ customer, leads, activities, activityTypes, appoi
                             <dl className="mt-4 grid gap-4">
                                 <Detail label="Phone">{customer.phone}</Detail>
                                 <Detail label="Email">{customer.email}</Detail>
+                                <Detail label="Birthday">{customer.date_of_birth ? formatDateTime(customer.date_of_birth, timezone, { day: 'numeric', month: 'long' }) : null}</Detail>
                                 <Detail label="City">{customer.city}</Detail>
                                 <Detail label="Address">{customer.address}</Detail>
                                 <Detail label="Notes">{customer.notes}</Detail>
@@ -142,6 +145,56 @@ export default function Show({ customer, leads, activities, activityTypes, appoi
                     </Card>
 
                     {documents ? <AttachmentsCard documents={documents} timezone={timezone} /> : null}
+
+                    {showLoyalty ? (
+                        <Card variant="outlined">
+                            <CardContent className="space-y-3">
+                                <h2 className="font-semibold text-slate-900">Loyalty</h2>
+                                {loyalty ? (
+                                    <>
+                                        <p className="text-sm text-slate-700">
+                                            {loyalty.stamps_balance} / {loyalty.stamps_required} stamps
+                                            {loyalty.rewards_available > 0 ? ` · ${loyalty.rewards_available} × ${loyalty.reward_label} ready` : ''}
+                                        </p>
+                                        <p className="text-xs text-slate-500">Lifetime redeemed: {loyalty.rewards_redeemed}</p>
+                                        {loyalty.card_url ? (
+                                            <a href={loyalty.card_url} target="_blank" rel="noreferrer" className="text-sm text-brand-700 hover:underline">
+                                                Open customer card
+                                            </a>
+                                        ) : null}
+                                        {canManageLoyalty ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                <Button
+                                                    size="small"
+                                                    variant="outlined"
+                                                    onClick={() => router.post(`/customers/${customer.id}/loyalty/stamp`, { delta: 1 }, { preserveScroll: true })}
+                                                >
+                                                    Add stamp
+                                                </Button>
+                                                <Button
+                                                    size="small"
+                                                    variant="contained"
+                                                    disabled={loyalty.rewards_available < 1}
+                                                    onClick={() => router.post(`/customers/${customer.id}/loyalty/redeem`, {}, { preserveScroll: true })}
+                                                >
+                                                    Redeem {loyalty_reward || loyalty.reward_label}
+                                                </Button>
+                                            </div>
+                                        ) : null}
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="text-sm text-slate-600">Not on the stamp card yet.</p>
+                                        {canManageLoyalty ? (
+                                            <Button size="small" variant="outlined" onClick={() => router.post(`/customers/${customer.id}/loyalty/enroll`, {}, { preserveScroll: true })}>
+                                                Enroll
+                                            </Button>
+                                        ) : null}
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
+                    ) : null}
 
                     {appointments ? (
                         <Card variant="outlined">

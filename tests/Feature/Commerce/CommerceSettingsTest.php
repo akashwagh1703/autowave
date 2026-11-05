@@ -31,6 +31,12 @@ class CommerceSettingsTest extends TestCase
             'free_delivery_over' => '999',
             'min_order' => '',
             'delivery_note' => '  Within 5 km  ',
+            'whatsapp' => false,
+            'include_qr' => true,
+            'qr_payload' => 'status',
+            'upi_id' => '',
+            'upi_payee' => '',
+            'message' => config('commerce.confirmation.message'),
             ...$overrides,
         ];
     }
@@ -55,9 +61,18 @@ class CommerceSettingsTest extends TestCase
         $this->get($this->appUrl('/settings/commerce'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('business/settings/Commerce')
             ->where('online.enabled', true)
-            ->where('online.delivery', false));
+            ->where('online.delivery', false)
+            ->where('confirmation.whatsapp', false)
+            ->where('confirmation.include_qr', true));
 
-        $this->put($this->appUrl('/settings/commerce'), $this->settingsPayload())->assertSessionHasNoErrors();
+        $this->put($this->appUrl('/settings/commerce'), $this->settingsPayload([
+            'whatsapp' => true,
+            'include_qr' => true,
+            'qr_payload' => 'upi',
+            'upi_id' => 'shop@upi',
+            'upi_payee' => 'Corner Shop',
+            'message' => 'Hi {{customer.first_name}}, order {{order.number}} is confirmed.',
+        ]))->assertSessionHasNoErrors();
 
         $this->assertSame([
             'enabled' => true,
@@ -69,10 +84,19 @@ class CommerceSettingsTest extends TestCase
             'min_order' => null,
             'delivery_note' => 'Within 5 km',
         ], $this->inTenant($tenant, fn () => app(CommerceSettings::class)->online()));
+        $this->assertSame([
+            'whatsapp' => true,
+            'include_qr' => true,
+            'qr_payload' => 'upi',
+            'upi_id' => 'shop@upi',
+            'upi_payee' => 'Corner Shop',
+            'message' => 'Hi {{customer.first_name}}, order {{order.number}} is confirmed.',
+        ], $this->inTenant($tenant, fn () => app(CommerceSettings::class)->confirmation()));
         $this->assertDatabaseHas('audit_logs', ['action' => 'commerce.settings_updated']);
 
         $this->put($this->appUrl('/settings/commerce'), $this->settingsPayload(['pickup' => false, 'delivery' => false]))->assertSessionHasErrors('pickup');
         $this->put($this->appUrl('/settings/commerce'), $this->settingsPayload(['delivery_fee' => '-1']))->assertSessionHasErrors('delivery_fee');
+        $this->put($this->appUrl('/settings/commerce'), $this->settingsPayload(['whatsapp' => true, 'include_qr' => true, 'qr_payload' => 'upi', 'upi_id' => '']))->assertSessionHasErrors('upi_id');
         // With online ordering off, offering neither is fine.
         $this->put($this->appUrl('/settings/commerce'), $this->settingsPayload(['enabled' => false, 'pickup' => false, 'delivery' => false]))->assertSessionHasNoErrors();
     }

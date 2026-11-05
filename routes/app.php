@@ -28,6 +28,8 @@ use App\Http\Controllers\App\InboxController;
 use App\Http\Controllers\App\KitchenController;
 use App\Http\Controllers\App\LeadActionController;
 use App\Http\Controllers\App\LeadController;
+use App\Http\Controllers\App\LoyaltyAccountController;
+use App\Http\Controllers\App\LoyaltySettingsController;
 use App\Http\Controllers\App\MessagingSettingsController;
 use App\Http\Controllers\App\OnboardingController;
 use App\Http\Controllers\App\OrderActionController;
@@ -217,6 +219,17 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
 
             Route::get('/settings/commerce', [CommerceSettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.commerce');
             Route::put('/settings/commerce', [CommerceSettingsController::class, 'update'])->middleware('can:settings.update')->name('settings.commerce.update');
+        });
+
+        Route::middleware('module:loyalty')->group(function () {
+            Route::get('/settings/loyalty', [LoyaltySettingsController::class, 'show'])->middleware('can:settings.view')->name('settings.loyalty');
+            Route::put('/settings/loyalty', [LoyaltySettingsController::class, 'update'])->middleware('can:settings.update')->name('settings.loyalty.update');
+
+            Route::middleware('can:loyalty.manage')->group(function () {
+                Route::post('/customers/{customer}/loyalty/enroll', [LoyaltyAccountController::class, 'enroll'])->name('customers.loyalty.enroll');
+                Route::post('/customers/{customer}/loyalty/stamp', [LoyaltyAccountController::class, 'stamp'])->name('customers.loyalty.stamp');
+                Route::post('/customers/{customer}/loyalty/redeem', [LoyaltyAccountController::class, 'redeem'])->name('customers.loyalty.redeem');
+            });
         });
 
         // Coaching (ADR-020): courses, batches, students (enrolments), fees, attendance and demo classes.

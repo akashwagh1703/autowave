@@ -36,6 +36,7 @@ class CustomerRequest extends FormRequest
             'email' => ['nullable', 'string', 'email', 'max:255'],
             'city' => ['nullable', 'string', 'max:80'],
             'address' => ['nullable', 'string', 'max:255'],
+            'date_of_birth' => ['nullable', 'date', 'before:today', 'after:1900-01-01'],
             'tags' => ['array', 'max:'.CustomerTags::MAX_TAGS],
             'tags.*' => ['string', 'max:'.CustomerTags::MAX_LENGTH],
             'notes' => ['nullable', 'string', 'max:5000'],

@@ -6,7 +6,7 @@ import PageHeader from '@/components/PageHeader';
 import CustomerForm from '@/modules/customers/CustomerForm';
 
 export default function Create({ tags }) {
-    const form = useForm({ name: '', phone: '', email: '', city: '', address: '', tags: [], notes: '' });
+    const form = useForm({ name: '', phone: '', email: '', city: '', address: '', date_of_birth: '', tags: [], notes: '' });
 
     const submit = (event) => {
         event.preventDefault();

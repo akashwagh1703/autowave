@@ -7,6 +7,7 @@ use App\Domain\Lead\Models\Lead;
 use App\Domain\Tenant\Concerns\BelongsToTenant;
 use App\Models\User;
 use App\Support\Phone;
+use Carbon\CarbonInterface;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
@@ -20,7 +21,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * A person the business serves. The customer timeline (activities) aggregates leads today and
  * bookings, orders and conversations in later phases.
  */
-#[Fillable(['tenant_id', 'name', 'phone', 'phone_normalized', 'email', 'city', 'address', 'tags', 'notes', 'created_by_user_id'])]
+#[Fillable([
+    'tenant_id', 'name', 'phone', 'phone_normalized', 'email', 'city', 'address', 'date_of_birth', 'birthday_greeted_on',
+    'tags', 'notes', 'created_by_user_id',
+])]
 #[UseFactory(CustomerFactory::class)]
 class Customer extends Model
 {
@@ -44,7 +48,26 @@ class Customer extends Model
     {
         return [
             'tags' => 'array',
+            'date_of_birth' => 'date',
+            'birthday_greeted_on' => 'date',
         ];
+    }
+
+    /** True when month/day match the tenant-local day (year ignored). */
+    public function isBirthdayOn(CarbonInterface $day): bool
+    {
+        if (! $this->date_of_birth) {
+            return false;
+        }
+
+        return (int) $this->date_of_birth->month === (int) $day->month
+            && (int) $this->date_of_birth->day === (int) $day->day;
+    }
+
+    /** True when the birth month matches the tenant-local month. */
+    public function isBirthdayMonth(CarbonInterface $day): bool
+    {
+        return $this->date_of_birth && (int) $this->date_of_birth->month === (int) $day->month;
     }
 
     public function leads(): HasMany

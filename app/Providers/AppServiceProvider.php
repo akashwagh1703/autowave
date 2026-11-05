@@ -6,8 +6,13 @@ use App\Domain\AI\Listeners\QueueLeadExtraction;
 use App\Domain\Automation\Listeners\RetimeAppointmentWaits;
 use App\Domain\Automation\Listeners\StartAutomations;
 use App\Domain\Billing\Support\Entitlements;
+use App\Domain\Booking\Events\AppointmentCompleted;
 use App\Domain\Booking\Events\AppointmentRescheduled;
 use App\Domain\Chatbot\Listeners\QueueChatbotReply;
+use App\Domain\Commerce\Events\OrderCompleted;
+use App\Domain\Commerce\Events\OrderConfirmed;
+use App\Domain\Commerce\Listeners\SendOrderConfirmationWhatsApp;
+use App\Domain\Loyalty\Listeners\EarnLoyaltyOnCompletion;
 use App\Domain\Messaging\Events\ConversationMessageReceived;
 use App\Domain\RBAC\Support\PermissionCatalog;
 use App\Domain\RBAC\Support\PermissionResolver;
@@ -51,6 +56,9 @@ class AppServiceProvider extends ServiceProvider
             Event::listen($event, EmailOwnersAboutWebsiteActivity::class);
         }
         Event::listen(AppointmentRescheduled::class, RetimeAppointmentWaits::class);
+        Event::listen(OrderConfirmed::class, SendOrderConfirmationWhatsApp::class);
+        Event::listen(OrderCompleted::class, EarnLoyaltyOnCompletion::class);
+        Event::listen(AppointmentCompleted::class, EarnLoyaltyOnCompletion::class);
         Event::listen(ConversationMessageReceived::class, QueueLeadExtraction::class);
         Event::listen(ConversationMessageReceived::class, QueueChatbotReply::class);
 

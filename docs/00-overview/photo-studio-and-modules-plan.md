@@ -87,10 +87,10 @@ WhatsApp assistant: book sessions, services & prices, products/albums, offers, F
 - Moderate / publish; website Reviews section uses real data.
 - Flip module `reviews` to `active`; add back to salon, clinic, photo_studio presets; backfill.
 
-## Phase 4 — Loyalty
+## Phase 4 — Loyalty ✅
 
-- Points per visit/order; simple rewards; customer balance on timeline.
-- Flip `loyalty` to active; salon + photo_studio presets.
+- Stamp cards (configurable N for a free reward); QR join; earn on order/appointment completed;
+  redeem on customer page; timeline entries. Active for salon, photo_studio, cafe, local_store.
 
 ## Phase 5 — Membership
 

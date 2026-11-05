@@ -12,6 +12,7 @@ export default function Edit({ customer, tags }) {
         email: customer.email ?? '',
         city: customer.city ?? '',
         address: customer.address ?? '',
+        date_of_birth: customer.date_of_birth ?? '',
         tags: customer.tags ?? [],
         notes: customer.notes ?? '',
     });

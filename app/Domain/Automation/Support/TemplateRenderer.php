@@ -2,6 +2,7 @@
 
 namespace App\Domain\Automation\Support;
 
+use App\Domain\Commerce\Support\OrderStatusLink;
 use App\Domain\Education\Support\BatchSchedule;
 use App\Domain\Tenant\Models\TenantSetting;
 use Illuminate\Support\Str;
@@ -45,6 +46,7 @@ class TemplateRenderer
             'customer.name' => $customer?->name,
             'customer.first_name' => $customer ? Str::before(trim($customer->name), ' ') : null,
             'customer.phone' => $customer?->phone,
+            'customer.birthday' => $customer?->date_of_birth?->format('j M'),
             'appointment.date' => $appointment?->starts_at->setTimezone($timezone)->format('D, j M'),
             'appointment.time' => $appointment?->starts_at->setTimezone($timezone)->format('g:i A'),
             'appointment.end_time' => $appointment?->ends_at->setTimezone($timezone)->format('g:i A'),
@@ -54,6 +56,7 @@ class TemplateRenderer
             'order.total' => $order ? number_format((float) $order->total, 2) : null,
             'order.items' => $order?->itemSummary(),
             'order.fulfilment' => $order ? config("commerce.fulfilment.{$order->fulfilment}.label", $order->fulfilment) : null,
+            'order.status_url' => $order ? OrderStatusLink::url($order, $context->tenant) : null,
             'conversation.channel' => $context->conversation ? config("messaging.channels.{$context->conversation->channel}.label", $context->conversation->channel) : null,
             'message.text' => $context->latestInboundText(),
             'enrolment.course' => $context->enrolment()?->batch?->course?->name,

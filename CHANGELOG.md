@@ -8,6 +8,15 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Added
 
+- **Loyalty stamp cards.** Cafés, salons, studios and stores get a configurable stamp card (e.g. buy 9,
+  get the 10th free). Walk-ins join via a public QR on the website; stamps are earned when an order
+  (or appointment) is completed; staff redeem on the customer page. Settings → Loyalty.
+- **Customer birthdays.** Optional date of birth on customers and the loyalty join form. A daily job
+  fires `customer.birthday` once a year (day or birth-month). Optional free loyalty reward; paused
+  WhatsApp “happy birthday” automation included.
+- **Order confirmation WhatsApp with QR.** Settings → Orders can send the customer a WhatsApp message when
+  an order is confirmed, with an optional QR (status page, order reference, or UPI pay link). Off by
+  default. Customers can open a signed status page from the QR.
 - **WhatsApp turf bookings can run for several hours.** After choosing a start time, customers pick
   how long (1–6 consecutive free hours). WhatsApp lists only allow one tap, so length is a second step.
 
@@ -334,7 +343,7 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Changed
 
-- **Unfinished catalogue modules are draft.** Marketing, forms, QR, reviews, loyalty, membership and
+- **Unfinished catalogue modules are draft.** Marketing, forms, QR, reviews, membership and
   analytics stay in the catalogue as `draft` so they are not offered in onboarding or shown as Active in
   Settings until they have real features. New salon, clinic, store and internal presets no longer enable
   them; salon and cafe website presets no longer include empty Packages/Reviews sections. Offers in the

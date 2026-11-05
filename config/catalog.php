@@ -59,7 +59,7 @@ return [
         'forms' => ['name' => 'Forms', 'description' => 'Enquiry and lead capture forms.', 'depends_on' => ['leads'], 'status' => 'draft'],
         'qr' => ['name' => 'QR', 'description' => 'QR codes for lead capture and offers.', 'depends_on' => [], 'status' => 'draft'],
         'reviews' => ['name' => 'Reviews', 'description' => 'Collect and display customer reviews.', 'depends_on' => ['customers'], 'status' => 'draft'],
-        'loyalty' => ['name' => 'Loyalty', 'description' => 'Points and rewards for repeat customers.', 'depends_on' => ['customers'], 'status' => 'draft'],
+        'loyalty' => ['name' => 'Loyalty', 'description' => 'Stamp cards and rewards for repeat customers (QR join).', 'depends_on' => ['customers']],
         'membership' => ['name' => 'Membership', 'description' => 'Memberships and subscriptions for customers.', 'depends_on' => ['customers'], 'status' => 'draft'],
         'payments' => ['name' => 'Payments', 'description' => 'Online and offline payment tracking.', 'depends_on' => []],
         'analytics' => ['name' => 'Analytics', 'description' => 'Business dashboards and reports.', 'depends_on' => [], 'status' => 'draft'],
@@ -99,7 +99,7 @@ return [
             'version' => '1.0',
             'website_templates' => ['elegant', 'modern', 'premium'],
             'engines' => ['service', 'booking', 'commerce'],
-            'modules' => ['crm', 'leads', 'customers', 'messaging', 'automation', 'website', 'ai'],
+            'modules' => ['crm', 'leads', 'customers', 'messaging', 'automation', 'website', 'loyalty', 'ai'],
             'configuration' => [
                 'dashboard_widgets' => ['revenue_today', 'appointments_today', 'new_leads', 'pending_followups', 'service_sales', 'product_sales', 'repeat_customers', 'potential_revenue'],
                 'website_sections' => ['header', 'hero', 'about', 'services', 'packages', 'products', 'gallery', 'team', 'testimonials', 'offers', 'faq', 'contact', 'booking', 'footer'],
@@ -114,7 +114,7 @@ return [
             'version' => '1.0',
             'website_templates' => ['premium', 'elegant', 'modern'],
             'engines' => ['service', 'booking', 'commerce'],
-            'modules' => ['crm', 'leads', 'customers', 'messaging', 'offers', 'automation', 'website', 'ai'],
+            'modules' => ['crm', 'leads', 'customers', 'messaging', 'offers', 'automation', 'website', 'loyalty', 'ai'],
             'configuration' => [
                 'dashboard_widgets' => ['revenue_today', 'appointments_today', 'new_leads', 'pending_followups', 'service_sales', 'product_sales', 'potential_revenue'],
                 'website_sections' => ['header', 'hero', 'about', 'services', 'packages', 'products', 'gallery', 'team', 'testimonials', 'offers', 'faq', 'contact', 'booking', 'footer'],
@@ -176,7 +176,7 @@ return [
             'version' => '1.0',
             'website_templates' => ['premium', 'elegant', 'modern'],
             'engines' => ['food', 'commerce'],
-            'modules' => ['crm', 'customers', 'messaging', 'offers', 'automation', 'website', 'ai'],
+            'modules' => ['crm', 'customers', 'messaging', 'offers', 'automation', 'website', 'loyalty', 'ai'],
             'configuration' => [
                 'dashboard_widgets' => ['orders_today', 'revenue_today', 'reservations_today', 'kitchen_queue', 'top_products', 'new_customers'],
                 'website_sections' => ['header', 'hero', 'about', 'products', 'reservation', 'gallery', 'offers', 'contact', 'footer'],
@@ -205,7 +205,7 @@ return [
             'version' => '1.0',
             'website_templates' => ['modern', 'minimal', 'corporate'],
             'engines' => ['commerce'],
-            'modules' => ['crm', 'customers', 'messaging', 'offers', 'automation', 'website', 'inventory', 'ai'],
+            'modules' => ['crm', 'customers', 'messaging', 'offers', 'automation', 'website', 'inventory', 'loyalty', 'ai'],
             'configuration' => [
                 'dashboard_widgets' => ['orders_today', 'revenue_today', 'low_stock', 'repeat_customers', 'top_products'],
                 'website_sections' => ['header', 'hero', 'about', 'products', 'offers', 'contact', 'footer'],

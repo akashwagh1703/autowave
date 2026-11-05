@@ -64,6 +64,21 @@ return [
         'delivery_note' => null,
     ],
 
+    /*
+    | WhatsApp confirmation when an order is confirmed (staff or auto-confirm). Tenant
+    | values live in the `commerce` setting under `confirmation`. Off by default so
+    | businesses opt in (AW-048). The QR may encode a signed status page, the order
+    | reference (pickup check), or a UPI payment link.
+    */
+    'confirmation' => [
+        'whatsapp' => false,
+        'include_qr' => true,
+        'qr_payload' => 'status',
+        'upi_id' => null,
+        'upi_payee' => null,
+        'message' => "Hi {{customer.first_name}}, your order {{order.number}} at {{business.name}} is confirmed.\n\n{{order.items}}\nTotal: {{order.total}} ({{order.fulfilment}})\n\nShow this QR when you collect your order.",
+    ],
+
     // Orders per visitor IP and business per hour.
     'online_per_hour' => 10,
 

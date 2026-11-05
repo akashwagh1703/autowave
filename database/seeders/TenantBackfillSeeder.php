@@ -21,10 +21,10 @@ use Illuminate\Database\Seeder;
 class TenantBackfillSeeder extends Seeder
 {
     /** Permission groups added after tenants already existed (config/rbac.php). */
-    public const NEW_PERMISSION_GROUPS = ['services', 'resources', 'website', 'conversations', 'ai', 'offers', 'courses', 'students', 'fees', 'reservations', 'documents'];
+    public const NEW_PERMISSION_GROUPS = ['services', 'resources', 'website', 'conversations', 'ai', 'offers', 'loyalty', 'courses', 'students', 'fees', 'reservations', 'documents'];
 
     /** Modules added to business types after tenants already existed (config/catalog.php); switched on once. */
-    public const NEW_MODULES = ['ai', 'offers'];
+    public const NEW_MODULES = ['ai', 'offers', 'loyalty'];
 
     public function run(
         BackfillTenantSettings $backfillSettings,

@@ -226,13 +226,26 @@ Other changes:
   manager).
 - `automation_runs.subject_type` gains `order`.
 - New tenant setting `commerce`: `online` (`enabled`, `auto_confirm`, `pickup`, `delivery`, `delivery_fee`,
-  `free_delivery_over`, `min_order`, `delivery_note`). Seeded from the business type's
-  `configuration.commerce` if present (local store); otherwise `config('commerce.online')` applies.
+  `free_delivery_over`, `min_order`, `delivery_note`) and `confirmation` (`whatsapp`, `include_qr`,
+  `qr_payload`, `upi_id`, `upi_payee`, `message`) for optional WhatsApp confirmation + QR. Seeded from the
+  business type's `configuration.commerce` if present (local store); otherwise `config('commerce.online')`
+  / `config('commerce.confirmation')` apply.
 - New audit actions:
   - `product.created`, `product.deleted`, `product.stock_adjusted`, `product_category.deleted`,
     `products.bulk_*`;
   - `order.payment_recorded`, `order.payment_removed`;
   - `commerce.settings_updated`.
+
+## Loyalty (`2026_11_05_100000`, birthday `2026_11_05_110000`)
+
+Stamp cards for the `loyalty` module. Tenant setting `loyalty` holds stamps_required, earn rules,
+reward label and birthday options (defaults in `config/loyalty.php`). Audit: `loyalty.settings_updated`.
+`customers` gains `date_of_birth` and `birthday_greeted_on` (once-per-year claim).
+
+| Table | Notes |
+|---|---|
+| `loyalty_accounts` | One per enrolled customer; `public_token` (ULID) for the card URL; stamp / lifetime / redeemed counters |
+| `loyalty_stamps` | Ledger (`order` / `appointment` / `manual` / `join` / `redeem` / `birthday`); unique `(tenant_id, source, source_id)` when `source_id` is set |
 
 ## Messaging (Phase 8, `2026_10_02_100000`) — ADR-018
 

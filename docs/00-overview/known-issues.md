@@ -539,11 +539,13 @@ with the date and commit/PR reference; do not delete it.
 
 - **Category:** Product
 - **Description:** The website shows a confirmation after checkout, and the owners get an email about each
-  website order. The customer gets no message unless the business turns on the paused "Order ready"
-  automation or builds its own. There is no order status page for customers.
-- **Impact:** Businesses contact customers themselves about confirmation and pickup.
-- **Status:** Open — add signed order-status links (see AW-037 for bookings).
-- **Affected:** Automations, website checkout
+  website order. Customer WhatsApp on confirm (optional QR + signed status page) is off by default under
+  Settings → Orders; "Order ready" automation stays paused unless turned on. Outside the 24-hour WhatsApp
+  window a free-text confirmation is skipped (approved templates not wired into this setting yet).
+- **Impact:** Businesses that leave the setting off still contact customers themselves about confirmation.
+- **Status:** Partially done — opt-in WhatsApp confirmation + QR/status page shipped; default remains off;
+  template-mode for closed windows still open.
+- **Affected:** Order settings, WhatsApp, website status page
 - **Created:** 2026-10-01
 
 ### AW-049 — Delivery is a flat fee with no area check

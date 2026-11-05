@@ -2,8 +2,13 @@ import { Link, useForm } from '@inertiajs/react';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
+import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
 import InputAdornment from '@mui/material/InputAdornment';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -29,7 +34,7 @@ function MoneyField({ form, name, label, helperText, disabled }) {
     );
 }
 
-export default function Commerce({ online }) {
+export default function Commerce({ online, confirmation }) {
     const { can, hasModule } = useTenant();
     const canUpdate = can('settings.update');
     const form = useForm({
@@ -41,8 +46,15 @@ export default function Commerce({ online }) {
         free_delivery_over: online.free_delivery_over ?? '',
         min_order: online.min_order ?? '',
         delivery_note: online.delivery_note ?? '',
+        whatsapp: confirmation.whatsapp,
+        include_qr: confirmation.include_qr,
+        qr_payload: confirmation.qr_payload,
+        upi_id: confirmation.upi_id ?? '',
+        upi_payee: confirmation.upi_payee ?? '',
+        message: confirmation.message ?? '',
     });
     const locked = !canUpdate || !form.data.enabled;
+    const confirmationLocked = !canUpdate || !form.data.whatsapp;
 
     const submit = (event) => {
         event.preventDefault();
@@ -121,6 +133,73 @@ export default function Commerce({ online }) {
                             error={Boolean(form.errors.delivery_note)}
                             helperText={form.errors.delivery_note ?? 'Shown at checkout, e.g. "We deliver within 5 km, usually the same day."'}
                             slotProps={{ htmlInput: { maxLength: 200 } }}
+                        />
+                    </CardContent>
+                </Card>
+
+                <Card variant="outlined">
+                    <CardContent className="space-y-3">
+                        <h2 className="font-semibold text-slate-900">WhatsApp confirmation</h2>
+                        <FormControlLabel
+                            control={<Switch checked={form.data.whatsapp} disabled={!canUpdate} onChange={(event) => form.setData('whatsapp', event.target.checked)} />}
+                            label="Send a WhatsApp confirmation when an order is confirmed"
+                        />
+                        <p className="text-sm text-slate-600">
+                            Works for counter, website and WhatsApp orders once they are confirmed. Needs a customer phone number and an open WhatsApp chat window (or an approved template later).
+                        </p>
+                        <FormControlLabel
+                            control={<Switch checked={form.data.include_qr} disabled={confirmationLocked} onChange={(event) => form.setData('include_qr', event.target.checked)} />}
+                            label="Attach a QR code image"
+                        />
+                        <FormControl fullWidth disabled={confirmationLocked || !form.data.include_qr} error={Boolean(form.errors.qr_payload)}>
+                            <InputLabel id="qr-payload-label">QR encodes</InputLabel>
+                            <Select
+                                labelId="qr-payload-label"
+                                label="QR encodes"
+                                value={form.data.qr_payload}
+                                onChange={(event) => form.setData('qr_payload', event.target.value)}
+                            >
+                                <MenuItem value="status">Order status page (customer shows this at pickup)</MenuItem>
+                                <MenuItem value="reference">Order reference only (for your team to check)</MenuItem>
+                                <MenuItem value="upi">UPI payment link (amount filled in)</MenuItem>
+                            </Select>
+                            {form.errors.qr_payload ? <FormHelperText>{form.errors.qr_payload}</FormHelperText> : null}
+                        </FormControl>
+                        {form.data.include_qr && form.data.qr_payload === 'upi' ? (
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <TextField
+                                    label="UPI ID"
+                                    fullWidth
+                                    value={form.data.upi_id}
+                                    disabled={confirmationLocked}
+                                    onChange={(event) => form.setData('upi_id', event.target.value)}
+                                    error={Boolean(form.errors.upi_id)}
+                                    helperText={form.errors.upi_id ?? 'e.g. shop@upi'}
+                                />
+                                <TextField
+                                    label="Payee name"
+                                    fullWidth
+                                    value={form.data.upi_payee}
+                                    disabled={confirmationLocked}
+                                    onChange={(event) => form.setData('upi_payee', event.target.value)}
+                                    error={Boolean(form.errors.upi_payee)}
+                                    helperText={form.errors.upi_payee ?? 'Optional. Shown in the payment app.'}
+                                />
+                            </div>
+                        ) : null}
+                        <TextField
+                            label="Message"
+                            fullWidth
+                            multiline
+                            minRows={4}
+                            value={form.data.message}
+                            disabled={confirmationLocked}
+                            onChange={(event) => form.setData('message', event.target.value)}
+                            error={Boolean(form.errors.message)}
+                            helperText={
+                                form.errors.message ??
+                                'Use {{customer.first_name}}, {{order.number}}, {{order.items}}, {{order.total}}, {{order.fulfilment}}, {{order.status_url}}, {{business.name}}.'
+                            }
                         />
                     </CardContent>
                 </Card>

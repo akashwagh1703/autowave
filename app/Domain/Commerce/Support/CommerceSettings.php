@@ -38,6 +38,34 @@ class CommerceSettings
         ];
     }
 
+    /**
+     * WhatsApp order confirmation (optional QR) after an order is confirmed.
+     *
+     * @return array{whatsapp: bool, include_qr: bool, qr_payload: string, upi_id: ?string, upi_payee: ?string, message: string}
+     */
+    public function confirmation(): array
+    {
+        $stored = is_array($this->stored()['confirmation'] ?? null) ? $this->stored()['confirmation'] : [];
+        $defaults = config('commerce.confirmation');
+        $value = fn (string $key) => array_key_exists($key, $stored) ? $stored[$key] : $defaults[$key];
+        $payload = (string) $value('qr_payload');
+
+        if (! in_array($payload, ['status', 'reference', 'upi'], true)) {
+            $payload = (string) $defaults['qr_payload'];
+        }
+
+        $message = trim((string) $value('message'));
+
+        return [
+            'whatsapp' => (bool) $value('whatsapp'),
+            'include_qr' => (bool) $value('include_qr'),
+            'qr_payload' => $payload,
+            'upi_id' => filled($value('upi_id')) ? (string) $value('upi_id') : null,
+            'upi_payee' => filled($value('upi_payee')) ? (string) $value('upi_payee') : null,
+            'message' => $message !== '' ? $message : (string) $defaults['message'],
+        ];
+    }
+
     /** @return list<string> fulfilment methods offered on the website */
     public function onlineFulfilment(): array
     {
@@ -61,7 +89,29 @@ class CommerceSettings
     /** @param  array<string, mixed>  $online */
     public function updateOnline(array $online): void
     {
-        TenantSetting::query()->updateOrCreate(['key' => self::KEY], ['value' => [...$this->stored(), 'online' => $online]]);
+        $this->persist(['online' => $online]);
+    }
+
+    /** @param  array<string, mixed>  $confirmation */
+    public function updateConfirmation(array $confirmation): void
+    {
+        $this->persist(['confirmation' => $confirmation]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $online
+     * @param  array<string, mixed>  $confirmation
+     */
+    public function update(array $online, array $confirmation): void
+    {
+        $this->persist(['online' => $online, 'confirmation' => $confirmation]);
+    }
+
+    /** @param  array<string, mixed>  $patch */
+    private function persist(array $patch): void
+    {
+        TenantSetting::query()->updateOrCreate(['key' => self::KEY], ['value' => [...$this->stored(), ...$patch]]);
+        $this->context->tenant()->unsetRelation('settings');
     }
 
     public static function money(mixed $value): ?string

@@ -27,6 +27,7 @@ export default function CustomerForm({ form, onSubmit, submitLabel, cancelHref, 
                 <div className="sm:col-span-2">{field('name', 'Name', { required: true, autoFocus: true, slotProps: { htmlInput: { maxLength: 150 } } })}</div>
                 {field('phone', 'Phone', { type: 'tel', placeholder: '+91 98765 43210', helperText: 'Used to match leads to this customer.' })}
                 {field('email', 'Email', { type: 'email' })}
+                {field('date_of_birth', 'Birthday', { type: 'date', helperText: 'Optional. Used for birthday wishes and loyalty treats.' })}
                 {field('city', 'City', { slotProps: { htmlInput: { maxLength: 80 } } })}
                 {field('address', 'Address', { slotProps: { htmlInput: { maxLength: 255 } } })}
                 <div className="sm:col-span-2">

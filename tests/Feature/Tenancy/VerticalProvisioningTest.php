@@ -50,7 +50,7 @@ class VerticalProvisioningTest extends TestCase
         $this->assertContains('offers', $workspace['modules']);
         $this->assertContains('payments', $workspace['modules']);
         $this->assertNotContains('reviews', $workspace['modules']);
-        $this->assertNotContains('loyalty', $workspace['modules']);
+        $this->assertContains('loyalty', $workspace['modules']);
         $this->assertContains('services', $workspace['sections']);
         $this->assertContains('packages', $workspace['sections']);
         $this->assertContains('products', $workspace['sections']);
@@ -102,6 +102,7 @@ class VerticalProvisioningTest extends TestCase
 
         $this->assertEqualsCanonicalizing(['food', 'commerce'], $workspace['engines']);
         $this->assertContains('offers', $workspace['modules']);
+        $this->assertContains('loyalty', $workspace['modules']);
         $this->assertContains('reservation', $workspace['sections']);
         $this->assertContains('products', $workspace['sections']);
 
@@ -128,6 +129,7 @@ class VerticalProvisioningTest extends TestCase
 
         $this->assertSame(['commerce'], $workspace['engines']);
         $this->assertContains('offers', $workspace['modules']);
+        $this->assertContains('loyalty', $workspace['modules']);
         $this->assertContains('inventory', $workspace['modules']);
     }
 

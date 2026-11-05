@@ -1,7 +1,7 @@
 # Commerce: products, stock and orders
 
 - **Status:** ✅ Phase 7; coupons, dine-in and top products in Phase 10
-- **Last updated:** 2026-10-04
+- **Last updated:** 2026-11-05
 
 ## Purpose
 
@@ -69,7 +69,8 @@ types get 404 on every commerce route, and the website hides the Products sectio
    customer timeline.
 8. **Order settings (`/settings/commerce`, linked from Orders and Settings):** online ordering on or off,
    auto-confirm website orders, minimum order, pickup, delivery, delivery fee, free delivery from a subtotal,
-   and a delivery note shown at checkout.
+   a delivery note shown at checkout, and optional **WhatsApp confirmation** (message + QR) when an order is
+   confirmed.
 9. **Website:** see "Online ordering" below.
 
 ## Rules
@@ -219,7 +220,8 @@ Dispatched after commit from `app/Domain/Commerce/Events`:
 
 Condition fields: `order.status`, `order.source`, `order.fulfilment`, `order.payment_status`,
 `order.total`. Template variables: `{{order.number}}` (#1001), `{{order.total}}`, `{{order.items}}`
-("2 × Hair serum, 1 × Shampoo"), `{{order.fulfilment}}`, plus the customer and business variables.
+("2 × Hair serum, 1 × Shampoo"), `{{order.fulfilment}}`, `{{order.status_url}}` (signed status page),
+plus the customer and business variables.
 
 Default templates:
 
@@ -229,6 +231,20 @@ Default templates:
 - **Tell customers their order is ready** (paused): on `order.ready`, sends the customer a WhatsApp message.
 
 Both are created for businesses with the commerce engine and backfilled once for existing ones.
+
+### WhatsApp confirmation + QR (Settings → Orders)
+
+Off by default. When **Send a WhatsApp confirmation when an order is confirmed** is on, `OrderConfirmed`
+queues a WhatsApp message to the customer (needs a phone number; free text needs an open 24-hour window
+when Meta WhatsApp is connected). Optional QR image (PNG) encodes one of:
+
+- **Order status page** (default): signed link on the business website (`/orders/{id}/status`) — show at pickup.
+- **Order reference**: opaque check string for the team.
+- **UPI payment link**: amount filled from the balance due (or total), using the UPI ID in settings.
+
+Message text supports the usual order/customer/business placeholders. Idempotent per order
+(`order-confirm-wa:{id}`). This is separate from Automations (you can still build custom
+`order.confirmed` flows).
 
 ## Timeline and audit
 
@@ -275,7 +291,8 @@ Money widgets also need `reports.view`:
   delivery, lifecycle, cancel restock (including deleted products), payments, removing payments, pages and
   permissions.
 - `CommerceSettingsTest`: business type defaults, settings update and permissions, dashboard widgets,
-  order automations with variables.
+  order automations with variables, WhatsApp confirmation settings.
+- `OrderConfirmationWhatsAppTest`: optional confirmation WhatsApp + QR on confirm, signed status page.
 - `CommerceIsolationTest`: cross-tenant access.
 - `tests/Feature/Website/OnlineShopTest`: products section, quote, website order, auto-confirm and
   returning customers, delivery fee, free delivery and minimum order, rules, closing the shop, honeypot and
@@ -288,5 +305,5 @@ and check constraint are covered by the ledger tests and the database checks.
 
 No online payments (AW-041), no variants (AW-042), no returns or refunds (AW-043), no taxes (AW-044;
 coupons arrived in Phase 10), discounts are not recomputed when items are added (AW-060), carts do not reserve stock (AW-045), receptionists cannot update orders (AW-046), orders cannot be
-edited (AW-047), no customer order messages or tracking by default (AW-048), flat delivery fee only
-(AW-049).
+edited (AW-047), customer order WhatsApp + QR/status is opt-in under Order settings (AW-048 partly addressed),
+flat delivery fee only (AW-049).

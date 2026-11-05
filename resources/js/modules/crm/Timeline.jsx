@@ -76,6 +76,9 @@ const icons = {
     reservation_cancelled: EventBusyIcon,
     reservation_no_show: EventBusyIcon,
     reservation_table_assigned: TableRestaurantIcon,
+    loyalty_joined: HowToRegIcon,
+    loyalty_stamp_earned: TaskAltIcon,
+    loyalty_reward_redeemed: PaymentsIcon,
 };
 
 const enrolmentVerbs = {
@@ -215,6 +218,12 @@ function describe(activity, timezone, currency) {
             return `updated ${reservationLabel(meta, timezone)}`;
         case 'order_items_added':
             return `added ${meta.added || 'items'} to ${orderLabel(meta)}`;
+        case 'loyalty_joined':
+            return 'joined the loyalty stamp card';
+        case 'loyalty_stamp_earned':
+            return `added ${meta.delta ?? 1} loyalty stamp${meta.delta === 1 ? '' : 's'} (balance ${meta.balance ?? '?'}/${meta.required ?? '?'})`;
+        case 'loyalty_reward_redeemed':
+            return `redeemed ${activity.body || 'a loyalty reward'} (balance ${meta.balance ?? 0})`;
         case 'order_placed':
             return `placed ${orderLabel(meta)}${sourceSuffix(meta.source, ' on the website')}${meta.items ? `: ${meta.items}` : ''}`;
         case 'payment_recorded':

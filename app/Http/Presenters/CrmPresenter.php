@@ -54,6 +54,7 @@ final class CrmPresenter
             'email' => $customer->email,
             'city' => $customer->city,
             'address' => $customer->address,
+            'date_of_birth' => $customer->date_of_birth?->toDateString(),
             'tags' => $customer->tags ?? [],
             'notes' => $customer->notes,
             'created_at' => $customer->created_at?->toIso8601String(),
