@@ -17,7 +17,7 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 - **Counter WhatsApp QR.** Settings → Messaging shows a downloadable QR for the business WhatsApp
   number. Customers scan it to open a chat with a “Hi” greeting — for printing at the counter.
 - **Downloadable loyalty and WhatsApp payment QRs.** Settings → Loyalty can download the join QR.
-  Settings → Orders shows and downloads the business UPI payment QR used with WhatsApp confirmation.
+  Settings → Orders shows and downloads a reusable customer UPI payment QR.
 - **Settings → Modules.** Owners can turn catalogue features on or off after onboarding (dependencies and
   engine-required modules enforced). Newly enabled modules get website/CRM/automation defaults.
 - **Loyalty stamp cards.** Cafés, salons, studios and stores get a configurable stamp card (e.g. buy 9,
@@ -26,14 +26,17 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 - **Customer birthdays.** Optional date of birth on customers and the loyalty join form. A daily job
   fires `customer.birthday` once a year (day or birth-month). Optional free loyalty reward; paused
   WhatsApp “happy birthday” automation included.
-- **Order confirmation WhatsApp with QR.** Settings → Orders can send the customer a WhatsApp message when
-  an order is confirmed, with an optional QR (status page, order reference, or UPI pay link). Off by
-  default. Customers can open a signed status page from the QR.
+- **Order customer WhatsApp (pay → screenshot → confirm).** Settings → Orders can message pending
+  orders with a payment QR and ask for a payment screenshot; confirmation after staff confirms has no
+  counter/delivery QR. Off by default.
 - **WhatsApp turf bookings can run for several hours.** After choosing a start time, customers pick
   how long (1–6 consecutive free hours). WhatsApp lists only allow one tap, so length is a second step.
 
 ### Changed
 
+- **Order WhatsApp is pay-then-confirm for customers.** Pending orders get a payment request (UPI QR +
+  “reply with screenshot”); confirmation after the business confirms has no counter/delivery QR.
+  After a completed order, loyalty stamps are messaged and a birthday is requested when missing.
 - **Local turf demo is Saffron Arena (Nashik).** `abc-turf` uses the public Google listing details:
   Nashik Road address, 24-hour hours, Instagram, cricket/football/pickleball resources and rates.
   Login unchanged: `owner@abc-turf.test` / `password`.

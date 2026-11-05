@@ -65,18 +65,19 @@ return [
     ],
 
     /*
-    | WhatsApp confirmation when an order is confirmed (staff or auto-confirm). Tenant
-    | values live in the `commerce` setting under `confirmation`. Off by default so
-    | businesses opt in (AW-048). The QR may encode a signed status page, the order
-    | reference (pickup check), or a UPI payment link.
+    | Customer WhatsApp for orders (Settings → Orders → confirmation). Off by default
+    | (AW-048). Flow: pending unpaid orders get a payment request (optional UPI QR) asking
+    | the customer to pay and reply with a screenshot; after the business confirms, a
+    | separate confirmation text is sent (no “show this to counter/delivery” QR).
     */
     'confirmation' => [
         'whatsapp' => false,
         'include_qr' => true,
-        'qr_payload' => 'status',
+        'qr_payload' => 'upi',
         'upi_id' => null,
         'upi_payee' => null,
-        'message' => "Hi {{customer.first_name}}, your order {{order.number}} at {{business.name}} is confirmed.\n\n{{order.items}}\nTotal: {{order.total}} ({{order.fulfilment}})\n\nShow this QR when you collect your order.",
+        'payment_message' => "Hi {{customer.first_name}}, thanks for your order {{order.number}} at {{business.name}}.\n\n{{order.items}}\nAmount to pay: {{order.total}} ({{order.fulfilment}})\n\nPlease pay using this QR and reply here with a screenshot of the payment. We'll confirm your order once we see it.",
+        'message' => "Hi {{customer.first_name}}, we've confirmed your order {{order.number}} at {{business.name}}.\n\n{{order.items}}\nTotal: {{order.total}} ({{order.fulfilment}})\n\nWe'll let you know when it's ready.",
     ],
 
     // Orders per visitor IP and business per hour.

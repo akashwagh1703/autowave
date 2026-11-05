@@ -33,7 +33,9 @@ free). Walk-ins join by scanning a QR; stamps are awarded when an order or appoi
    birthday) → open a `loyalty_accounts` row with a public token.
 2. **Card:** `GET /loyalty/card/{token}` shows stamp progress for the customer to show at the counter.
 3. **Earn:** on `OrderCompleted` (and optionally `AppointmentCompleted`), add stamps (idempotent per
-   order/appointment). Auto-enrols the customer if they were not on the card yet.
+   order/appointment). Auto-enrols the customer if they were not on the card yet. After an order
+   completes, WhatsApp shows their stamp balance (and card link) and, when birthday collection is on
+   and DOB is missing, a signed link to save their birthday.
 4. **Redeem:** staff on the customer page → subtracts `stamps_required`, increments rewards redeemed.
 
 ## Permissions

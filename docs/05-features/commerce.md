@@ -232,22 +232,23 @@ Default templates:
 
 Both are created for businesses with the commerce engine and backfilled once for existing ones.
 
-### WhatsApp confirmation + QR (Settings → Orders)
+### Customer WhatsApp: pay → screenshot → confirm (Settings → Orders)
 
-Off by default. When **Send a WhatsApp confirmation when an order is confirmed** is on, `OrderConfirmed`
-queues a WhatsApp message to the customer (needs a phone number; free text needs an open 24-hour window
-when Meta WhatsApp is connected). Optional QR image (PNG) encodes one of:
+Off by default. Intended flow for website orders (keep **auto-confirm** off):
 
-- **Order status page** (default): signed link on the business website (`/orders/{id}/status`) — show at pickup.
-- **Order reference**: opaque check string for the team.
-- **UPI payment link**: amount filled from the balance due (or total), using the UPI ID in settings.
+1. Customer places a **pending** order → WhatsApp **payment request** with optional QR (usually UPI with
+   the amount filled in). Message asks them to pay and **reply with a payment screenshot**.
+2. Business sees the screenshot, then **confirms** the order → short **confirmation** WhatsApp with **no QR**
+   (nothing for the counter or delivery staff to scan).
 
-When a UPI ID is saved, Settings → Orders also shows a downloadable **WhatsApp payment QR** (static UPI
-QR for printing or sharing). Per-order status/reference QRs are still generated at confirm time.
+Counter sales that start already confirmed skip the payment request and only get the confirmation text.
+Needs a customer phone; free text needs an open 24-hour window when Meta WhatsApp is connected.
 
-Message text supports the usual order/customer/business placeholders. Idempotent per order
-(`order-confirm-wa:{id}`). This is separate from Automations (you can still build custom
-`order.confirmed` flows).
+Payment QR payloads: **UPI** (default), order status page link, or order reference. A reusable static UPI
+QR can be downloaded for sharing with customers only — not for counter/delivery staff.
+
+Placeholders: order/customer/business fields. Idempotent keys: `order-payment-wa:{id}`,
+`order-confirm-wa:{id}`. Separate from Automations (`order.confirmed` / `order.created` flows still work).
 
 ## Timeline and audit
 

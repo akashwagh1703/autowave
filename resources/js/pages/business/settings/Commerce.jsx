@@ -53,11 +53,12 @@ export default function Commerce({ online, confirmation, payment_qr }) {
         qr_payload: confirmation.qr_payload,
         upi_id: confirmation.upi_id ?? '',
         upi_payee: confirmation.upi_payee ?? '',
+        payment_message: confirmation.payment_message ?? '',
         message: confirmation.message ?? '',
     });
     const locked = !canUpdate || !form.data.enabled;
     const confirmationLocked = !canUpdate || !form.data.whatsapp;
-    const paymentQrFilename = `${tenant?.slug || 'business'}-whatsapp-payment-qr.png`;
+    const paymentQrFilename = `${tenant?.slug || 'business'}-customer-payment-qr.png`;
 
     const submit = (event) => {
         event.preventDefault();
@@ -83,7 +84,7 @@ export default function Commerce({ online, confirmation, payment_qr }) {
                             label="Take orders from my website"
                         />
                         <p className="text-sm text-slate-600">
-                            Visitors add products to a cart and send the order; you confirm it here. Payment is collected at pickup or on delivery.
+                            Visitors add products to a cart and send the order. With WhatsApp payment on, they pay via QR and send a screenshot; you confirm after you see the payment.
                             {hasModule('website') ? (
                                 <>
                                     {' '}The cart appears when the Products section is switched on under{' '}
@@ -142,29 +143,29 @@ export default function Commerce({ online, confirmation, payment_qr }) {
 
                 <Card variant="outlined">
                     <CardContent className="space-y-3">
-                        <h2 className="font-semibold text-slate-900">WhatsApp confirmation</h2>
+                        <h2 className="font-semibold text-slate-900">Customer WhatsApp</h2>
                         <FormControlLabel
                             control={<Switch checked={form.data.whatsapp} disabled={!canUpdate} onChange={(event) => form.setData('whatsapp', event.target.checked)} />}
-                            label="Send a WhatsApp confirmation when an order is confirmed"
+                            label="Message the customer about payment and confirmation"
                         />
                         <p className="text-sm text-slate-600">
-                            Works for counter, website and WhatsApp orders once they are confirmed. Needs a customer phone number and an open WhatsApp chat window (or an approved template later).
+                            Pending website orders get a payment request (pay with the QR, reply with a screenshot). After you confirm, they get a short confirmation — nothing for the counter or delivery staff to scan. Needs the customer phone and an open WhatsApp window (or an approved template later). Keep &ldquo;Confirm website orders automatically&rdquo; off for this flow.
                         </p>
                         <FormControlLabel
                             control={<Switch checked={form.data.include_qr} disabled={confirmationLocked} onChange={(event) => form.setData('include_qr', event.target.checked)} />}
-                            label="Attach a QR code image"
+                            label="Attach a payment QR on the payment request"
                         />
                         <FormControl fullWidth disabled={confirmationLocked || !form.data.include_qr} error={Boolean(form.errors.qr_payload)}>
-                            <InputLabel id="qr-payload-label">QR encodes</InputLabel>
+                            <InputLabel id="qr-payload-label">Payment QR encodes</InputLabel>
                             <Select
                                 labelId="qr-payload-label"
-                                label="QR encodes"
+                                label="Payment QR encodes"
                                 value={form.data.qr_payload}
                                 onChange={(event) => form.setData('qr_payload', event.target.value)}
                             >
-                                <MenuItem value="status">Order status page (customer shows this at pickup)</MenuItem>
-                                <MenuItem value="reference">Order reference only (for your team to check)</MenuItem>
-                                <MenuItem value="upi">UPI payment link (amount filled in)</MenuItem>
+                                <MenuItem value="upi">UPI payment link (order amount filled in)</MenuItem>
+                                <MenuItem value="status">Order status page link</MenuItem>
+                                <MenuItem value="reference">Order reference only</MenuItem>
                             </Select>
                             {form.errors.qr_payload ? <FormHelperText>{form.errors.qr_payload}</FormHelperText> : null}
                         </FormControl>
@@ -192,11 +193,11 @@ export default function Commerce({ online, confirmation, payment_qr }) {
                         ) : null}
                         {payment_qr ? (
                             <div className="flex flex-col items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:flex-row sm:items-center">
-                                <img src={payment_qr} alt="WhatsApp payment QR" className="h-40 w-40 rounded border border-slate-200 bg-white p-2" />
+                                <img src={payment_qr} alt="Customer payment QR" className="h-40 w-40 rounded border border-slate-200 bg-white p-2" />
                                 <div className="space-y-2 text-sm">
-                                    <p className="font-medium text-slate-800">WhatsApp payment QR</p>
+                                    <p className="font-medium text-slate-800">Reusable customer payment QR</p>
                                     <p className="text-slate-600">
-                                        Download this QR to print or share. When confirmation QR encodes UPI, WhatsApp messages use your UPI ID with the order amount filled in.
+                                        For sharing with customers only (not for counter or delivery staff). Per-order WhatsApp payment messages still use your UPI ID with the order amount filled in.
                                     </p>
                                     <Button
                                         type="button"
@@ -205,27 +206,41 @@ export default function Commerce({ online, confirmation, payment_qr }) {
                                         startIcon={<DownloadIcon />}
                                         onClick={() => downloadDataUri(payment_qr, paymentQrFilename)}
                                     >
-                                        Download WhatsApp QR
+                                        Download payment QR
                                     </Button>
                                 </div>
                             </div>
                         ) : form.data.include_qr && form.data.qr_payload === 'upi' ? (
-                            <p className="text-sm text-slate-600">Save a UPI ID to preview and download your WhatsApp payment QR.</p>
+                            <p className="text-sm text-slate-600">Save a UPI ID to preview and download a reusable customer payment QR.</p>
                         ) : form.data.include_qr ? (
-                            <p className="text-sm text-slate-600">Status and reference QRs are created per order when you confirm. Add a UPI ID to download a reusable payment QR.</p>
+                            <p className="text-sm text-slate-600">Status and reference QRs are created per pending order with the payment request. Prefer UPI so customers can pay the order amount.</p>
                         ) : null}
                         <TextField
-                            label="Message"
+                            label="Payment request message"
                             fullWidth
                             multiline
                             minRows={4}
+                            value={form.data.payment_message}
+                            disabled={confirmationLocked}
+                            onChange={(event) => form.setData('payment_message', event.target.value)}
+                            error={Boolean(form.errors.payment_message)}
+                            helperText={
+                                form.errors.payment_message ??
+                                'Sent when a website order is pending. Ask them to pay and reply with a screenshot. Placeholders: {{customer.first_name}}, {{order.number}}, {{order.items}}, {{order.total}}, {{order.fulfilment}}, {{business.name}}.'
+                            }
+                        />
+                        <TextField
+                            label="Confirmation message"
+                            fullWidth
+                            multiline
+                            minRows={3}
                             value={form.data.message}
                             disabled={confirmationLocked}
                             onChange={(event) => form.setData('message', event.target.value)}
                             error={Boolean(form.errors.message)}
                             helperText={
                                 form.errors.message ??
-                                'Use {{customer.first_name}}, {{order.number}}, {{order.items}}, {{order.total}}, {{order.fulfilment}}, {{order.status_url}}, {{business.name}}.'
+                                'Sent after you confirm the order (once you have the payment screenshot). No QR attached.'
                             }
                         />
                     </CardContent>

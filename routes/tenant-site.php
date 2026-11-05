@@ -4,6 +4,7 @@ use App\Http\Controllers\SeoController;
 use App\Http\Controllers\Website\BookingController;
 use App\Http\Controllers\Website\EnquiryController;
 use App\Http\Controllers\Website\HomeController;
+use App\Http\Controllers\Website\CustomerBirthdayController;
 use App\Http\Controllers\Website\LoyaltyJoinController;
 use App\Http\Controllers\Website\ManageBookingController;
 use App\Http\Controllers\Website\OrderStatusController;
@@ -34,6 +35,10 @@ Route::middleware('site.live')->group(function () {
     Route::post('/cart/quote', [ShopController::class, 'quote'])->middleware('throttle:website-cart')->name('tenant.cart.quote');
     Route::post('/orders', [ShopController::class, 'store'])->middleware('throttle:website-order')->name('tenant.orders.store');
     Route::get('/orders/{order}/status', OrderStatusController::class)->middleware(['signed:relative', 'throttle:60,1'])->name('tenant.orders.status');
+    Route::middleware(['signed:relative', 'throttle:60,1'])->prefix('customers/{customer}/birthday')->group(function () {
+        Route::get('/', [CustomerBirthdayController::class, 'show'])->name('tenant.customers.birthday');
+        Route::post('/', [CustomerBirthdayController::class, 'store'])->name('tenant.customers.birthday.store');
+    });
     Route::middleware('throttle:website-enquiry')->group(function () {
         Route::get('/loyalty/join', [LoyaltyJoinController::class, 'show'])->name('tenant.loyalty.join');
         Route::post('/loyalty/join', [LoyaltyJoinController::class, 'store'])->name('tenant.loyalty.join.store');

@@ -8,7 +8,7 @@ use App\Domain\Tenant\Support\TenantContext;
 use Illuminate\Support\Facades\URL;
 
 /**
- * Signed public link so a customer can open their order status (and show the QR at pickup).
+ * Signed public link so a customer can open their order status on the business website.
  * Signature is relative (host differs from the app host that may generate the URL).
  */
 class OrderStatusLink

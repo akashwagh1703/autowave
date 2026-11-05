@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/** Public signed order status page (QR / WhatsApp confirmation link). */
+/** Public signed order status page (optional payment-request QR / status link). */
 class OrderStatusController extends Controller
 {
     public function __invoke(Order $order, TenantContext $context): Response

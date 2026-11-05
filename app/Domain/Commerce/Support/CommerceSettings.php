@@ -39,9 +39,9 @@ class CommerceSettings
     }
 
     /**
-     * WhatsApp order confirmation (optional QR) after an order is confirmed.
+     * Customer WhatsApp for orders: payment request (pending) + confirmation (after staff confirms).
      *
-     * @return array{whatsapp: bool, include_qr: bool, qr_payload: string, upi_id: ?string, upi_payee: ?string, message: string}
+     * @return array{whatsapp: bool, include_qr: bool, qr_payload: string, upi_id: ?string, upi_payee: ?string, payment_message: string, message: string}
      */
     public function confirmation(): array
     {
@@ -54,6 +54,7 @@ class CommerceSettings
             $payload = (string) $defaults['qr_payload'];
         }
 
+        $paymentMessage = trim((string) $value('payment_message'));
         $message = trim((string) $value('message'));
 
         return [
@@ -62,6 +63,7 @@ class CommerceSettings
             'qr_payload' => $payload,
             'upi_id' => filled($value('upi_id')) ? (string) $value('upi_id') : null,
             'upi_payee' => filled($value('upi_payee')) ? (string) $value('upi_payee') : null,
+            'payment_message' => $paymentMessage !== '' ? $paymentMessage : (string) $defaults['payment_message'],
             'message' => $message !== '' ? $message : (string) $defaults['message'],
         ];
     }

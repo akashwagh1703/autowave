@@ -5,10 +5,13 @@ namespace Tests\Feature\Loyalty;
 use App\Domain\Commerce\Enums\OrderStatus;
 use App\Domain\Loyalty\Actions\EarnFromOrder;
 use App\Domain\Loyalty\Models\LoyaltyAccount;
+use App\Domain\Loyalty\Support\CustomerBirthdayLink;
 use App\Domain\Loyalty\Support\LoyaltySettings;
+use App\Domain\Messaging\Models\OutboundMessage;
 use App\Domain\Module\Services\ModuleManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\Concerns\CreatesAutomations;
 use Tests\Concerns\CreatesCommerceRecords;
 use Tests\Concerns\CreatesCrmRecords;
 use Tests\Concerns\CreatesTenants;
@@ -16,7 +19,7 @@ use Tests\TestCase;
 
 class LoyaltyStampCardTest extends TestCase
 {
-    use CreatesCommerceRecords, CreatesCrmRecords, CreatesTenants, RefreshDatabase;
+    use CreatesAutomations, CreatesCommerceRecords, CreatesCrmRecords, CreatesTenants, RefreshDatabase;
 
     private const CAFE = 'abc-cafe.autowave.test';
 
@@ -140,5 +143,44 @@ class LoyaltyStampCardTest extends TestCase
 
         $this->assertSame(8, $this->inTenant($tenant, fn () => app(LoyaltySettings::class)->all()['stamps_required']));
         $this->assertSame('Free pastry', $this->inTenant($tenant, fn () => app(LoyaltySettings::class)->all()['reward_label']));
+    }
+
+    public function test_completed_order_whatsapp_shows_stamps_and_asks_for_birthday(): void
+    {
+        $tenant = $this->createTenant('ABC Cafe', 'cafe');
+        $this->pauseDefaultAutomations($tenant);
+        $this->inTenant($tenant, fn () => app(LoyaltySettings::class)->update([
+            'enabled' => true,
+            'stamps_required' => 10,
+            'earn_per' => 'order',
+            'reward_label' => 'Free coffee',
+            'collect_birthday' => true,
+        ]));
+
+        $product = $this->makeProduct($tenant, ['name' => 'Coffee', 'price' => '80.00']);
+        $customer = $this->makeCustomer($tenant, ['name' => 'Neha', 'phone' => '9876543210', 'date_of_birth' => null]);
+
+        $order = $this->placeOrder($tenant, [[$product, 1]], [
+            'customer_id' => $customer->id,
+            'completed' => true,
+        ]);
+
+        $message = $this->inTenant($tenant, fn () => OutboundMessage::query()->where('idempotency_key', 'order-complete-followup-wa:'.$order->id)->sole());
+        $this->assertStringContainsString('1 of 10 stamps toward Free coffee', $message->body);
+        $this->assertStringContainsString('/customers/'.$customer->id.'/birthday', $message->body);
+
+        $url = $this->inTenant($tenant, fn () => CustomerBirthdayLink::url($customer->fresh()));
+        $path = parse_url($url, PHP_URL_PATH).'?'.parse_url($url, PHP_URL_QUERY);
+
+        $this->get($this->siteUrl(self::CAFE, $path))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('website/CustomerBirthday'));
+
+        $this->from($this->siteUrl(self::CAFE, $path))
+            ->post($this->siteUrl(self::CAFE, $path), ['date_of_birth' => '1995-06-15'])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('1995-06-15', $this->inTenant($tenant, fn () => $customer->fresh()->date_of_birth?->format('Y-m-d')));
     }
 }

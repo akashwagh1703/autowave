@@ -33,9 +33,10 @@ class CommerceSettingsTest extends TestCase
             'delivery_note' => '  Within 5 km  ',
             'whatsapp' => false,
             'include_qr' => true,
-            'qr_payload' => 'status',
+            'qr_payload' => 'upi',
             'upi_id' => '',
             'upi_payee' => '',
+            'payment_message' => config('commerce.confirmation.payment_message'),
             'message' => config('commerce.confirmation.message'),
             ...$overrides,
         ];
@@ -71,6 +72,7 @@ class CommerceSettingsTest extends TestCase
             'qr_payload' => 'upi',
             'upi_id' => 'shop@upi',
             'upi_payee' => 'Corner Shop',
+            'payment_message' => 'Hi {{customer.first_name}}, please pay {{order.total}} for {{order.number}}.',
             'message' => 'Hi {{customer.first_name}}, order {{order.number}} is confirmed.',
         ]))->assertSessionHasNoErrors();
 
@@ -90,6 +92,7 @@ class CommerceSettingsTest extends TestCase
             'qr_payload' => 'upi',
             'upi_id' => 'shop@upi',
             'upi_payee' => 'Corner Shop',
+            'payment_message' => 'Hi {{customer.first_name}}, please pay {{order.total}} for {{order.number}}.',
             'message' => 'Hi {{customer.first_name}}, order {{order.number}} is confirmed.',
         ], $this->inTenant($tenant, fn () => app(CommerceSettings::class)->confirmation()));
         $this->assertDatabaseHas('audit_logs', ['action' => 'commerce.settings_updated']);

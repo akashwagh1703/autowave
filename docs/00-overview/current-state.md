@@ -201,8 +201,8 @@ This document describes what **actually exists** in the repository today. Planne
     remove payments (cash, UPI, card, bank transfer, other), notes, customer call and WhatsApp, history.
   - Prices, totals and stock are always computed on the server. Order numbers run per business from #1001.
 - **Order settings** (`/settings/commerce`): online ordering, auto-confirm, pickup, delivery fee, free
-  delivery threshold, minimum order, delivery note, optional WhatsApp confirmation with QR (status /
-  reference / UPI).
+  delivery threshold, minimum order, delivery note, optional customer WhatsApp (payment request with QR
+  on pending orders → confirm after payment screenshot; confirmation text has no counter/delivery QR).
 - **Website shop:** the products section now shows the catalogue. When online ordering is open, visitors add
   products to a cart (kept in the browser), see a server-priced quote, and check out for pickup or delivery.
   Website orders start pending (or confirmed with auto-confirm) and the owners get an email. Honeypot and

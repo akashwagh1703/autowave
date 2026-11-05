@@ -15,7 +15,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/** Settings → Orders and shop: online ordering, pickup/delivery, and WhatsApp confirmation QR. */
+/** Settings → Orders and shop: online ordering, pickup/delivery, and customer payment WhatsApp. */
 class CommerceSettingsController extends Controller
 {
     public function show(CommerceSettings $settings, TenantContext $context): Response
@@ -59,6 +59,7 @@ class CommerceSettingsController extends Controller
             'qr_payload' => ['required', Rule::in(['status', 'reference', 'upi'])],
             'upi_id' => ['nullable', 'string', 'regex:'.UpdateBillingSettings::UPI_PATTERN],
             'upi_payee' => ['nullable', 'string', 'max:100'],
+            'payment_message' => ['required', 'string', 'max:'.$messageMax],
             'message' => ['required', 'string', 'max:'.$messageMax],
         ], [
             'upi_id.regex' => __('Enter a UPI ID like name@bank.'),
@@ -89,6 +90,7 @@ class CommerceSettingsController extends Controller
             'qr_payload' => $validated['qr_payload'],
             'upi_id' => filled($validated['upi_id'] ?? null) ? trim($validated['upi_id']) : null,
             'upi_payee' => filled($validated['upi_payee'] ?? null) ? trim($validated['upi_payee']) : null,
+            'payment_message' => trim($validated['payment_message']),
             'message' => trim($validated['message']),
         ];
 
