@@ -8,6 +8,7 @@ use App\Domain\Commerce\Enums\OrderStatus;
 use App\Domain\Commerce\Support\CommerceSettings;
 use App\Domain\Commerce\Support\OrderStatusLink;
 use App\Domain\Messaging\Models\OutboundMessage;
+use App\Support\TenantTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -132,5 +133,68 @@ class OrderConfirmationWhatsAppTest extends TestCase
         $png = QrCode::png('AW-1-#1001', 200);
         $this->assertStringStartsWith("\x89PNG", $png);
         $this->assertStringStartsWith('data:image/png;base64,', QrCode::pngDataUri('AW-1-#1001', 200));
+    }
+
+    public function test_ready_whatsapp_uses_pickup_celebration_copy(): void
+    {
+        $tenant = $this->createTenant();
+        $this->pauseDefaultAutomations($tenant);
+        $product = $this->makeProduct($tenant, ['name' => 'Oil', 'price' => '100.00']);
+        $customer = $this->makeCustomer($tenant, ['name' => 'Ravi Kumar', 'phone' => '9988776655']);
+
+        $this->inTenant($tenant, function () {
+            $settings = app(CommerceSettings::class);
+            $settings->updateConfirmation([
+                ...$settings->confirmation(),
+                'whatsapp' => true,
+                'include_qr' => false,
+                'message' => 'Payment received for {{order.number}}.',
+                'ready_message_pickup' => 'Pickup party for {{customer.first_name}} — {{order.number}} is ready!',
+            ]);
+        });
+
+        $order = $this->placeOrder($tenant, [[$product, 1]], [
+            'customer_id' => $customer->id,
+            'fulfilment' => 'pickup',
+        ]);
+
+        $this->inTenant($tenant, function () use ($order) {
+            app(ChangeOrderStatus::class)->handle($order, OrderStatus::Ready);
+        });
+
+        $ready = $this->inTenant($tenant, fn () => OutboundMessage::query()->where('idempotency_key', 'order-ready-wa:'.$order->id)->sole());
+        $this->assertSame('Pickup party for Ravi — #1001 is ready!', $ready->body);
+        $this->assertStringNotContainsString('Show this QR', $ready->body);
+    }
+
+    public function test_birthday_first_order_of_the_day_gets_a_wish_and_free_item_offer(): void
+    {
+        $tenant = $this->createTenant();
+        $this->pauseDefaultAutomations($tenant);
+        $today = TenantTime::now();
+        $product = $this->makeProduct($tenant, ['name' => 'Cake', 'price' => '200.00']);
+        $customer = $this->makeCustomer($tenant, [
+            'name' => 'Neha Shah',
+            'phone' => '9876543210',
+            'date_of_birth' => $today->copy()->subYears(25)->toDateString(),
+        ]);
+
+        $order = $this->placeOrder($tenant, [[$product, 1]], ['customer_id' => $customer->id]);
+
+        $wish = $this->inTenant($tenant, fn () => OutboundMessage::query()
+            ->where('idempotency_key', 'birthday-first-order-wa:'.$customer->id.':'.$today->toDateString())
+            ->sole());
+        $this->assertStringContainsString('Happy birthday, Neha', $wish->body);
+        $this->assertStringContainsString('one item', $wish->body);
+        $this->assertStringContainsString($order->reference(), $wish->body);
+        $this->assertSame(
+            $today->toDateString(),
+            $this->inTenant($tenant, fn () => $customer->fresh()->birthday_greeted_on?->toDateString()),
+        );
+
+        $this->placeOrder($tenant, [[$product, 1]], ['customer_id' => $customer->id]);
+        $this->assertSame(1, $this->inTenant($tenant, fn () => OutboundMessage::query()
+            ->where('idempotency_key', 'birthday-first-order-wa:'.$customer->id.':'.$today->toDateString())
+            ->count()));
     }
 }

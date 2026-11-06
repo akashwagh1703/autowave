@@ -10,7 +10,8 @@ One record per person the business serves, with their full history in one timeli
 ## User flow
 
 - Customers are created by hand (`/customers/create`) or automatically when a lead is converted.
-- The customer page shows contact details, tags, notes, their leads and the timeline.
+- The customer page shows contact details, tags, notes, their leads, orders (paginated) and the
+  timeline (paginated).
 - Team members can log notes, calls, WhatsApp messages, emails and meetings directly on a customer.
 
 ## Rules
@@ -35,6 +36,7 @@ A customer's timeline contains:
 - later phases add bookings, orders and messages.
 
 Entries show who did what, and when, in the tenant's timezone. Lead entries link back to the lead.
+Paginated at 25 per page (`activities_page`). Orders on the same page use `orders_page` (25 per page).
 
 ## List (`/customers`)
 

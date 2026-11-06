@@ -166,7 +166,8 @@ class LoyaltyStampCardTest extends TestCase
         ]);
 
         $message = $this->inTenant($tenant, fn () => OutboundMessage::query()->where('idempotency_key', 'order-complete-followup-wa:'.$order->id)->sole());
-        $this->assertStringContainsString('1 of 10 stamps toward Free coffee', $message->body);
+        $this->assertStringContainsString('1 of 10', $message->body);
+        $this->assertStringContainsString('Free coffee', $message->body);
         $this->assertStringContainsString('/customers/'.$customer->id.'/birthday', $message->body);
 
         $url = $this->inTenant($tenant, fn () => CustomerBirthdayLink::url($customer->fresh()));

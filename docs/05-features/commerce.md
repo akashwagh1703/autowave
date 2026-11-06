@@ -232,25 +232,27 @@ Default templates:
 
 Both are created for businesses with the commerce engine and backfilled once for existing ones.
 
-### Customer WhatsApp: pay → screenshot → record → confirm (Settings → Orders)
+### Customer WhatsApp: pay → screenshot → record → confirm → ready (Settings → Orders)
 
 Off by default. Intended flow for WhatsApp and website orders (keep **auto-confirm** off):
 
-1. Customer places a **pending** order (WhatsApp assistant or website) → WhatsApp **payment request** with
-   optional UPI QR (amount filled in). Message asks them to pay and **reply with a payment screenshot**.
-2. When the screenshot is downloaded into the inbox, AutoWave copies it onto that customer's latest
-   **pending unpaid** order (`payment_proof_received` on the timeline). Staff open the order, review the
-   image, **record the payment**, then **confirm**.
-3. Confirmation WhatsApp is short text with **no QR** (nothing for counter or delivery staff).
+1. Customer places a **pending** order → WhatsApp **payment request** with optional UPI QR. Asks them to
+   pay and **reply with a payment screenshot**.
+2. Screenshot is copied onto the pending unpaid order (`payment_proof_received`). Staff **review**,
+   **record payment**, then **confirm**.
+3. Confirmation WhatsApp celebrates that **payment was received** and the order is confirmed — **no**
+   “show this QR at the counter/pickup” copy.
+4. When the order is marked **ready**, a separate pickup or delivery celebration message is sent.
 
-Counter sales that start already confirmed skip the payment request and only get the confirmation text.
-Needs a customer phone; free text needs an open 24-hour window when Meta WhatsApp is connected.
+If today is the customer’s **birthday** and this is their **first order of the day**, they also get a
+birthday wish offering **one free item** (reply with the item; staff honour it on confirm).
 
-Payment QR payloads: **UPI** (default), order status page link, or order reference. A reusable static UPI
-QR can be downloaded for sharing with customers only — not for counter/delivery staff.
+Counter sales that start already confirmed skip the payment request. Needs a customer phone and an open
+24-hour window when Meta WhatsApp is connected.
 
-Placeholders: order/customer/business fields. Idempotent keys: `order-payment-wa:{id}`,
-`order-confirm-wa:{id}`. Separate from Automations (`order.confirmed` / `order.created` flows still work).
+Payment QR payloads: **UPI** (default), status link, or reference. Idempotent keys:
+`order-payment-wa:{id}`, `order-confirm-wa:{id}`, `order-ready-wa:{id}`,
+`birthday-first-order-wa:{customer}:{date}`.
 
 ## Timeline and audit
 

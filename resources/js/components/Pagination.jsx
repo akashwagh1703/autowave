@@ -1,17 +1,17 @@
 import { router } from '@inertiajs/react';
 import MuiPagination from '@mui/material/Pagination';
 
-// Server-side pagination: keeps the current query string and changes `page`.
-export default function Pagination({ meta, noun = 'results' }) {
+// Server-side pagination: keeps the current query string and changes `page` (or `pageKey`).
+export default function Pagination({ meta, noun = 'results', pageKey = 'page' }) {
     if (!meta || meta.total === 0) {
         return null;
     }
 
     const goTo = (page) => {
         const params = new URLSearchParams(window.location.search);
-        params.set('page', String(page));
+        params.set(pageKey, String(page));
 
-        router.get(`${window.location.pathname}?${params.toString()}`, {}, { preserveState: true, preserveScroll: false });
+        router.get(`${window.location.pathname}?${params.toString()}`, {}, { preserveState: true, preserveScroll: true });
     };
 
     return (

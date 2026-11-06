@@ -66,9 +66,9 @@ return [
 
     /*
     | Customer WhatsApp for orders (Settings → Orders → confirmation). Off by default
-    | (AW-048). Flow: pending unpaid orders get a payment request (optional UPI QR) asking
-    | the customer to pay and reply with a screenshot; after the business confirms, a
-    | separate confirmation text is sent (no “show this to counter/delivery” QR).
+    | (AW-048). Flow: pending unpaid → payment QR + screenshot; after staff records payment
+    | and confirms → celebration text (no counter/delivery QR); when marked ready → pickup
+    | or delivery message.
     */
     'confirmation' => [
         'whatsapp' => false,
@@ -76,8 +76,11 @@ return [
         'qr_payload' => 'upi',
         'upi_id' => null,
         'upi_payee' => null,
-        'payment_message' => "Hi {{customer.first_name}}, thanks for your order {{order.number}} at {{business.name}}.\n\n{{order.items}}\nAmount to pay: {{order.total}} ({{order.fulfilment}})\n\nPlease pay using this QR, then reply here with a screenshot of the payment. We'll review it on your order, record the payment, and confirm once it looks right.",
-        'message' => "Hi {{customer.first_name}}, we've received your payment and confirmed order {{order.number}} at {{business.name}}.\n\n{{order.items}}\nTotal: {{order.total}} ({{order.fulfilment}})\n\nWe'll let you know when it's ready.",
+        'payment_message' => "✨ Hi {{customer.first_name}}! Your order {{order.number}} at {{business.name}} is almost yours.\n\n{{order.items}}\n💵 Amount to pay: *{{order.total}}* ({{order.fulfilment}})\n\nScan the QR, pay securely, then *reply here with a screenshot* of the payment. We’ll check it and confirm right away — thank you!",
+        'message' => "🎉 Payment received — you’re confirmed!\n\nHi {{customer.first_name}}, we’ve got your payment and *confirmed order {{order.number}}* at {{business.name}}.\n\n{{order.items}}\nTotal paid: *{{order.total}}* ({{order.fulfilment}})\n\nWe’re preparing it with care. We’ll message you the moment it’s ready. Thanks for choosing us! 💛",
+        'ready_message_pickup' => "🥳 It’s ready for you, {{customer.first_name}}!\n\nOrder *{{order.number}}* from {{business.name}} is ready for *pickup*. Come collect it whenever you’re nearby — we can’t wait for you to enjoy it!\n\n{{order.items}}\nTotal: {{order.total}}",
+        'ready_message_delivery' => "🛵 On its way, {{customer.first_name}}!\n\nOrder *{{order.number}}* from {{business.name}} is out for *delivery*. Keep your phone handy — it’ll be with you soon.\n\n{{order.items}}\nTotal: {{order.total}}",
+        'ready_message' => "✨ Great news, {{customer.first_name}}!\n\nOrder *{{order.number}}* from {{business.name}} is ready ({{order.fulfilment}}). Thank you for your patience — enjoy every bite!\n\n{{order.items}}\nTotal: {{order.total}}",
     ],
 
     // Orders per visitor IP and business per hour.

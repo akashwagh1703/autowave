@@ -12,10 +12,13 @@ use App\Domain\Chatbot\Listeners\QueueChatbotReply;
 use App\Domain\Commerce\Events\OrderCompleted;
 use App\Domain\Commerce\Events\OrderConfirmed;
 use App\Domain\Commerce\Events\OrderCreated;
+use App\Domain\Commerce\Events\OrderReady;
 use App\Domain\Commerce\Listeners\AttachWhatsAppPaymentProof;
 use App\Domain\Commerce\Listeners\SendOrderConfirmationWhatsApp;
 use App\Domain\Commerce\Listeners\SendOrderPaymentWhatsApp;
+use App\Domain\Commerce\Listeners\SendOrderReadyWhatsApp;
 use App\Domain\Loyalty\Listeners\EarnLoyaltyOnCompletion;
+use App\Domain\Loyalty\Listeners\SendBirthdayWishOnFirstOrder;
 use App\Domain\Loyalty\Listeners\SendOrderCompleteFollowUpWhatsApp;
 use App\Domain\Messaging\Events\ConversationMessageReceived;
 use App\Domain\Messaging\Events\InboundMediaStored;
@@ -61,8 +64,10 @@ class AppServiceProvider extends ServiceProvider
             Event::listen($event, EmailOwnersAboutWebsiteActivity::class);
         }
         Event::listen(AppointmentRescheduled::class, RetimeAppointmentWaits::class);
+        Event::listen(OrderCreated::class, SendBirthdayWishOnFirstOrder::class);
         Event::listen(OrderCreated::class, SendOrderPaymentWhatsApp::class);
         Event::listen(OrderConfirmed::class, SendOrderConfirmationWhatsApp::class);
+        Event::listen(OrderReady::class, SendOrderReadyWhatsApp::class);
         Event::listen(OrderCompleted::class, EarnLoyaltyOnCompletion::class);
         Event::listen(OrderCompleted::class, SendOrderCompleteFollowUpWhatsApp::class);
         Event::listen(AppointmentCompleted::class, EarnLoyaltyOnCompletion::class);

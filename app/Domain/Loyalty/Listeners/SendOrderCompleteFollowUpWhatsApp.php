@@ -71,10 +71,10 @@ class SendOrderCompleteFollowUpWhatsApp
             $required = $settings['stamps_required'];
             $balance = $account->stamps_balance;
             $reward = $settings['reward_label'];
-            $parts[] = "Thanks for your order {$order->reference()}! You now have {$balance} of {$required} stamps toward {$reward}.";
+            $parts[] = "🌟 Thanks for order {$order->reference()}! Your stamp card now shows *{$balance} of {$required}* toward {$reward}. Keep going — your reward is getting closer!";
 
             if ($cardUrl = LoyaltyLinks::cardUrl($account)) {
-                $parts[] = "Your stamp card: {$cardUrl}";
+                $parts[] = "📱 Your personal stamp card: {$cardUrl}";
             }
         }
 
@@ -83,8 +83,8 @@ class SendOrderCompleteFollowUpWhatsApp
         if ($settings['collect_birthday'] && ! $customer->date_of_birth) {
             $birthdayUrl = CustomerBirthdayLink::url($customer);
             $parts[] = $birthdayUrl
-                ? "Want a birthday treat from us? Save your date of birth here: {$birthdayUrl}"
-                : 'Want a birthday treat from us? Reply with your date of birth as DD/MM/YYYY.';
+                ? "🎂 One more thing — save your birthday and we’ll surprise you on your special day: {$birthdayUrl}"
+                : '🎂 One more thing — reply with your date of birth as DD/MM/YYYY and we’ll surprise you on your special day!';
         }
 
         if ($parts === []) {

@@ -317,8 +317,8 @@ class OrderTest extends TestCase
         $this->assertSame('Call before delivery', $this->inTenant($this->tenant, fn () => $order->fresh()->notes));
 
         $this->get($this->appUrl("/customers/{$customer->id}"))->assertInertia(fn (Assert $page) => $page
-            ->where('orders.0.reference', '#1001')
-            ->where('activities', fn ($activities) => collect($activities)->contains('type', 'order_placed')));
+            ->where('orders.data.0.reference', '#1001')
+            ->where('activities.data', fn ($activities) => collect($activities)->contains('type', 'order_placed')));
     }
 
     public function test_order_permissions(): void

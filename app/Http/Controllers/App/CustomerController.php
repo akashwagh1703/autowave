@@ -107,15 +107,25 @@ class CustomerController extends Controller
             ? LoyaltyAccount::query()->where('customer_id', $customer->id)->first()
             : null;
 
+        $activities = Activity::query()
+            ->where('customer_id', $customer->id)
+            ->with(['user:id,name', 'lead'])
+            ->orderByDesc('occurred_at')->orderByDesc('id')
+            ->paginate(config('crm.per_page'), ['*'], 'activities_page')
+            ->withQueryString();
+
+        $orders = $showOrders
+            ? Order::query()
+                ->where('customer_id', $customer->id)
+                ->with('items')
+                ->orderByDesc('created_at')->orderByDesc('id')
+                ->paginate(config('commerce.per_page'), ['*'], 'orders_page')
+                ->withQueryString()
+            : null;
+
         return Inertia::render('business/customers/Show', [
-            'orders' => $showOrders
-                ? Order::query()
-                    ->where('customer_id', $customer->id)
-                    ->with('items')
-                    ->orderByDesc('created_at')->orderByDesc('id')
-                    ->limit(20)
-                    ->get()
-                    ->map(fn (Order $order) => CommercePresenter::order($order))
+            'orders' => $orders
+                ? CrmPresenter::paginated($orders, fn (Order $order) => CommercePresenter::order($order))
                 : null,
             'appointments' => $showAppointments
                 ? Appointment::query()
@@ -137,13 +147,7 @@ class CustomerController extends Controller
                 ->orderByDesc('created_at')
                 ->get()
                 ->map(fn ($lead) => CrmPresenter::lead($lead)),
-            'activities' => Activity::query()
-                ->where('customer_id', $customer->id)
-                ->with(['user:id,name', 'lead'])
-                ->orderByDesc('occurred_at')->orderByDesc('id')
-                ->limit(100)
-                ->get()
-                ->map(fn (Activity $activity) => CrmPresenter::activity($activity)),
+            'activities' => CrmPresenter::paginated($activities, fn (Activity $activity) => CrmPresenter::activity($activity)),
             'activityTypes' => $this->options->activityTypes(),
             'documents' => FilesPresenter::card($customer, 'customer', route('customers.attachments.store', $customer), $request->user(), $this->context->tenant()),
         ]);

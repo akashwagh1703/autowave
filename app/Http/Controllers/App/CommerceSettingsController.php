@@ -61,6 +61,9 @@ class CommerceSettingsController extends Controller
             'upi_payee' => ['nullable', 'string', 'max:100'],
             'payment_message' => ['required', 'string', 'max:'.$messageMax],
             'message' => ['required', 'string', 'max:'.$messageMax],
+            'ready_message_pickup' => ['required', 'string', 'max:'.$messageMax],
+            'ready_message_delivery' => ['required', 'string', 'max:'.$messageMax],
+            'ready_message' => ['required', 'string', 'max:'.$messageMax],
         ], [
             'upi_id.regex' => __('Enter a UPI ID like name@bank.'),
         ]);
@@ -92,6 +95,9 @@ class CommerceSettingsController extends Controller
             'upi_payee' => filled($validated['upi_payee'] ?? null) ? trim($validated['upi_payee']) : null,
             'payment_message' => trim($validated['payment_message']),
             'message' => trim($validated['message']),
+            'ready_message_pickup' => trim($validated['ready_message_pickup']),
+            'ready_message_delivery' => trim($validated['ready_message_delivery']),
+            'ready_message' => trim($validated['ready_message']),
         ];
 
         $settings->update($online, $confirmation);

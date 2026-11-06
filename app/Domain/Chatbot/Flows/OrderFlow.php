@@ -378,7 +378,7 @@ class OrderFlow extends ChatFlow
             '',
             $this->settings->online()['auto_confirm']
                 ? null
-                : __('After you place it, we will send a payment QR. Pay and reply with a screenshot — we confirm once we see the payment.'),
+                : __('Next: we’ll send a payment QR. Pay, reply with a screenshot, and we’ll confirm your order as soon as we see it. ✨'),
         ], fn ($line) => $line !== null);
 
         return $this->reply(trim(implode("\n", $lines)), Interactive::buttons([
@@ -419,10 +419,12 @@ class OrderFlow extends ChatFlow
         $session->put('placed', $placed->id);
         $this->linkCustomer($conversation, $placed->customer_id);
 
-        $how = $placed->fulfilment === 'delivery' ? __('We will deliver it to you.') : __('We will tell you here when it is ready for pickup.');
+        $how = $placed->fulfilment === 'delivery'
+            ? __('We’ll bring it to you and message you the moment it’s on the way. 🛵')
+            : __('We’ll message you the moment it’s ready for pickup — can’t wait! 🥳');
         $body = $placed->status === OrderStatus::Pending
-            ? __('🙏 Thank you, :name! We have your order *:number* (total :total). Please pay using the QR we send next, then reply here with a screenshot of the payment. We will confirm your order after we check it.', ['name' => $name, 'number' => $placed->number, 'total' => $this->content->money($placed->total)])
-            : __('✅ Order *:number* is confirmed! Total :total.', ['number' => $placed->number, 'total' => $this->content->money($placed->total)])."\n".$how;
+            ? __('🎉 Thank you, :name! We’ve got your order *:number* (total :total). Pay with the QR we send next, then reply with a *payment screenshot* — we’ll confirm as soon as we check it.', ['name' => $name, 'number' => $placed->number, 'total' => $this->content->money($placed->total)])
+            : __('🎉 You’re confirmed, :name! Order *:number* is locked in (total :total).', ['name' => $name, 'number' => $placed->number, 'total' => $this->content->money($placed->total)])."\n".$how;
 
         return $this->reply($body, Interactive::buttons([
             ['id' => self::PREFIX.'menu', 'title' => __('Main menu')],

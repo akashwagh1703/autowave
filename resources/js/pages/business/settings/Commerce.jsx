@@ -55,6 +55,9 @@ export default function Commerce({ online, confirmation, payment_qr }) {
         upi_payee: confirmation.upi_payee ?? '',
         payment_message: confirmation.payment_message ?? '',
         message: confirmation.message ?? '',
+        ready_message_pickup: confirmation.ready_message_pickup ?? '',
+        ready_message_delivery: confirmation.ready_message_delivery ?? '',
+        ready_message: confirmation.ready_message ?? '',
     });
     const locked = !canUpdate || !form.data.enabled;
     const confirmationLocked = !canUpdate || !form.data.whatsapp;
@@ -149,7 +152,7 @@ export default function Commerce({ online, confirmation, payment_qr }) {
                             label="Message the customer about payment and confirmation"
                         />
                         <p className="text-sm text-slate-600">
-                            WhatsApp and website orders that stay pending get a payment QR. The customer pays and replies with a screenshot — that image appears on the order so you can review it, record the payment, then confirm. Confirmation WhatsApp has no counter/delivery QR. Needs the customer phone and an open WhatsApp window (or an approved template later). Keep &ldquo;Confirm website orders automatically&rdquo; off for this flow.
+                            Pending orders get a payment QR; the customer pays and sends a screenshot on WhatsApp. You review it on the order, record the payment, then confirm — they get a &ldquo;payment received&rdquo; celebration (no counter/delivery QR). When you mark the order ready, they get a pickup or delivery message. Needs the customer phone and an open WhatsApp window (or an approved template later). Keep auto-confirm off for this flow.
                         </p>
                         <FormControlLabel
                             control={<Switch checked={form.data.include_qr} disabled={confirmationLocked} onChange={(event) => form.setData('include_qr', event.target.checked)} />}
@@ -240,8 +243,41 @@ export default function Commerce({ online, confirmation, payment_qr }) {
                             error={Boolean(form.errors.message)}
                             helperText={
                                 form.errors.message ??
-                                'Sent after you confirm the order (once you have the payment screenshot). No QR attached.'
+                                'Sent after you record payment and confirm — celebrate that payment was received. No QR attached.'
                             }
+                        />
+                        <TextField
+                            label="Ready — pickup"
+                            fullWidth
+                            multiline
+                            minRows={3}
+                            value={form.data.ready_message_pickup}
+                            disabled={confirmationLocked}
+                            onChange={(event) => form.setData('ready_message_pickup', event.target.value)}
+                            error={Boolean(form.errors.ready_message_pickup)}
+                            helperText={form.errors.ready_message_pickup ?? 'When you mark a pickup order ready.'}
+                        />
+                        <TextField
+                            label="Ready — delivery"
+                            fullWidth
+                            multiline
+                            minRows={3}
+                            value={form.data.ready_message_delivery}
+                            disabled={confirmationLocked}
+                            onChange={(event) => form.setData('ready_message_delivery', event.target.value)}
+                            error={Boolean(form.errors.ready_message_delivery)}
+                            helperText={form.errors.ready_message_delivery ?? 'When you mark a delivery order ready / out for delivery.'}
+                        />
+                        <TextField
+                            label="Ready — other"
+                            fullWidth
+                            multiline
+                            minRows={2}
+                            value={form.data.ready_message}
+                            disabled={confirmationLocked}
+                            onChange={(event) => form.setData('ready_message', event.target.value)}
+                            error={Boolean(form.errors.ready_message)}
+                            helperText={form.errors.ready_message ?? 'Fallback for in-store or other fulfilment types.'}
                         />
                     </CardContent>
                 </Card>

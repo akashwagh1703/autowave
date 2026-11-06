@@ -13,6 +13,7 @@ import ShoppingBagIcon from '@mui/icons-material/ShoppingBagOutlined';
 import { useState } from 'react';
 import AppLayout from '@/layouts/AppLayout';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import Pagination from '@/components/Pagination';
 import AppointmentStatusChip from '@/modules/booking/AppointmentStatusChip';
 import { OrderStatusChip } from '@/modules/orders/OrderChips';
 import StageChip from '@/modules/leads/StageChip';
@@ -124,7 +125,14 @@ export default function Show({ customer, leads, activities, activityTypes, appoi
                     <Card variant="outlined">
                         <CardContent>
                             <h2 className="mb-4 font-semibold text-slate-900">Timeline</h2>
-                            <Timeline activities={activities} timezone={timezone} showLead={canSeeLeads} showAppointment={Boolean(appointments)} showOrder={Boolean(orders)} />
+                            <Timeline
+                                activities={activities.data}
+                                timezone={timezone}
+                                showLead={canSeeLeads}
+                                showAppointment={Boolean(appointments)}
+                                showOrder={orders !== null}
+                            />
+                            <Pagination meta={activities.meta} noun="entries" pageKey="activities_page" />
                         </CardContent>
                     </Card>
                 </div>
@@ -227,12 +235,12 @@ export default function Show({ customer, leads, activities, activityTypes, appoi
                     {orders ? (
                         <Card variant="outlined">
                             <CardContent>
-                                <h2 className="font-semibold text-slate-900">Orders ({orders.length})</h2>
-                                {orders.length === 0 ? (
+                                <h2 className="font-semibold text-slate-900">Orders ({orders.meta.total})</h2>
+                                {orders.data.length === 0 ? (
                                     <p className="mt-2 text-sm text-slate-600">No orders yet.</p>
                                 ) : (
                                     <ul className="mt-3 divide-y divide-slate-100">
-                                        {orders.map((order) => (
+                                        {orders.data.map((order) => (
                                             <li key={order.id} className="py-2">
                                                 <div className="flex items-center justify-between gap-2">
                                                     <Link href={`/orders/${order.id}`} className="text-sm font-medium text-slate-900 hover:text-brand-700">
@@ -247,6 +255,7 @@ export default function Show({ customer, leads, activities, activityTypes, appoi
                                         ))}
                                     </ul>
                                 )}
+                                <Pagination meta={orders.meta} noun="orders" pageKey="orders_page" />
                             </CardContent>
                         </Card>
                     ) : null}

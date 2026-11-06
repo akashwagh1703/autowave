@@ -317,11 +317,11 @@ return [
         ],
         'order_ready' => [
             'name' => 'Tell customers their order is ready',
-            'description' => 'Sends a WhatsApp message when an order is ready for pickup or out for delivery.',
+            'description' => 'Sends a WhatsApp message when an order is ready for pickup or out for delivery. (Also covered by Settings → Orders WhatsApp when that is on.)',
             'trigger' => 'order.ready',
             'active' => false,
             'steps' => [
-                ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => 'Hi {{customer.first_name}}, your order {{order.number}} from {{business.name}} is ready ({{order.fulfilment}}). Total: {{order.total}}.']],
+                ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => "🥳 Great news, {{customer.first_name}}!\n\nOrder {{order.number}} from {{business.name}} is ready ({{order.fulfilment}}). Come enjoy it — we prepared it just for you!\n\nTotal: {{order.total}}"]],
             ],
         ],
         'birthday_wish' => [
@@ -330,7 +330,7 @@ return [
             'trigger' => 'customer.birthday',
             'active' => false,
             'steps' => [
-                ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => 'Happy birthday, {{customer.first_name}}! From everyone at {{business.name}} — we hope your day is wonderful. Show this message for a birthday treat.']],
+                ['type' => 'action', 'action' => 'send_whatsapp', 'config' => ['message' => "🎂 Happy birthday, {{customer.first_name}}!\n\nEveryone at {{business.name}} is wishing you an amazing day. Come celebrate with us — reply for a birthday treat on the house (one item). 💛"]],
             ],
         ],
         'admission_welcome' => [

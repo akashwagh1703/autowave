@@ -38,6 +38,9 @@ class CommerceSettingsTest extends TestCase
             'upi_payee' => '',
             'payment_message' => config('commerce.confirmation.payment_message'),
             'message' => config('commerce.confirmation.message'),
+            'ready_message_pickup' => config('commerce.confirmation.ready_message_pickup'),
+            'ready_message_delivery' => config('commerce.confirmation.ready_message_delivery'),
+            'ready_message' => config('commerce.confirmation.ready_message'),
             ...$overrides,
         ];
     }
@@ -74,6 +77,9 @@ class CommerceSettingsTest extends TestCase
             'upi_payee' => 'Corner Shop',
             'payment_message' => 'Hi {{customer.first_name}}, please pay {{order.total}} for {{order.number}}.',
             'message' => 'Hi {{customer.first_name}}, order {{order.number}} is confirmed.',
+            'ready_message_pickup' => 'Pickup ready {{order.number}}',
+            'ready_message_delivery' => 'Delivery ready {{order.number}}',
+            'ready_message' => 'Ready {{order.number}}',
         ]))->assertSessionHasNoErrors();
 
         $this->assertSame([
@@ -94,6 +100,9 @@ class CommerceSettingsTest extends TestCase
             'upi_payee' => 'Corner Shop',
             'payment_message' => 'Hi {{customer.first_name}}, please pay {{order.total}} for {{order.number}}.',
             'message' => 'Hi {{customer.first_name}}, order {{order.number}} is confirmed.',
+            'ready_message_pickup' => 'Pickup ready {{order.number}}',
+            'ready_message_delivery' => 'Delivery ready {{order.number}}',
+            'ready_message' => 'Ready {{order.number}}',
         ], $this->inTenant($tenant, fn () => app(CommerceSettings::class)->confirmation()));
         $this->assertDatabaseHas('audit_logs', ['action' => 'commerce.settings_updated']);
 

@@ -90,7 +90,8 @@ class CustomerTest extends TestCase
                 ->component('business/customers/Show')
                 ->where('customer.name', 'Priya')
                 ->has('leads', 1)
-                ->where('activities', fn ($activities) => collect($activities)->pluck('type')->sort()->values()->all() === ['call', 'converted', 'created', 'created']));
+                ->where('activities.data', fn ($activities) => collect($activities)->pluck('type')->sort()->values()->all() === ['call', 'converted', 'created', 'created'])
+                ->where('activities.meta.total', 4));
     }
 
     public function test_notes_can_be_logged_on_a_customer(): void

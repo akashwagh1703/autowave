@@ -71,7 +71,7 @@ class BookingHttpTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->has('appointments', 1)
                 ->where('appointments.0.service.name', 'Haircut')
-                ->where('activities.0.type', 'appointment_booked'));
+                ->where('activities.data.0.type', 'appointment_booked'));
 
         $this->get($this->appUrl('/appointments?date=2026-10-06'))
             ->assertOk()
