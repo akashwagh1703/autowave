@@ -12,11 +12,13 @@ use App\Domain\Chatbot\Listeners\QueueChatbotReply;
 use App\Domain\Commerce\Events\OrderCompleted;
 use App\Domain\Commerce\Events\OrderConfirmed;
 use App\Domain\Commerce\Events\OrderCreated;
+use App\Domain\Commerce\Listeners\AttachWhatsAppPaymentProof;
 use App\Domain\Commerce\Listeners\SendOrderConfirmationWhatsApp;
 use App\Domain\Commerce\Listeners\SendOrderPaymentWhatsApp;
 use App\Domain\Loyalty\Listeners\EarnLoyaltyOnCompletion;
 use App\Domain\Loyalty\Listeners\SendOrderCompleteFollowUpWhatsApp;
 use App\Domain\Messaging\Events\ConversationMessageReceived;
+use App\Domain\Messaging\Events\InboundMediaStored;
 use App\Domain\RBAC\Support\PermissionCatalog;
 use App\Domain\RBAC\Support\PermissionResolver;
 use App\Domain\Tenant\Support\TenantContext;
@@ -64,6 +66,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(OrderCompleted::class, EarnLoyaltyOnCompletion::class);
         Event::listen(OrderCompleted::class, SendOrderCompleteFollowUpWhatsApp::class);
         Event::listen(AppointmentCompleted::class, EarnLoyaltyOnCompletion::class);
+        Event::listen(InboundMediaStored::class, AttachWhatsAppPaymentProof::class);
         Event::listen(ConversationMessageReceived::class, QueueLeadExtraction::class);
         Event::listen(ConversationMessageReceived::class, QueueChatbotReply::class);
 

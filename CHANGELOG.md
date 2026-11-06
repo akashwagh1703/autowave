@@ -34,9 +34,10 @@ Categories: Added, Changed, Fixed, Security, Deprecated, Removed.
 
 ### Changed
 
-- **Order WhatsApp is pay-then-confirm for customers.** Pending orders get a payment request (UPI QR +
-  “reply with screenshot”); confirmation after the business confirms has no counter/delivery QR.
-  After a completed order, loyalty stamps are messaged and a birthday is requested when missing.
+- **Order WhatsApp is pay → screenshot → record → confirm.** Pending WhatsApp/website orders get a
+  payment QR; the customer’s payment screenshot is copied onto the order for staff to review, record
+  payment, then confirm (confirmation has no counter/delivery QR). After complete, loyalty stamps and
+  missing birthday asks are messaged.
 - **Local turf demo is Saffron Arena (Nashik).** `abc-turf` uses the public Google listing details:
   Nashik Road address, 24-hour hours, Instagram, cricket/football/pickleball resources and rates.
   Login unchanged: `owner@abc-turf.test` / `password`.

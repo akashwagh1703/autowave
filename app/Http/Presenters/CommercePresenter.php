@@ -129,6 +129,9 @@ final class CommercePresenter
             'payments' => $order->relationLoaded('payments')
                 ? $order->payments->map(fn (OrderPayment $payment) => self::payment($payment))->values()->all()
                 : null,
+            'payment_proofs' => $order->relationLoaded('attachments')
+                ? $order->attachments->map(fn ($attachment) => FilesPresenter::attachment($attachment))->values()->all()
+                : [],
             'creator' => $order->relationLoaded('creator') && $order->creator
                 ? ['id' => $order->creator->id, 'name' => $order->creator->name]
                 : null,

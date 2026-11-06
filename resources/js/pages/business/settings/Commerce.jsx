@@ -149,7 +149,7 @@ export default function Commerce({ online, confirmation, payment_qr }) {
                             label="Message the customer about payment and confirmation"
                         />
                         <p className="text-sm text-slate-600">
-                            Pending website orders get a payment request (pay with the QR, reply with a screenshot). After you confirm, they get a short confirmation — nothing for the counter or delivery staff to scan. Needs the customer phone and an open WhatsApp window (or an approved template later). Keep &ldquo;Confirm website orders automatically&rdquo; off for this flow.
+                            WhatsApp and website orders that stay pending get a payment QR. The customer pays and replies with a screenshot — that image appears on the order so you can review it, record the payment, then confirm. Confirmation WhatsApp has no counter/delivery QR. Needs the customer phone and an open WhatsApp window (or an approved template later). Keep &ldquo;Confirm website orders automatically&rdquo; off for this flow.
                         </p>
                         <FormControlLabel
                             control={<Switch checked={form.data.include_qr} disabled={confirmationLocked} onChange={(event) => form.setData('include_qr', event.target.checked)} />}

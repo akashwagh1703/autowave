@@ -144,7 +144,7 @@ class OrderController extends Controller
 
     public function show(Order $order, TenantContext $context): Response
     {
-        $order->load(['customer', 'table', 'items.product', 'payments.recorder:id,name', 'creator:id,name']);
+        $order->load(['customer', 'table', 'items.product', 'payments.recorder:id,name', 'attachments', 'creator:id,name']);
         $canAddItems = $order->fulfilment === 'dine_in' && $order->status->isOpen();
 
         return Inertia::render('business/orders/Show', [

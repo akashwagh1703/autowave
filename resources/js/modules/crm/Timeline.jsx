@@ -57,6 +57,7 @@ const icons = {
     order_completed: TaskAltIcon,
     order_cancelled: RemoveShoppingCartIcon,
     payment_recorded: PaymentsIcon,
+    payment_proof_received: PaymentsIcon,
     payment_removed: PaymentsIcon,
     order_items_added: ShoppingBagIcon,
     admitted: SchoolIcon,
@@ -228,6 +229,8 @@ function describe(activity, timezone, currency) {
             return `placed ${orderLabel(meta)}${sourceSuffix(meta.source, ' on the website')}${meta.items ? `: ${meta.items}` : ''}`;
         case 'payment_recorded':
             return `recorded a payment of ${formatPrice(meta.amount, currency)}${meta.method_label ? ` (${meta.method_label})` : ''} for ${activity.appointment_id ? appointmentLabel(meta, timezone) : orderLabel(meta)}`;
+        case 'payment_proof_received':
+            return `received a WhatsApp payment screenshot for ${orderLabel(meta)}`;
         case 'payment_removed':
             return `removed a payment of ${formatPrice(meta.amount, currency)} from ${activity.appointment_id ? appointmentLabel(meta, timezone) : orderLabel(meta)}`;
         case 'created':

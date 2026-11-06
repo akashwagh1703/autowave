@@ -76,8 +76,8 @@ return [
         'qr_payload' => 'upi',
         'upi_id' => null,
         'upi_payee' => null,
-        'payment_message' => "Hi {{customer.first_name}}, thanks for your order {{order.number}} at {{business.name}}.\n\n{{order.items}}\nAmount to pay: {{order.total}} ({{order.fulfilment}})\n\nPlease pay using this QR and reply here with a screenshot of the payment. We'll confirm your order once we see it.",
-        'message' => "Hi {{customer.first_name}}, we've confirmed your order {{order.number}} at {{business.name}}.\n\n{{order.items}}\nTotal: {{order.total}} ({{order.fulfilment}})\n\nWe'll let you know when it's ready.",
+        'payment_message' => "Hi {{customer.first_name}}, thanks for your order {{order.number}} at {{business.name}}.\n\n{{order.items}}\nAmount to pay: {{order.total}} ({{order.fulfilment}})\n\nPlease pay using this QR, then reply here with a screenshot of the payment. We'll review it on your order, record the payment, and confirm once it looks right.",
+        'message' => "Hi {{customer.first_name}}, we've received your payment and confirmed order {{order.number}} at {{business.name}}.\n\n{{order.items}}\nTotal: {{order.total}} ({{order.fulfilment}})\n\nWe'll let you know when it's ready.",
     ],
 
     // Orders per visitor IP and business per hour.

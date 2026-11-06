@@ -232,14 +232,16 @@ Default templates:
 
 Both are created for businesses with the commerce engine and backfilled once for existing ones.
 
-### Customer WhatsApp: pay → screenshot → confirm (Settings → Orders)
+### Customer WhatsApp: pay → screenshot → record → confirm (Settings → Orders)
 
-Off by default. Intended flow for website orders (keep **auto-confirm** off):
+Off by default. Intended flow for WhatsApp and website orders (keep **auto-confirm** off):
 
-1. Customer places a **pending** order → WhatsApp **payment request** with optional QR (usually UPI with
-   the amount filled in). Message asks them to pay and **reply with a payment screenshot**.
-2. Business sees the screenshot, then **confirms** the order → short **confirmation** WhatsApp with **no QR**
-   (nothing for the counter or delivery staff to scan).
+1. Customer places a **pending** order (WhatsApp assistant or website) → WhatsApp **payment request** with
+   optional UPI QR (amount filled in). Message asks them to pay and **reply with a payment screenshot**.
+2. When the screenshot is downloaded into the inbox, AutoWave copies it onto that customer's latest
+   **pending unpaid** order (`payment_proof_received` on the timeline). Staff open the order, review the
+   image, **record the payment**, then **confirm**.
+3. Confirmation WhatsApp is short text with **no QR** (nothing for counter or delivery staff).
 
 Counter sales that start already confirmed skip the payment request and only get the confirmation text.
 Needs a customer phone; free text needs an open 24-hour window when Meta WhatsApp is connected.

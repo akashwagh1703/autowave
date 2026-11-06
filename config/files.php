@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Commerce\Models\Order;
 use App\Domain\Commerce\Models\Product;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Education\Models\Course;
@@ -88,6 +89,16 @@ return [
             'max' => 50,
             'view' => 'documents.view',
             'manage' => 'documents.manage',
+        ],
+        // WhatsApp (and other) payment screenshots copied onto a pending order for staff review.
+        'order' => [
+            'model' => Order::class,
+            'kinds' => ['image'],
+            'folder' => 'orders/payment-proofs',
+            'visibility' => 'private',
+            'max' => 10,
+            'view' => 'orders.view',
+            'manage' => 'orders.update',
         ],
         'product' => [
             'model' => Product::class,

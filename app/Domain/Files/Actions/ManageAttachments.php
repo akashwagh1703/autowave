@@ -110,6 +110,23 @@ class ManageAttachments
         return $attachment;
     }
 
+    /**
+     * Copies an existing private file onto another record (e.g. WhatsApp screenshot → order payment proof).
+     */
+    public function attachCopy(Attachment $source, Model $owner, string $ownerKey, ?string $title = null): Attachment
+    {
+        $tmp = (string) tempnam(sys_get_temp_dir(), 'aw-copy-');
+        file_put_contents($tmp, Storage::disk($source->disk)->get($source->path));
+
+        $file = new UploadedFile($tmp, $source->original_name ?: 'file', $source->mime_type, null, true);
+
+        try {
+            return $this->upload($owner, $ownerKey, $file, null, $title);
+        } finally {
+            @unlink($tmp);
+        }
+    }
+
     public function delete(Attachment $attachment): void
     {
         $attachment->delete();

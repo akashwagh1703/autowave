@@ -3,6 +3,7 @@
 namespace App\Domain\Messaging\Jobs;
 
 use App\Domain\Files\Actions\ManageAttachments;
+use App\Domain\Messaging\Events\InboundMediaStored;
 use App\Domain\Messaging\Exceptions\MediaTooLarge;
 use App\Domain\Messaging\Exceptions\MetaApiException;
 use App\Domain\Messaging\Meta\MetaGraphClient;
@@ -78,6 +79,8 @@ class DownloadInboundMedia implements ShouldQueue
             }
 
             $this->mark($message, ['status' => ConversationMessage::MEDIA_STORED]);
+            $message->load('attachment');
+            InboundMediaStored::dispatch($message->fresh(['attachment', 'conversation']));
         });
     }
 

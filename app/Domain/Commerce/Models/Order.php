@@ -6,6 +6,7 @@ use App\Domain\Activity\Models\Activity;
 use App\Domain\Commerce\Enums\OrderStatus;
 use App\Domain\Commerce\Enums\PaymentStatus;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Files\Models\Attachment;
 use App\Domain\Food\Models\DiningTable;
 use App\Domain\Tenant\Concerns\BelongsToTenant;
 use App\Models\User;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * A customer's order of products (a dine-in order may have no customer: a walk-in at a table).
@@ -74,6 +76,12 @@ class Order extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(OrderPayment::class)->orderBy('paid_at')->orderBy('id');
+    }
+
+    /** Payment screenshots (usually copied from WhatsApp) for staff to review before confirming. */
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable')->orderBy('id');
     }
 
     public function activities(): HasMany

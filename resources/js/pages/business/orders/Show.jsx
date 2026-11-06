@@ -73,6 +73,8 @@ export default function Show({ order, transitions, activities, paymentMethods, p
     const canUpdate = can('orders.update');
     const digits = String(order.customer?.phone ?? '').replace(/\D/g, '');
     const hasBalance = Number(order.balance) > 0;
+    const paymentProofs = order.payment_proofs ?? [];
+    const awaitingPaymentReview = order.status === 'pending' && paymentProofs.length > 0;
 
     const setStatus = (status, extra = {}) =>
         router.patch(`/orders/${order.id}/status`, { status, ...extra }, {
@@ -150,8 +152,43 @@ export default function Show({ order, transitions, activities, paymentMethods, p
                 </Alert>
             ) : null}
 
+            {awaitingPaymentReview ? (
+                <Alert severity="info" className="mb-4">
+                    The customer sent a payment screenshot on WhatsApp. Review it below, record the payment, then confirm the order.
+                </Alert>
+            ) : null}
+
             <div className="grid gap-4 lg:grid-cols-3">
                 <div className="space-y-4 lg:col-span-2">
+                    {paymentProofs.length > 0 ? (
+                        <Card variant="outlined">
+                            <CardContent className="space-y-3">
+                                <h2 className="font-semibold text-slate-900">Payment screenshots</h2>
+                                <p className="text-sm text-slate-600">
+                                    Sent by the customer on WhatsApp. Check the amount matches, record the payment, then confirm.
+                                </p>
+                                <div className="flex flex-wrap gap-3">
+                                    {paymentProofs.map((proof) => (
+                                        <a
+                                            key={proof.id}
+                                            href={proof.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="block overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                                        >
+                                            <img src={proof.url} alt={proof.name || 'Payment screenshot'} className="h-40 w-40 object-cover" />
+                                        </a>
+                                    ))}
+                                </div>
+                                {canUpdate && hasBalance ? (
+                                    <Button variant="contained" size="small" onClick={() => setPaying(true)}>
+                                        Record payment from screenshot
+                                    </Button>
+                                ) : null}
+                            </CardContent>
+                        </Card>
+                    ) : null}
+
                     <Card variant="outlined">
                         <CardContent>
                             <div className="flex flex-wrap items-center justify-between gap-2">

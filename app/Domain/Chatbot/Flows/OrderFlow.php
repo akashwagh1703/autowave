@@ -376,7 +376,9 @@ class OrderFlow extends ChatFlow
             $fulfilment === 'delivery' ? '🛵 '.__('Delivery to: :address', ['address' => $order['address']]) : '🛍️ '.__('Pickup from :business', ['business' => $this->content->name()]),
             '🙍 '.$name,
             '',
-            $this->settings->online()['auto_confirm'] ? null : __('We will confirm it here shortly.'),
+            $this->settings->online()['auto_confirm']
+                ? null
+                : __('After you place it, we will send a payment QR. Pay and reply with a screenshot — we confirm once we see the payment.'),
         ], fn ($line) => $line !== null);
 
         return $this->reply(trim(implode("\n", $lines)), Interactive::buttons([
@@ -419,7 +421,7 @@ class OrderFlow extends ChatFlow
 
         $how = $placed->fulfilment === 'delivery' ? __('We will deliver it to you.') : __('We will tell you here when it is ready for pickup.');
         $body = $placed->status === OrderStatus::Pending
-            ? __('🙏 Thank you, :name! We have your order *:number* (total :total). We will confirm it here shortly.', ['name' => $name, 'number' => $placed->number, 'total' => $this->content->money($placed->total)])
+            ? __('🙏 Thank you, :name! We have your order *:number* (total :total). Please pay using the QR we send next, then reply here with a screenshot of the payment. We will confirm your order after we check it.', ['name' => $name, 'number' => $placed->number, 'total' => $this->content->money($placed->total)])
             : __('✅ Order *:number* is confirmed! Total :total.', ['number' => $placed->number, 'total' => $this->content->money($placed->total)])."\n".$how;
 
         return $this->reply($body, Interactive::buttons([
